@@ -10,6 +10,6 @@ class UFactoryEnvironment : public UFactory
 	GENERATED_BODY()
 	
 public:
-	virtual IRLActor* CreateRLActor(const FString& name) override;
+	virtual AActor* createRLActor(const FString& name, FVector aLocation, FRotator aRotation) override;
 };
 

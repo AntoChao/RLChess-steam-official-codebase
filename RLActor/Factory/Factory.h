@@ -11,21 +11,21 @@ class UFactory: public UObject
 	
 public:
     // Access the singleton instance
-    static UFactory* Get();
+    static UFactory* get();
 
     // Method to create an RLActor by name
     UFUNCTION(BlueprintCallable, Category = "RLFactory")
-    virtual IRLActor* CreateRLActor(const FString& name);
+    virtual AActor* createRLActor(const FString& name, FVector aLocation, FRotator aRotation);
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lobby")
     TSubclass<UFactory> factoryClass = nullptr;
 
-protected:
-    // Ensure singleton is initialized
-    static void Initialize();
-
     // Protected constructor for singleton pattern
     UFactory();
+
+protected:
+    // Ensure singleton is initialized
+    static void initialize();
 
 private:
     // The singleton instance

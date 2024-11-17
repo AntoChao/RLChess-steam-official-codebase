@@ -1,11 +1,11 @@
 #include "Factory.h"
 
-UFactory::URLFactory()
+UFactory::UFactory()
 {
     singletonInstance = nullptr;
 }
 
-UFactory* UFactory::Get()
+UFactory* UFactory::get()
 {
     if (!singletonInstance)
     {
@@ -14,7 +14,7 @@ UFactory* UFactory::Get()
     return singletonInstance;
 }
 
-void UFactory::Initialize()
+void UFactory::initialize()
 {
     singletonInstance = NewObject<UFactory>(factoryClass);
     if (singletonInstance)
@@ -23,40 +23,13 @@ void UFactory::Initialize()
     }
 }
 
-IRLActor* UFactory::CreateRLActor(const FString& name)
+AActor* UFactory::createRLActor(const FString& name, FVector aLocation, FRotator aRotation)
 {
     if (!GEngine || !GWorld)
     {
         UE_LOG(LogTemp, Warning, TEXT("RLFactory: Engine or World context is null!"));
         return nullptr;
     }
-    /*
-    // Map actor names to class types or blueprints
-    TSubclassOf<ARLActor> ActorClass = nullptr;
-
-    if (Name == "Ranger")
-    {
-        ActorClass = LoadClass<ARLActor>(nullptr, TEXT("/Game/Blueprints/Actors/BP_Ranger"));
-    }
-    else if (Name == "Samurai")
-    {
-        ActorClass = LoadClass<ARLActor>(nullptr, TEXT("/Game/Blueprints/Actors/BP_Samurai"));
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("RLFactory: No class found for actor name: %s"), *Name);
-        return nullptr;
-    }
-
-    // Spawn the actor in the world
-    if (ActorClass)
-    {
-        FActorSpawnParameters SpawnParams;
-        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-        return GWorld->SpawnActor<ARLActor>(ActorClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
-    }*/
-
     return nullptr;
 }
 
@@ -77,5 +50,4 @@ void SomeFunction()
         UE_LOG(LogTemp, Warning, TEXT("Failed to create actor: %s"), *ActorName);
     }
 }
-
 */

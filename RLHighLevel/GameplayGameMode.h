@@ -21,10 +21,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
 		ARoundManager* roundManager = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-		int numPlayers = 0;
 
 	// all locations
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+		TArray<FLocation> playerLocations;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
 		FLocation tableLocation;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
@@ -32,18 +33,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
 		TArray<FLocation> chairLocations;
 
+	// all players
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
 		void setupGame();
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
 		void createPlayers();
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
-		void createMap();
+		void createEnvironment();
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
 		void startRound();
-	UFUNCTION(BlueprintCallable, Category = "GameMode")
-		void updateGameplayGameState();
-	UFUNCTION(BlueprintCallable, Category = "GameMode")
-		void checkIsAnyWinner();
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
 		void endGameplayGameMode();
 };

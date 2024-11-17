@@ -8,10 +8,12 @@
 #include "InputActionValue.h"
 #include "PlayerCharacter.generated.h"
 
-class UInputComponent;
-class USkeletalMeshComponent;
 class USceneComponent;
+class USkeletalMeshComponent;
 class UCameraComponent;
+
+class UInputComponent;
+
 class UAnimMontage;
 class USoundBase;
 

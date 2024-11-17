@@ -18,46 +18,56 @@ void AGameplayGameMode::BeginPlay()
 void AGameplayGameMode::setupGame()
 {
 	createPlayers();
-	createMap();
+    createEnvironment();
 }
 void AGameplayGameMode::createPlayers()
 {
-    UFactoryPlayer* Factory = UFactoryPlayer::Get();
+    UFactoryPlayer* playerFactory = UFactoryPlayer::Get();
+    int playerCounter = 0;
 
     for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); ++Iterator)
-    {
+    {    
         APlayerController* PC = Iterator->Get();
         if (PC)
         {
-            numPlayers++;
-
             FString characterName = PC->PlayerRLState->characterName;
-            IRLActor* createdActor = Factory->CreateRLActor(ActorName);
+            FVector direction = (playerLocations[playerCounter] - tableLocation).GetSafeNormal();
+            FRotator rotation = Direction.Rotation();
+
+            AActor* createdActor = playerFactory->createRLActor(characterName, playerLocations[playerCounter], rotation);
             ACharacter* charact = Cast<ACharacter*>createdActor;
             if (charact) {
                 PC->Possess(charact);
             }
         }
+        playerCounter++;
     }
 }
 
-void AGameplayGameMode::createMap()
+void AGameplayGameMode::createEnvironment()
 {
+    UFactoryPlayer* environmentFactory = UFactoryEnvironment::Get();
+    
+    // spawn timers
+    int timerCounter = 0;
 
+    for (APlayerCharacter* aPlayer : allPlayers)
+    {
+        FVector direction = (timerLocations[timerCounter] - chairLocations).GetSafeNormal();
+        FRotator rotation = Direction.Rotation();
+
+        AActor* createdActor = environmentFactory->createRLActor("Timer", timerLocations[timerCounter], rotation);
+        timerCounter++;
+    }
 }
+
 void AGameplayGameMode::startRound()
 {
-
+    roundManager = URoundManager::Get();
+    roundManager->startRoundManager();
 }
-void AGameplayGameMode::updateGameplayGameState()
-{
-	return;
-}
-void AGameplayGameMode::checkIsAnyWinner()
-{
 
-}
-void AGameplayGameMode::endGameplayGameMode()
+void AGameplayGameMode::endGameplayGameMode(APlayerCharacter* winner)
 {
-
+    return;
 }
