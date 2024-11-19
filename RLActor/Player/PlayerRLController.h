@@ -60,9 +60,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	class UInputAction* interactAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	class UInputAction* placePieceAction;
-
 	// all lobby action functionalities
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void goBackFunc(const FInputActionValue& Value);
@@ -87,9 +84,5 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void interactFunc(const FInputActionValue& Value);
-
-	UFUNCTION(BlueprintCallable, Category = "Control")
-	void placePieceFunc(const FInputActionValue& Value);
-
 };
 

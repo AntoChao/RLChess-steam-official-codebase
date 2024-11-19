@@ -13,10 +13,10 @@ class USceneComponent;
 class USkeletalMeshComponent;
 class UCameraComponent;
 
-class UInputComponent;
-
 class UAnimMontage;
 class USoundBase;
+
+class APiece;
 
 /* Debug Tool
 GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Control stop use weapon secondary"));
@@ -47,21 +47,24 @@ protected:
 
 	virtual void Tick(float DeltaTime) override;
 
-/* character basic stats*/
+	/* character basic components*/
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Body Stats")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	float BodyRadius = 42.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Body Stats")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	float BodyHalfHeight = 96.0f;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
-	class USpringArmComponent* CameraBoom;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class USkeletalMeshComponent* body;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
+	class UCameraComponent* camera;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
-	class UCameraComponent* playerCamera;
+	/* character basic stats*/
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
+	bool isAlibe = false;
 
-
-/* RL actor functions */ 
+	/* RL actor functions */
 public:
 
 	virtual FName GetActorName() const override;
@@ -70,17 +73,17 @@ public:
 
 	virtual bool IsAbleToInteract(RLPlayer* Sender) const override;
 
-	virtual void BeInteracted(RLPlayer* Sender) override;
+	virtual void BeInteracted(APlayerCharacter* Sender) override;
 
-	virtual void BeUnInteracted(RLPlayer* Sender) override;
+	virtual void BeUnInteracted(APlayerCharacter* Sender) override;
 
-/* controller functions*/ 
+	/* controller functions*/
 public:
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void openMenu(const FInputActionValue& Value);
 
 	UFUNCTION(BlueprintCallable, Category = "Control")
-	void look(FVector2D LookAxisVector);
+	void look(FVector2D lookAxisVector);
 
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void move(FVector2D movementVector);
@@ -94,32 +97,70 @@ public:
 	void interactEnvironment();
 	
 	UFUNCTION(BlueprintCallable, Category = "Widget Interact Control")
+	void selectPiece();
+	UFUNCTION(BlueprintCallable, Category = "Widget Interact Control")
 	void placePiece();
+	UFUNCTION(BlueprintCallable, Category = "Widget Interact Control")
+	void shop();
+	UFUNCTION(BlueprintCallable, Category = "Widget Interact Control")
+	void pickUpItem();
+	UFUNCTION(BlueprintCallable, Category = "Widget Interact Control")
+	void useItem();
+	
 
-private:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Look Controller")
+protected:
+	// look stats
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Look Controller Stats")
 	bool isAbleToLook = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Look Controller Stats")
-	float look_XSensitivity = 1.0f;
+	float baseTurnRate = 45.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Look Controller Stats")
-	float look_YSensitivity = 1.0f;
+	float baseLookUpRate = 45.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller")
+	// move stats
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	bool isAbleToMove = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	float move_XSensitivity = 1.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	float move_YSensitivity = 1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Run Controller")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	bool isRunning = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Run Controller")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	bool isAbleToRun = true;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
+	float curSpeed = 0.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget Interact Control")
+	// interact stats
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	bool isAbleToInteract = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
+	AActor* detectedActor = nullptr; // update by camera detection
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
+	APiece* selectedPiece = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
+	AItem* selectedItem = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget Interact Control")
-	bool isAbleToPlacePiece = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
+	bool isAbleToPlacePiece = false; // update by floor detection
+
+	// character stats
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
+	float walkSpeed = 400.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
+	float runSpeed = 600.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	float range = 500.0f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	int rangeRank = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	int initMoney = 5;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	TArray<AActors*> inventory;
 };
 

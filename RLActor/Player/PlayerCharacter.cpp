@@ -9,23 +9,23 @@
 
 APlayerCharacter::APlayerCharacter()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 		
-	// Create a CameraComponent	
-	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
-	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
-	FirstPersonCameraComponent->SetRelativeLocation(FVector(-10.f, 0.f, 60.f)); // Position the camera
-	FirstPersonCameraComponent->bUsePawnControlRotation = true;
+	// Create the full-body skeletal mesh
+	body = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FullBodyMesh"));
+	body->SetupAttachment(RootComponent);
+	body->SetIsReplicated(true); // Enable replication for multiplayer
+	body->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f)); // Adjust for character height
+	body->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f)); // Align with capsule
 
-	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
-	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
-	Mesh1P->SetOnlyOwnerSee(true);
-	Mesh1P->SetupAttachment(FirstPersonCameraComponent);
-	Mesh1P->bCastDynamicShadow = false;
-	Mesh1P->CastShadow = false;
-	//Mesh1P->SetRelativeRotation(FRotator(0.9f, -19.19f, 5.2f));
-	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
+	// Create the first-person camera
+	camera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
+	camera->SetupAttachment(RootComponent);
+	camera->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f)); // Position at eye level
+	camera->bUsePawnControlRotation = true; // Rotate camera with controller
 
 }
 
@@ -33,70 +33,104 @@ void APlayerCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
-
-	//Add Input Mapping Context
-	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
-		}
-	}
-
-}
-
-//////////////////////////////////////////////////////////////////////////// Input
-
-void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
-{
-	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		//Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
-
-		//Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ARLChessCharacter::Move);
-
-		//Looking
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ARLChessCharacter::Look);
-	}
 }
 
 
-void APlayerCharacter::Move(const FInputActionValue& Value)
+void APlayerCharacter::look(FVector2D lookAxisVector)
 {
-	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
-
-	if (Controller != nullptr)
+	if (isAbleToLook)
 	{
+		AddControllerYawInput(lookAxisVector.X * baseTurnRate * GetWorld()->GetDeltaSeconds());
+		AddControllerPitchInput(lookAxisVector.Y * baseLookUpRate * GetWorld()->GetDeltaSeconds());
+	}
+}
+
+void APlayerCharacter::move(FVector2D movementVector)
+{
+	if (isAbleToMove) {
+		// find out which way is forward
+		const FRotator Rotation = PlayerController->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+		// get forward vector
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+
+		// get right vector 
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
 		// add movement 
-		AddMovementInput(GetActorForwardVector(), MovementVector.Y);
-		AddMovementInput(GetActorRightVector(), MovementVector.X);
+		AddMovementInput(ForwardDirection, movementVector.Y * move_XSensitivity);
+		AddMovementInput(RightDirection, movementVector.X * move_YSensitivity);
 	}
 }
 
-void APlayerCharacter::Look(const FInputActionValue& Value)
-{
-	// input is a Vector2D
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
+void APlayerCharacter::run() {
+	if (isAbleToRun) {
+		isRunning = true;
+		curSpeed = runSpeed;
+	}
+}
 
-	if (Controller != nullptr)
+void APlayerCharacter::stopRun() {
+	IsRunning = false;
+	curSpeed = walkSpeed:
+}
+
+void APlayerCharacter::interactEnvironment()
+{
+	if (isAbleToInteract) // detectedActorValid
 	{
-		// add yaw and pitch input to controller
-		AddControllerYawInput(LookAxisVector.X);
-		AddControllerPitchInput(LookAxisVector.Y);
+		// different interaction
+		if (detectedActor ischild of piece)
+		{
+			selectPiece();
+		}
+		else if (detectedActor ischild of square && selectedPiece != nullptr)
+		{
+			placePieceToSquare();
+		}
+		else if (detectedActor ischild of shop)
+		{
+			shop();
+		}
+		else if (detectedActor ischild of item)
+		{
+			pickUpItem();// if isAbleToPickUp
+		}
+		else if (selectedItem != nullptr)
+		{
+			useItem();
+		}
+
+		// interaction effects
+		if (! detectedActor ischild of piece)
+		{
+			selectedPiece = nullptr;
+		}
+		selectedItem = nullptr;
 	}
 }
 
-void APlayerCharacter::SetHasRifle(bool bNewHasRifle)
+void APlayerCharacter::selectPiece()
 {
-	bHasRifle = bNewHasRifle;
+
 }
 
-bool APlayerCharacter::GetHasRifle()
+void APlayerCharacter::placePiece()
 {
-	return bHasRifle;
+
+}
+
+void APlayerCharacter::shop()
+{
+
+}
+void APlayerCharacter::pickUpItem()
+{
+
+}
+
+void APlayerCharacter::useItem()
+{
+
 }
