@@ -7,10 +7,6 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 
-
-//////////////////////////////////////////////////////////////////////////
-// APlayerCharacter
-
 APlayerCharacter::APlayerCharacter()
 {
 	// Set size for collision capsule

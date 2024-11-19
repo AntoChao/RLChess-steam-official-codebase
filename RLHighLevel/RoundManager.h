@@ -29,6 +29,10 @@ private:
     // The singleton instance
     static URoundManager* roundManagerInstance;
 
+    // timerTime
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+        int turnTime = 10; // in segs
+
     // player and timers refences
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
         int numPlayers = 0;

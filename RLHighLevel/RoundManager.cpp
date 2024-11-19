@@ -59,6 +59,8 @@ void URoundManager::startNextPlayerTurn()
     turnCounter++;
     if (allPlayers[curPlayerIndex]->checkIsAlive())
     {
+        // enable player to move piece
+        allPlayers[curPlayerIndex]->setInItsTurn(true);
         // calculate the current turn and round
         if (turnCounter % numPlayers == 0)
         {
@@ -67,7 +69,7 @@ void URoundManager::startNextPlayerTurn()
         }
 
         // turn the timer on
-        allTimers[curPlayerIndex]->turnOn();
+        allTimers[curPlayerIndex]->turnOn(turnTime);
     }
     else 
     {
@@ -77,6 +79,9 @@ void URoundManager::startNextPlayerTurn()
 
 void URoundManager::endCurPlayerTurn()
 {
+    // unenable player to move piece
+    allPlayers[curPlayerIndex]->setInItsTurn(false);
+
     // calculate the next player index and start its turn
     curPlayerIndex++;
     if (curPlayerIndex % numPlayers == 0)
