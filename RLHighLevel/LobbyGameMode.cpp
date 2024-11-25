@@ -1,12 +1,14 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "LobbyGameMode.h"
+#include "../RLActor/Player/PlayerRLState.h"
 
 ALobbyGameMode::ALobbyGameMode()
 {
 	PlayerStateClass = APlayerRLState::StaticClass();
 }
 
+/*
 void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
@@ -86,3 +88,4 @@ void ALobbyGameMode::NotifyPlayers(const FString& Message)
         }
     }
 }
+*/

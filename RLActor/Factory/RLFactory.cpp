@@ -1,29 +1,29 @@
-#include "Factory.h"
+#include "RLFactory.h"
 
-UFactory::UFactory()
+URLFactory::URLFactory()
 {
     singletonInstance = nullptr;
 }
 
-UFactory* UFactory::get()
+URLFactory* URLFactory::get()
 {
     if (!singletonInstance)
     {
-        Initialize();
+        initialize();
     }
     return singletonInstance;
 }
 
-void UFactory::initialize()
+void URLFactory::initialize()
 {
-    singletonInstance = NewObject<UFactory>(factoryClass);
+    singletonInstance = NewObject<URLFactory>(factoryClass);
     if (singletonInstance)
     {
         singletonInstance->AddToRoot(); // Ensure the object is not garbage collected
     }
 }
 
-AActor* UFactory::createRLActor(const FString& name, FVector aLocation, FRotator aRotation)
+AActor* URLFactory::createRLActor(const FString& name, FVector aLocation, FRotator aRotation)
 {
     if (!GEngine || !GWorld)
     {
@@ -33,6 +33,10 @@ AActor* UFactory::createRLActor(const FString& name, FVector aLocation, FRotator
     return nullptr;
 }
 
+AActor* URLFactory::createRandom(FVector aLocation, FRotator aRotation)
+{
+    return nullptr;
+}
 /*
 * example usage
 void SomeFunction()

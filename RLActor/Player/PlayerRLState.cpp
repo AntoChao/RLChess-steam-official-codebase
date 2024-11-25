@@ -1,5 +1,5 @@
 #include "PlayerRLState.h"
-#include "Net/UnrealNetwork.h
+#include "Net/UnrealNetwork.h"
 
 void APlayerRLState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

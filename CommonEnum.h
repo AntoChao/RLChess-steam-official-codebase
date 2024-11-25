@@ -12,3 +12,21 @@ enum class EGameMode: uint8 {
 	EGameplay,
 	EEnd
 };
+
+UENUM(BlueprintType, Blueprintable)
+enum class EInteraction : uint8 {
+	EUseItem,
+	EPickUpItem,
+	EShop,
+	ESelectPiece,
+	EPlacePiece,
+	ENone
+};
+
+UENUM(BlueprintType, Blueprintable)
+enum class EPieceStatus : uint8 {
+	EInShop,
+	EInBench,
+	EInBoard,
+	ENone
+};

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "RLChessGameMode.h"
+#include "RoundManager.h"
 #include "GameplayGameMode.generated.h"
 
 class ARoundManager;
@@ -20,18 +21,18 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-		ARoundManager* roundManager = nullptr;
+		URoundManager* roundManager = nullptr;
 
 	// all locations
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-		TArray<FLocation> playerLocations;
+		TArray<FVector> playerLocations;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-		FLocation tableLocation;
+		FVector tableLocation;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-		TArray<FLocation> timerLocations;
+		TArray<FVector> timerLocations;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-		TArray<FLocation> chairLocations;
+		TArray<FVector> chairLocations;
 
 	// all players
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
@@ -40,10 +41,15 @@ protected:
 		void createPlayers();
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
 		void createEnvironment();
+
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
-		void startRound();
+		void startRoundSetUp();
+		UFUNCTION(BlueprintCallable, Category = "GameMode")
+		void startRoundGameplay();
+
+public:
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
-		void endGameplayGameMode();
+	void endGameplayGameMode(APlayerCharacter* winner);
 };
 
 

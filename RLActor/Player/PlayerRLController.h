@@ -1,14 +1,26 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "Engine/EngineTypes.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/PlayerController.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+
+#include "../../CommonEnum.h"
+#include "PlayerRLState.h"
+
 #include "PlayerRLController.generated.h"
 
 UCLASS(BlueprintType, Blueprintable)
 class APlayerRLController : public APlayerController
 {
 	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	class APlayerRLState* rlPlayerState;
 
 public:
 	APlayerRLController();
@@ -18,16 +30,17 @@ protected:
 
 	// possessed player
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	class APlayerCharacter* player;
+	class APlayerCharacter* rlPlayer;
 
 	virtual void OnPossess(APawn* InPawn) override;
-	virtual void UnPossess() override;
 
 	// set up input componnet
 	virtual void SetupInputComponent() override;
 
 	// set up mapping context
 	void setupMappingContextBasedOnGameMode();
+	void setupLobbyInput(UEnhancedInputComponent* EnhancedInput);
+	void setupGameplayInput(UEnhancedInputComponent* EnhancedInput);
 
 	// mapping context
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -60,6 +73,17 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	class UInputAction* interactAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	class UInputAction* selectItemOne;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	class UInputAction* selectItemTwo;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	class UInputAction* selectItemThree;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	class UInputAction* selectItemFour;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	class UInputAction* selectItemFive;
+
 	// all lobby action functionalities
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void goBackFunc(const FInputActionValue& Value);
@@ -70,6 +94,9 @@ protected:
 	// all gameplay action functionalities
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void openMenuFunc(const FInputActionValue& Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void pauseGameFunc(const FInputActionValue& Value);
 
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void lookFunc(const FInputActionValue& Value);
@@ -84,5 +111,25 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void interactFunc(const FInputActionValue& Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void selectItemOneFunc(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void selectItemTwoFunc(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void selectItemThreeFunc(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void selectItemFourFunc(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void selectItemFiveFunc(const FInputActionValue& Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	bool selectItemAvailable(int num);
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void selectItem(int itemIndex);
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void UnPossessEffect();
 };
 

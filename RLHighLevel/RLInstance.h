@@ -3,7 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/GameInstance"
+#include "Engine/GameInstance.h"
+#include "../CommonEnum.h"
+#include "Kismet/GameplayStatics.h"
 #include "RLInstance.generated.h"
 
 UCLASS(minimalapi)
@@ -14,7 +16,7 @@ class URLInstance: public UGameInstance
 public:
 	URLInstance();
 
-private:
+protected:
 	UPROPERTY(BlueprintReadWrite, Category = "Level Control")
 		EGameMode curGameMode;
 

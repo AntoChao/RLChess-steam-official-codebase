@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "RoundManager .h"
+#include "RoundManager.h"
+#include "GameplayGameMode.h"
+#include "Kismet/GameplayStatics.h"
 
 URoundManager::URoundManager(){
     roundManagerInstance = nullptr;
@@ -10,29 +12,50 @@ URoundManager* URoundManager::get()
 {
     if (!roundManagerInstance)
     {
-        Initialize();
+        initialize();
     }
     return roundManagerInstance;
 }
 
 void URoundManager::initialize()
 {
-    roundManagerInstance = NewObject<UFactory>(factoryClass);
+    roundManagerInstance = NewObject<URoundManager>();
     if (roundManagerInstance)
     {
         roundManagerInstance->AddToRoot(); // Ensure the object is not garbage collected
-        // find all players and timers references
-        UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerCharacter::StaticClass(), allPlayers);
-        numPlayers = allPlayers.Num();
-        UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnvTimer::StaticClass(), allTimers);
     }
 }
 
-void URoundManager::startRoundManager()
+void URoundManager::setAllPlayers(TArray<APlayerCharacter*> players)
 {
-    // setup
+    allPlayers = players;
+    numPlayers = allPlayers.Num();
+}
+
+void URoundManager::startRoundManagerSetUpRound()
+{
+    AEnvBoard* gameBoard = AEnvBoard::get();
+    gameBoard->createBoard();
+    gameBoard->initializeBoardColor(allPlayers);
+    gameBoard->setUpPlayerBench(allPlayers);
+}
+
+void URoundManager::startRoundManagerGameplayRound()
+{
+    initialFreeTime();
+    startTurns();
+}
+
+// give one minutes to let player do anything they want
+void URoundManager::initialFreeTime()
+{
+    return;
+}
+
+void URoundManager::startTurns()
+{
     curPlayerIndex = findInitPlayerIndex();
-    
+
     roundCounter++;
     startNextPlayerTurn();
 }
@@ -60,7 +83,7 @@ void URoundManager::startNextPlayerTurn()
     if (allPlayers[curPlayerIndex]->checkIsAlive())
     {
         // enable player to move piece
-        allPlayers[curPlayerIndex]->setInItsTurn(true);
+        allPlayers[curPlayerIndex]->startTurn();
         // calculate the current turn and round
         if (turnCounter % numPlayers == 0)
         {
@@ -69,7 +92,7 @@ void URoundManager::startNextPlayerTurn()
         }
 
         // turn the timer on
-        allTimers[curPlayerIndex]->turnOn(turnTime);
+        // allTimers[curPlayerIndex]->turnOn(turnTime);
     }
     else 
     {
@@ -80,13 +103,13 @@ void URoundManager::startNextPlayerTurn()
 void URoundManager::endCurPlayerTurn()
 {
     // unenable player to move piece
-    allPlayers[curPlayerIndex]->setInItsTurn(false);
+    allPlayers[curPlayerIndex]->endTurn();
 
     // calculate the next player index and start its turn
     curPlayerIndex++;
     if (curPlayerIndex % numPlayers == 0)
     {
-        curPlayerIndex = 0
+        curPlayerIndex = 0;
     }
     startNextPlayerTurn();
 }

@@ -4,6 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+
+#include "../RLActor/Environment/EnvBoard.h"
+#include "../RLActor/Player/PlayerCharacter.h"
+
 #include "RoundManager.generated.h"
 
 UCLASS(minimalapi)
@@ -15,21 +19,39 @@ public:
     // Access the singleton instance
     static URoundManager* get();
 
-	URoundManager();
-
-    // called by gamemode to initialize
-    UFUNCTION(BlueprintCallable, Category = "RoundManager")
-        void startRoundManager();
-
-protected:
     // Ensure singleton is initialized
     static void initialize();
 
-private:
+    // Ensure singleton is initialized
+    void setAllPlayers(TArray<APlayerCharacter*> players);
+
+	URoundManager();
+
     // The singleton instance
     static URoundManager* roundManagerInstance;
 
+    // called by gamemode to initialize
+    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+        void startRoundManagerSetUpRound();
+
+    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+        void startRoundManagerGameplayRound();
+
+    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+        void initialFreeTime();
+
+    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+        void startTurns();
+
+    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+        bool getIsSetUpTurn();
+
+protected:
+
     // timerTime
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+        bool isSetupTurn = true;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
         int turnTime = 10; // in segs
 
@@ -39,10 +61,6 @@ private:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
         TArray<APlayerCharacter*> allPlayers;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-        TArray<AEnvTimer*> allTimers; // timers index has to align with player
-
 
     // manage player round
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
@@ -57,13 +75,13 @@ private:
         int findInitPlayerIndex();
 
     UFUNCTION(BlueprintCallable, Category = "RoundManager")
-        void startNextPlayerTurn();
-    UFUNCTION(BlueprintCallable, Category = "RoundManager")
-        void endCurPlayerTurn();
-
-
-    UFUNCTION(BlueprintCallable, Category = "RoundManager")
         void checkIfGameEnd();
+
+public:
+    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+    void startNextPlayerTurn();
+    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+    void endCurPlayerTurn();
 };
 
 

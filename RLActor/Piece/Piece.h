@@ -4,7 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/BoxComponent.h"
+
 #include "../RLActor.h"
+#include "../../CommonEnum.h"
 #include "Piece.generated.h"
 
 UCLASS(BlueprintType, Blueprintable)
@@ -15,16 +19,71 @@ class APiece : public AActor, public IRLActor
 public:
 	APiece();
 
+	virtual void BeginPlay() override;
+/* RLActor functions*/
 public:
-	virtual FName GetActorName() const override;
+	virtual FString GetActorName() override;
 
-	virtual FText GetDescription() const override;
+	virtual FString GetDescription() override;
 
-	virtual bool IsAbleToInteract(RLPlayer* Sender) const override;
+	virtual bool IsAbleToBeInteracted(APlayerCharacter* Sender) override;
 
-	virtual void BeInteracted(RLPlayer* Sender) override;
+	virtual void BeInteracted(APlayerCharacter* Sender) override;
 
-	virtual void BeUnInteracted(RLPlayer* Sender) override;
+	virtual void BeUnInteracted(APlayerCharacter* Sender) override;
+
+/* Piece information*/
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	FString pieceName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	FString pieceDescription;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	FColor pieceColor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	int pieceLevel;
+
+	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
+	virtual TArray<FVector2D> calculatePossibleMove();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	EPieceStatus pieceStatus = EPieceStatus::EInShop;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	AEnvSquare* curSquare = nullptr;
+
+/* piece collision*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Piece Collision")
+	UStaticMeshComponent* pieceBody;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Piece Collision")
+	UBoxComponent* pieceCollision;
+
+
+	UFUNCTION(BlueprintCallable, Category = "Piece Collision")
+	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+		bool bFromSweep, const FHitResult& SweepResult);
+
+/* piece movement */
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Movement")
+	bool isMoving = false;
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	EPieceStatus getPieceStatus();
+	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	void setPieceStatus(EPieceStatus newStatus);
+
+	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	int getLevel();
+
+	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	void bePlaced(AEnvSquare* squareDestination);
 
 };
 

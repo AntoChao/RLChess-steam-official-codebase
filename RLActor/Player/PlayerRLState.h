@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
-#include "PlayerInfoPackage.generated.h"
+#include "PlayerRLState.generated.h"
 
 UCLASS(config=Game)
 class APlayerRLState : public APlayerState

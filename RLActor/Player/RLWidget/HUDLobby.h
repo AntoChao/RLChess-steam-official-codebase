@@ -4,12 +4,10 @@
 #include "Blueprint/UserWidget.h"
 #include "HUDLobby.generated.h"
 
-UCLASS(BlueprintType, Blueprintable)
+UCLASS()
 class UHUDLobby : public UUserWidget
 {
 	GENERATED_BODY()
 
-public:
-	UHUDLobby();
 };
 

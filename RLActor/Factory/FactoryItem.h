@@ -1,11 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Factory.h"
+#include "RLFactory.h"
 #include "FactoryItem.generated.h"
 
 UCLASS(Blueprintable)
-class UFactoryItem : public UFactory
+class UFactoryItem : public URLFactory
 {
 	GENERATED_BODY()
 	

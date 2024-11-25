@@ -6,6 +6,8 @@
 #include "UObject/Interface.h"
 #include "RLActor.generated.h"
 
+class APlayerCharacter;
+
 UINTERFACE(MinimalAPI, Blueprintable)
 class URLActor : public UInterface
 {
@@ -17,13 +19,13 @@ class IRLActor
     GENERATED_BODY()
 
 public:
-    virtual FName GetActorName() const = 0;
+    virtual FString GetActorName() = 0;
 
-    virtual FText GetDescription() const = 0;
+    virtual FString GetDescription() = 0;
 
-    virtual bool IsAbleToInteract(RLPlayer* Sender) const = 0;
+    virtual bool IsAbleToBeInteracted(APlayerCharacter* Sender) = 0;
 
-    virtual void BeInteracted(RLPlayer* Sender) = 0;
+    virtual void BeInteracted(APlayerCharacter* Sender) = 0;
 
-    virtual void BeUnInteracted(RLPlayer* Sender) = 0;
+    virtual void BeUnInteracted(APlayerCharacter* Sender) = 0;
 };

@@ -1,8 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+#include "GameplayGameMode.h"
 #include "../RLActor/Factory/FactoryPlayer.h"
 #include "../RLActor/Factory/FactoryEnvironment.h"
-#include "GameplayGameMode.h"
+#include "../RLActor/Player/PlayerRLController.h"
 
 AGameplayGameMode::AGameplayGameMode() {
 	roundManager = NewObject<URoundManager>();
@@ -12,7 +13,8 @@ void AGameplayGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	setupGame();
-	startRound();
+    startRoundSetUp();
+    startRoundGameplay();
 }
 
 void AGameplayGameMode::setupGame()
@@ -22,32 +24,40 @@ void AGameplayGameMode::setupGame()
 }
 void AGameplayGameMode::createPlayers()
 {
-    UFactoryPlayer* playerFactory = UFactoryPlayer::Get();
+    URLFactory* playerFactory = UFactoryPlayer::get();
     int playerCounter = 0;
 
-    for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); ++Iterator)
+    TArray<APlayerCharacter*> players;
+
+    for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
     {    
-        APlayerController* PC = Iterator->Get();
+        APlayerRLController* PC = Cast<APlayerRLController>(Iterator->Get());
         if (PC)
         {
-            FString characterName = PC->PlayerRLState->characterName;
+            FString characterName = PC->rlPlayerState->characterName;
             FVector direction = (playerLocations[playerCounter] - tableLocation).GetSafeNormal();
-            FRotator rotation = Direction.Rotation();
+            FRotator rotation = direction.Rotation();
 
             AActor* createdActor = playerFactory->createRLActor(characterName, playerLocations[playerCounter], rotation);
-            ACharacter* charact = Cast<ACharacter*>createdActor;
-            if (charact) {
+            APlayerCharacter* charact = Cast<APlayerCharacter>(createdActor);
+            if (charact) 
+            {
                 PC->Possess(charact);
+                players.Add(charact);
             }
         }
         playerCounter++;
     }
+
+    roundManager = URoundManager::get();
+    roundManager->setAllPlayers(players);
 }
 
 void AGameplayGameMode::createEnvironment()
 {
-    UFactoryPlayer* environmentFactory = UFactoryEnvironment::Get();
     
+    URLFactory* environmentFactory = UFactoryEnvironment::get();
+    /*
     // spawn timers
     int timerCounter = 0;
 
@@ -58,13 +68,19 @@ void AGameplayGameMode::createEnvironment()
 
         AActor* createdActor = environmentFactory->createRLActor("Timer", timerLocations[timerCounter], rotation);
         timerCounter++;
-    }
+    }*/
 }
 
-void AGameplayGameMode::startRound()
+void AGameplayGameMode::startRoundSetUp()
 {
-    roundManager = URoundManager::Get();
-    roundManager->startRoundManager();
+    roundManager = URoundManager::get();
+    roundManager->startRoundManagerSetUpRound();
+}
+
+void AGameplayGameMode::startRoundGameplay()
+{
+    roundManager = URoundManager::get();
+    roundManager->startRoundManagerGameplayRound();
 }
 
 void AGameplayGameMode::endGameplayGameMode(APlayerCharacter* winner)
