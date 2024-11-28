@@ -16,19 +16,22 @@ class URoundManager : public UObject
 	GENERATED_BODY()
 
 public:
+    URoundManager();
+
     // Access the singleton instance
     static URoundManager* get();
 
     // Ensure singleton is initialized
     static void initialize();
 
-    // Ensure singleton is initialized
-    void setAllPlayers(TArray<APlayerCharacter*> players);
-
-	URoundManager();
-
     // The singleton instance
     static URoundManager* roundManagerInstance;
+
+    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+    void setGameMode(AGameplayGameMode* curGameMode);
+
+    // Ensure singleton is initialized
+    void setAllPlayers(TArray<APlayerCharacter*> players);
 
     // called by gamemode to initialize
     UFUNCTION(BlueprintCallable, Category = "RoundManager")
@@ -47,6 +50,9 @@ public:
         bool getIsSetUpTurn();
 
 protected:
+    // gamemode, uobject doesnt have worldcontext
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+    AGameplayGameMode* gameModeInstance = nullptr;
 
     // timerTime
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")

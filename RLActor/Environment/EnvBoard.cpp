@@ -2,29 +2,12 @@
 
 #include "EnvBoard.h"
 #include "../Factory/FactoryEnvironment.h"
+#include "../../RLHighLevel/GameplayGameMode.h"
 #include "EnvSquare.h"
 #include "../Player/PlayerCharacter.h"
 
 AEnvBoard::AEnvBoard() {
-    boardInstance = nullptr;
-}
-
-AEnvBoard* AEnvBoard::get()
-{
-    if (!boardInstance)
-    {
-        initialize();
-    }
-    return boardInstance;
-}
-
-void AEnvBoard::initialize()
-{
-    boardInstance = NewObject<AEnvBoard>(boardClass);
-    if (boardInstance)
-    {
-        boardInstance->AddToRoot();
-    }
+    
 }
 
 void AEnvBoard::createBoard()
@@ -32,60 +15,78 @@ void AEnvBoard::createBoard()
     totalSquareNum = rowSize * columnSize;
     allSquares.SetNum(totalSquareNum);
 
-    URLFactory* squareFactory = UFactoryEnvironment::get();
+    centerLocation = FVector2D(rowSize/2, columnSize/2);
+    
+    AGameplayGameMode* gameMode = Cast<AGameplayGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+    UFactoryEnvironment* squareFactory = gameMode->environmentFactoryInstance;
 
-    float boardWidth = rowSize * squareLength;
-    float boardHeight = columnSize * squareLength;
-    FVector topLeft = boardCenter - FVector(boardWidth / 2.0f, boardHeight / 2.0f, 0.0f);
-    for (int row = 0; row < rowSize; ++row)
+    if (squareFactory)
     {
-        for (int col = 0; col < columnSize; ++col)
+        float boardWidth = rowSize * squareLength;
+        float boardHeight = columnSize * squareLength;
+        FVector topLeft = boardCenter - FVector(boardWidth / 2.0f, boardHeight / 2.0f, 0.0f);
+        for (int row = 0; row < rowSize; ++row)
         {
-            // Calculate the position of the current square
-            float x = topLeft.X + (row * squareLength) + (squareLength / 2.0f);
-            float y = topLeft.Y + (col * squareLength) + (squareLength / 2.0f);
-            float z = boardCenter.Z; // Use the board's Z-level for all squares
+            for (int col = 0; col < columnSize; ++col)
+            {
+                // Calculate the position of the current square
+                float x = topLeft.X + (row * squareLength) + (squareLength / 2.0f);
+                float y = topLeft.Y + (col * squareLength) + (squareLength / 2.0f);
+                float z = boardCenter.Z; // Use the board's Z-level for all squares
 
-            FVector newSquarePosition(x, y, z);
-            AEnvSquare* newSquare = Cast<AEnvSquare>(squareFactory->createRLActor(TEXT("basicSquare"), newSquarePosition, squareRotation));
-            newSquare->SetActorLocation(newSquarePosition);
-            newSquare->setSquareLocation(FVector2D(row, col));
+                FVector newSquarePosition(x, y, z);
+
+                AEnvSquare* newSquare = nullptr;
+                if ((row + col) % 2 == 0)
+                {
+                    newSquare = Cast<AEnvSquare>(squareFactory->createRLActor(TEXT("BlackSquare"), newSquarePosition, squareRotation));
+                }
+                else
+                {
+                    newSquare = Cast<AEnvSquare>(squareFactory->createRLActor(TEXT("WhiteSquare"), newSquarePosition, squareRotation));
+                }
+
+                if (newSquare)
+                {
+                    newSquare->SetActorLocation(newSquarePosition);
+                    newSquare->setSquareLocation(FVector2D(row, col));
+                    allSquares[getIndexFromLocation(FVector2D(row, col))] = newSquare;
+                }
+            }
         }
     }
+
 }
 
 void AEnvBoard::initializeBoardColor(TArray<APlayerCharacter*> allPlayers)
 {
-    if (allPlayers.Num() < 2 || allPlayers.Num() > 4)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Invalid number of players! Must be between 2 and 4."));
-        return;
-    }
-
     // Iterate over the board and assign colorField based on player sections
     for (int Y = 0; Y < columnSize; ++Y)
     {
         for (int X = 0; X < rowSize; ++X)
         {
             int Index = getIndexFromLocation(FVector2D(X, Y));
-            // if (!allSquares.IsValidIndex(Index)) continue;
+            if (!allSquares.IsValidIndex(Index)) continue;  // Safety check
 
             AEnvSquare* curSquare = allSquares[Index];
+            if (!curSquare) continue;  // Check for null pointers
 
-            if (curSquare != nullptr) continue;
-
+            // Player 0: top centre rows
             if (Y < 2 && X > 1 && X < rowSize - 2 && allPlayers.IsValidIndex(0))
             {
                 curSquare->setSquareColorField(allPlayers[0]->getPlayerColor());
             }
+            // Player 1: bottom centre rows
             else if (Y >= columnSize - 2 && X > 1 && X < rowSize - 2 && allPlayers.IsValidIndex(1))
             {
                 curSquare->setSquareColorField(allPlayers[1]->getPlayerColor());
             }
+            // Player 2: left centre columns
             else if (X < 2 && Y > 1 && Y < columnSize - 2 && allPlayers.IsValidIndex(2))
             {
                 curSquare->setSquareColorField(allPlayers[2]->getPlayerColor());
             }
+            // Player 3: right centre columns
             else if (X >= rowSize - 2 && Y > 1 && Y < columnSize - 2 && allPlayers.IsValidIndex(3))
             {
                 curSquare->setSquareColorField(allPlayers[3]->getPlayerColor());
@@ -96,11 +97,12 @@ void AEnvBoard::initializeBoardColor(TArray<APlayerCharacter*> allPlayers)
 
 void AEnvBoard::setUpPlayerBench(TArray<APlayerCharacter*> allPlayers)
 {
+    /* multiplayer case
     if (allPlayers.Num() < 2 || allPlayers.Num() > 4)
     {
         UE_LOG(LogTemp, Warning, TEXT("Invalid number of players! Must be between 2 and 4."));
         return;
-    }
+    }*/
 
     for (int32 playerIndex = 0; playerIndex < allPlayers.Num(); ++playerIndex)
     {
@@ -119,27 +121,16 @@ FVector AEnvBoard::getSpawnStartPositionForPlayer(int playerIndex)
 
     switch (playerIndex)
     {
-    case 0: // Player 1: Top-left corner, offset outside the board
-    {
-        return topLeft - FVector(2 * squareLength, 0.0f, 0.0f) + FVector(0.0f, squareLength, 0.0f);
-    }
-    case 1: // Player 2: Bottom-left corner, offset outside the board
-    {
-        return topLeft + FVector((columnSize - 2) * squareLength, -2 * squareLength, 0.0f);
-    }
-    case 2: // Player 3: Left side, offset outside the board
-    {
-        return topLeft - FVector(squareLength, 2 * squareLength, 0.0f);
-    }
-    case 3: // Player 4: Right side, offset outside the board
-    {
-        return bottomRight + FVector(-2 * squareLength, -squareLength, 0.0f);
-    }
+    case 0: // Player 1: Top-center of the first row
+        return FVector(topLeft.X + (rowSize * squareLength / 2), topLeft.Y, 0.0f);
+    case 1: // Player 2: Bottom-center of the last row
+        return FVector(topLeft.X + (rowSize * squareLength / 2), topLeft.Y + (columnSize * squareLength), 0.0f);
+    case 2: // Player 3: Center of the first column
+        return FVector(topLeft.X, topLeft.Y + (columnSize * squareLength / 2), 0.0f);
+    case 3: // Player 4: Center of the last column
+        return FVector(topLeft.X + (rowSize * squareLength), topLeft.Y + (columnSize * squareLength / 2), 0.0f);
     default:
-    {
-
-        return FVector::ZeroVector;
-    }
+        return FVector::ZeroVector; // Fallback for an undefined player index
     }
 }
 
@@ -166,6 +157,43 @@ FVector AEnvBoard::getPlayerPlacementOffset(int playerIndex)
         break;
     }
     return placementOffset;
+}
+
+EPieceDirection AEnvBoard::calculateInitDirection(FVector2D initLocation)
+{
+    // Calculate the direction vector
+    FVector2D directionVector = centerLocation - initLocation;
+
+    // Normalize the vector to find the dominant direction
+    directionVector.Normalize();
+
+    // Determine the direction based on the vector components
+    if (FMath::Abs(directionVector.X) > FMath::Abs(directionVector.Y))
+    {
+        // Horizontal dominance
+        if (directionVector.X > 0)
+        {
+            return EPieceDirection::ERight;
+        }
+        else
+        {
+            return EPieceDirection::ELeft;
+        }
+    }
+    else
+    {
+        // Vertical dominance
+        if (directionVector.Y > 0)
+        {
+            return EPieceDirection::EUp;
+        }
+        else
+        {
+            return EPieceDirection::EDown;
+        }
+    }
+
+    return EPieceDirection::ENone; // Fallback (e.g., when InitPoint == CenterLocation)
 }
 
 FVector2D AEnvBoard::getLocationFromIndex(int aIndex)
@@ -223,25 +251,34 @@ void AEnvBoard::BeUnInteracted(APlayerCharacter* Sender)
     return;
 }
 
+int AEnvBoard::getRowSize()
+{
+    return rowSize;
+}
+int AEnvBoard::getColumnSize()
+{
+    return columnSize;
+}
+
 void AEnvBoard::setSpecificColor(FColor aColor)
 {
     for (AEnvSquare* aSquare : allSquares)
     {
         if (aSquare->getSquareColorField() == aColor)
         {
-            aSquare->setIsPossibleMove(true);
+            aSquare->setSquareColorField(aColor);
         }
     }
 }
 
-void AEnvBoard::setPossibleMoves(TArray<FVector2D> allPossibles)
+void AEnvBoard::setPossibleMoves(TArray<FVector2D> allPossibles, FColor pieceColor)
 {
     for (FVector2D eachLocation : allPossibles)
     {
         if (isValidLocation(eachLocation))
         {
             int index = getIndexFromLocation(eachLocation);
-            allSquares[index]->setIsPossibleMove(true);
+            allSquares[index]->setIsPossibleMove(true, pieceColor);
         }
     }
 }
@@ -252,7 +289,13 @@ void AEnvBoard::resetBoard()
     {
         if (IsValid(aSquare))
         {
-            aSquare->setIsPossibleMove(false);
+            aSquare->setIsPossibleMove(false, FColor::Transparent);
         }
     }
+}
+
+bool AEnvBoard::isSquareOccupied(FVector2D aLocation)
+{
+    AEnvSquare* targetSquare = allSquares[getIndexFromLocation(aLocation)];
+    return targetSquare->getIsOccupied();
 }

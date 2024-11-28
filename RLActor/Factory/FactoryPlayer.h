@@ -11,8 +11,6 @@ class UFactoryPlayer : public URLFactory
 	GENERATED_BODY()
 	
 public:
-	UFactoryPlayer();
-
 	virtual AActor* createRLActor(const FString& name, FVector aLocation, FRotator aRotation) override;
 
 protected:

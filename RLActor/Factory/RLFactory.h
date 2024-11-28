@@ -10,9 +10,6 @@ class URLFactory: public UObject
 	GENERATED_BODY()
 	
 public:
-    // Access the singleton instance
-    static URLFactory* get();
-
     // Method to create an RLActor by name
     UFUNCTION(BlueprintCallable, Category = "RLFactory")
     virtual AActor* createRLActor(const FString& name, FVector aLocation, FRotator aRotation);
@@ -20,15 +17,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "RLFactory")
     virtual AActor* createRandom(FVector aLocation, FRotator aRotation);
 
-    static TSubclassOf<URLFactory> factoryClass;
-
+protected:
     // Protected constructor for singleton pattern
     URLFactory();
 
-    static URLFactory* singletonInstance;
-
-protected:
-    // Ensure singleton is initialized
-    static void initialize();
+    FActorSpawnParameters SpawnParams;
 };
 

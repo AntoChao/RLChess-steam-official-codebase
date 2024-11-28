@@ -2,25 +2,9 @@
 
 URLFactory::URLFactory()
 {
-    singletonInstance = nullptr;
-}
-
-URLFactory* URLFactory::get()
-{
-    if (!singletonInstance)
-    {
-        initialize();
-    }
-    return singletonInstance;
-}
-
-void URLFactory::initialize()
-{
-    singletonInstance = NewObject<URLFactory>(factoryClass);
-    if (singletonInstance)
-    {
-        singletonInstance->AddToRoot(); // Ensure the object is not garbage collected
-    }
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    SpawnParams.Owner = nullptr; // No specific owner unless necessary
+    SpawnParams.Instigator = nullptr;
 }
 
 AActor* URLFactory::createRLActor(const FString& name, FVector aLocation, FRotator aRotation)
@@ -30,28 +14,14 @@ AActor* URLFactory::createRLActor(const FString& name, FVector aLocation, FRotat
         UE_LOG(LogTemp, Warning, TEXT("RLFactory: Engine or World context is null!"));
         return nullptr;
     }
+
+    // Add logic to create actors here
+    UE_LOG(LogTemp, Warning, TEXT("RLFactory: createRLActor called for %s"), *name);
     return nullptr;
 }
 
 AActor* URLFactory::createRandom(FVector aLocation, FRotator aRotation)
 {
+    UE_LOG(LogTemp, Warning, TEXT("RLFactory: createRandom called"));
     return nullptr;
 }
-/*
-* example usage
-void SomeFunction()
-{
-    URLFactory* Factory = URLFactory::Get();
-    FString ActorName = TEXT("ExampleActor");
-
-    ARLActor* CreatedActor = Factory->CreateRLActor(ActorName);
-    if (CreatedActor)
-    {
-        UE_LOG(LogTemp, Log, TEXT("Successfully created actor: %s"), *ActorName);
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Failed to create actor: %s"), *ActorName);
-    }
-}
-*/

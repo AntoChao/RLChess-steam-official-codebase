@@ -10,7 +10,36 @@ APlayerRLController::APlayerRLController()
 void APlayerRLController::BeginPlay() {
 	Super::BeginPlay();
 
-	setupMappingContextBasedOnGameMode();
+	// Cast the PlayerState to your custom PlayerState class
+	// AMyPlayerState* MyPlayerState = GetPlayerState<AMyPlayerState>();
+	rlPlayerState = GetPlayerState<APlayerRLState>();
+	if (!rlPlayerState)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerRLState not found!"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerRLState FOUND!"));
+	}
+
+}
+
+FString APlayerRLController::getPlayerName()
+{
+	return rlPlayerState->playerName;
+}
+FColor APlayerRLController::getPlayerColor()
+{
+	return rlPlayerState->playerColor;
+}
+
+FString APlayerRLController::getCharacterName()
+{
+	if (!rlPlayerState)
+	{
+		rlPlayerState = GetPlayerState<APlayerRLState>();
+	}
+	return rlPlayerState->characterName;
 }
 
 void APlayerRLController::OnPossess(APawn* InPawn) {
@@ -20,6 +49,7 @@ void APlayerRLController::OnPossess(APawn* InPawn) {
 	rlPlayer = Cast<APlayerCharacter>(InPawn);
 	if (IsLocalController() && rlPlayer) {
 		setupMappingContextBasedOnGameMode();
+		rlPlayer->setControllerInfo(getPlayerName(), getPlayerColor());
 	}
 }
 
@@ -85,9 +115,11 @@ void APlayerRLController::setupGameplayInput(UEnhancedInputComponent* EnhancedIn
 	EnhancedInput->BindAction(runAction, ETriggerEvent::Triggered, this, &APlayerRLController::runFunc);
 	EnhancedInput->BindAction(runAction, ETriggerEvent::Completed, this, &APlayerRLController::runEndFunc);
 
-	EnhancedInput->BindAction(interactAction, ETriggerEvent::Started, this, &APlayerRLController::interactFunc);
-		
+	EnhancedInput->BindAction(jumpAction, ETriggerEvent::Triggered, this, &APlayerRLController::jumpFunc);
+	EnhancedInput->BindAction(jumpAction, ETriggerEvent::Completed, this, &APlayerRLController::jumpEndFunc);
 
+	EnhancedInput->BindAction(interactAction, ETriggerEvent::Started, this, &APlayerRLController::interactFunc);
+	
 	EnhancedInput->BindAction(selectItemOne, ETriggerEvent::Triggered, this, &APlayerRLController::selectItemOneFunc);
 	EnhancedInput->BindAction(selectItemTwo, ETriggerEvent::Triggered, this, &APlayerRLController::selectItemTwoFunc);
 	EnhancedInput->BindAction(selectItemThree, ETriggerEvent::Triggered, this, &APlayerRLController::selectItemThreeFunc);
@@ -160,19 +192,48 @@ void APlayerRLController::moveFunc(const FInputActionValue& Value) {
 
 void APlayerRLController::runFunc(const FInputActionValue& Value) {
 	if (rlPlayer) {
-		rlPlayer->run();
+		if (Value.Get<bool>())
+		{
+			rlPlayer->run();
+		}
 	}
 }
 void APlayerRLController::runEndFunc(const FInputActionValue& Value) {
 	if (rlPlayer) {
-		rlPlayer->stopRun();
+		if (Value.Get<bool>())
+		{
+			rlPlayer->stopRun();
+		}
+	}
+}
+
+void APlayerRLController::jumpFunc(const FInputActionValue& Value)
+{
+	if (rlPlayer) {
+		if (Value.Get<bool>())
+		{
+			rlPlayer->startJump();
+		}
+	}
+}
+
+void APlayerRLController::jumpEndFunc(const FInputActionValue& Value)
+{
+	if (rlPlayer) {
+		if (Value.Get<bool>())
+		{
+			rlPlayer->jumpCompleted();
+		}
 	}
 }
 
 void APlayerRLController::interactFunc(const FInputActionValue& Value) {
 	if (rlPlayer) {
-		// player is able to interact or not is responsability of player
-		rlPlayer->interact();
+		if (Value.Get<bool>())
+		{
+			// player is able to interact or not is responsability of player
+			rlPlayer->interact();
+		}
 	}
 }
 
@@ -180,35 +241,50 @@ void APlayerRLController::selectItemOneFunc(const FInputActionValue& Value)
 {
 	if (selectItemAvailable(1))
 	{
-		selectItem(1);
+		if (Value.Get<bool>())
+		{
+			selectItem(1);
+		}
 	}
 }
 void APlayerRLController::selectItemTwoFunc(const FInputActionValue& Value)
 {
 	if (selectItemAvailable(2))
 	{
-		selectItem(2);
+		if (Value.Get<bool>())
+		{
+			selectItem(2);
+		}
 	}
 }
 void APlayerRLController::selectItemThreeFunc(const FInputActionValue& Value)
 {
 	if (selectItemAvailable(3))
 	{
-		selectItem(3);
+		if (Value.Get<bool>())
+		{
+			selectItem(3);
+		}
 	}
 }
 void APlayerRLController::selectItemFourFunc(const FInputActionValue& Value)
 {
 	if (selectItemAvailable(4))
 	{
-		selectItem(4);
+		if (Value.Get<bool>())
+		{
+			selectItem(4);
+		}
 	}
 }
 void APlayerRLController::selectItemFiveFunc(const FInputActionValue& Value)
 {
 	if (selectItemAvailable(5))
 	{
-		selectItem(5);
+		if (Value.Get<bool>())
+		{
+			selectItem(5);
+		}
 	}
 }
 

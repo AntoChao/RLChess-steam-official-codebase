@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "RLFactory.h"
+#include "../Environment/EnvBoard.h"
 #include "FactoryEnvironment.generated.h"
 
 class AEnvBoard;
@@ -11,11 +12,17 @@ class UFactoryEnvironment : public URLFactory
 {
 	GENERATED_BODY()
 	
+public:
+    virtual AActor* createRLActor(const FString& name, FVector aLocation, FRotator aRotation) override;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board Stats")
-	TSubclassOf<AEnvBoard> boardClass = nullptr;
+		TSubclassOf<AEnvBoard> boardClass;
 
-public:
-	virtual AActor* createRLActor(const FString& name, FVector aLocation, FRotator aRotation) override;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
+		TSubclassOf<AEnvSquare> blackSquareClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
+		TSubclassOf<AEnvSquare> whiteSquareClass;
 };
 

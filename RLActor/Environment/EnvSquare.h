@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "../RLActor.h"
+#include "Components/StaticMeshComponent.h"
+#include "Materials/MaterialInterface.h"
 #include "EnvSquare.generated.h"
 
 UCLASS(BlueprintType, Blueprintable)
@@ -14,6 +16,8 @@ class AEnvSquare : public AActor, public IRLActor
 
 public:
 	AEnvSquare();
+
+	virtual void BeginPlay() override;
 
 public:
 	virtual FString GetActorName() override;
@@ -28,6 +32,36 @@ public:
 	void beOccupied(APiece* aPiece);
 
 	virtual void BeUnInteracted(APlayerCharacter* Sender) override;
+
+
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UStaticMeshComponent* squareMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UStaticMeshComponent* highlightMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Materials")
+	UMaterialInterface* redMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Materials")
+	UMaterialInterface* blueMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Materials")
+	UMaterialInterface* greenMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Materials")
+	UMaterialInterface* yellowMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Materials")
+	UMaterialInterface* purpleMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Materials")
+	UMaterialInterface* transparentMaterial;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Square Materials")
+	TMap<FColor, UMaterialInterface*> colorToMaterial;
+
+	UFUNCTION(BlueprintCallable, Category = "Square Materials")
+	void initializeMaterials();
+
+	UFUNCTION(BlueprintCallable, Category = "Square Materials")
+	void setColor(const FColor& NewColor);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
@@ -58,9 +92,12 @@ public:
 	FColor getSquareColorField();
 
 	UFUNCTION(BlueprintCallable, Category = "Square Stats")
-	void setIsPossibleMove(bool status);
+	void setIsPossibleMove(bool status, FColor pieceColor);
 
 	UFUNCTION(BlueprintCallable, Category = "Square Stats")
 	void occupiedPieceLeaved();
+
+	UFUNCTION(BlueprintCallable, Category = "Square Stats")
+	bool getIsOccupied();
 };
 

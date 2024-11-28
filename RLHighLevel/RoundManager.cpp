@@ -4,6 +4,8 @@
 #include "GameplayGameMode.h"
 #include "Kismet/GameplayStatics.h"
 
+URoundManager* URoundManager::roundManagerInstance = nullptr;
+
 URoundManager::URoundManager(){
     roundManagerInstance = nullptr;
 }
@@ -26,6 +28,10 @@ void URoundManager::initialize()
     }
 }
 
+void URoundManager::setGameMode(AGameplayGameMode* curGameMode)
+{
+    gameModeInstance = curGameMode;
+}
 void URoundManager::setAllPlayers(TArray<APlayerCharacter*> players)
 {
     allPlayers = players;
@@ -34,10 +40,14 @@ void URoundManager::setAllPlayers(TArray<APlayerCharacter*> players)
 
 void URoundManager::startRoundManagerSetUpRound()
 {
-    AEnvBoard* gameBoard = AEnvBoard::get();
-    gameBoard->createBoard();
-    gameBoard->initializeBoardColor(allPlayers);
-    gameBoard->setUpPlayerBench(allPlayers);
+    AEnvBoard* gameBoard = gameModeInstance->getBoard();
+    
+    if (gameBoard)
+    {
+        gameBoard->createBoard();
+        gameBoard->initializeBoardColor(allPlayers);
+        gameBoard->setUpPlayerBench(allPlayers);
+    }
 }
 
 void URoundManager::startRoundManagerGameplayRound()
@@ -63,7 +73,7 @@ void URoundManager::startTurns()
 int URoundManager::findInitPlayerIndex()
 {
     int minSpeed = INT_MAX;
-    int minSpeedIndex = 0;
+    int minSpeedIndex = -1;
     for (int i = 0; i < numPlayers; i++)
     {
         int curSpeed = allPlayers[i]->getArmySpeed();
@@ -79,24 +89,27 @@ int URoundManager::findInitPlayerIndex()
 
 void URoundManager::startNextPlayerTurn()
 {
-    turnCounter++;
-    if (allPlayers[curPlayerIndex]->checkIsAlive())
+    if (curPlayerIndex == -1)
     {
-        // enable player to move piece
-        allPlayers[curPlayerIndex]->startTurn();
-        // calculate the current turn and round
-        if (turnCounter % numPlayers == 0)
+        turnCounter++;
+        if (allPlayers[curPlayerIndex]->checkIsAlive())
         {
-            roundCounter++;
-            turnCounter = 0;
-        }
+            // enable player to move piece
+            allPlayers[curPlayerIndex]->startTurn();
+            // calculate the current turn and round
+            if (turnCounter % numPlayers == 0)
+            {
+                roundCounter++;
+                turnCounter = 0;
+            }
 
-        // turn the timer on
-        // allTimers[curPlayerIndex]->turnOn(turnTime);
-    }
-    else 
-    {
-        endCurPlayerTurn();
+            // turn the timer on
+            // allTimers[curPlayerIndex]->turnOn(turnTime);
+        }
+        else
+        {
+            endCurPlayerTurn();
+        }
     }
 }
 
@@ -131,11 +144,14 @@ void URoundManager::checkIfGameEnd() {
 
     if (alivePlayerCounter <= 1)
     {
-        AGameplayGameMode* gameplayGM = Cast<AGameplayGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-
-        if (gameplayGM)
+        if (gameModeInstance)
         {
-            gameplayGM->endGameplayGameMode(winner);
+            gameModeInstance->endGameplayGameMode(winner);
         }
     }
+}
+
+bool URoundManager::getIsSetUpTurn()
+{
+    return isSetupTurn;
 }

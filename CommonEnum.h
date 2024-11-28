@@ -30,3 +30,12 @@ enum class EPieceStatus : uint8 {
 	EInBoard,
 	ENone
 };
+
+UENUM(BlueprintType, Blueprintable)
+enum class EPieceDirection : uint8 {
+	EUp,
+	EDown,
+	ELeft,
+	ERight,
+	ENone
+};

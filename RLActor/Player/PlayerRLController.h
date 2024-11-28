@@ -19,11 +19,23 @@ class APlayerRLController : public APlayerController
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Player State")
 	class APlayerRLState* rlPlayerState;
 
 public:
 	APlayerRLController();
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "Control")
+		FString getPlayerName();
+	UFUNCTION(BlueprintCallable, Category = "Control")
+		FColor getPlayerColor();
+
+	UFUNCTION(BlueprintCallable, Category = "Control")
+		FString getCharacterName();
+
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void UnPossessEffect();
 
 protected:
 	virtual void BeginPlay();
@@ -71,6 +83,9 @@ protected:
 	class UInputAction* runAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	class UInputAction* jumpAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	class UInputAction* interactAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -110,6 +125,11 @@ protected:
 	void runEndFunc(const FInputActionValue& Value);
 
 	UFUNCTION(BlueprintCallable, Category = "Control")
+	void jumpFunc(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void jumpEndFunc(const FInputActionValue& Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Control")
 	void interactFunc(const FInputActionValue& Value);
 
 	UFUNCTION(BlueprintCallable, Category = "Control")
@@ -127,9 +147,5 @@ protected:
 	bool selectItemAvailable(int num);
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void selectItem(int itemIndex);
-
-public:
-	UFUNCTION(BlueprintCallable, Category = "Control")
-	void UnPossessEffect();
 };
 

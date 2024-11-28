@@ -8,7 +8,11 @@
 #include "EnhancedInputSubsystems.h"
 #include "PlayerRLController.h"
 
+#include "Kismet/GameplayStatics.h"
+
+#include "../../RLHighLevel/GameplayGameMode.h"
 #include "../../RLHighLevel/RoundManager.h"
+
 #include "../RLActor.h"
 #include "../Item/Item.h"
 #include "../Piece/Piece.h"
@@ -24,13 +28,6 @@ APlayerCharacter::APlayerCharacter()
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 		
-	// Create the full-body skeletal mesh
-	body = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FullBodyMesh"));
-	body->SetupAttachment(RootComponent);
-	body->SetIsReplicated(true); // Enable replication for multiplayer
-	body->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f)); // Adjust for character height
-	body->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f)); // Align with capsule
-
 	// Create the first-person camera
 	camera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	camera->SetupAttachment(RootComponent);
@@ -46,9 +43,10 @@ void APlayerCharacter::BeginPlay()
 	bench.SetNum(benchSize);
 }
 
-FColor APlayerCharacter::getPlayerColor()
+void APlayerCharacter::setControllerInfo(FString aPlayerName, FColor aPlayerColor)
 {
-	return playerColor;
+	playerName = aPlayerName;
+	playerColor = aPlayerColor;
 }
 
 void APlayerCharacter::startSetup()
@@ -234,14 +232,24 @@ void APlayerCharacter::endTurn()
 }
 
 // RL actor functions
-FString APlayerCharacter::GetActorName()
+FString APlayerCharacter::getPlayerName()
 {
 	return playerName;
 }
 
+FColor APlayerCharacter::getPlayerColor()
+{
+	return playerColor;
+}
+
+FString APlayerCharacter::GetActorName()
+{
+	return characterClassName;
+}
+
 FString APlayerCharacter::GetDescription()
 {
-	return playerDescription;
+	return characterDescription;
 }
 
 bool APlayerCharacter::IsAbleToBeInteracted(APlayerCharacter* Sender)
@@ -270,7 +278,7 @@ void APlayerCharacter::look(FVector2D lookAxisVector)
 	if (isAbleToLook)
 	{
 		AddControllerYawInput(lookAxisVector.X * baseTurnRate * GetWorld()->GetDeltaSeconds());
-		AddControllerPitchInput(lookAxisVector.Y * baseLookUpRate * GetWorld()->GetDeltaSeconds());
+		AddControllerPitchInput(-1 * lookAxisVector.Y * baseLookUpRate * GetWorld()->GetDeltaSeconds());
 	}
 }
 
@@ -293,11 +301,16 @@ void APlayerCharacter::move(FVector2D movementVector)
 	}
 }
 
+void APlayerCharacter::updateSpeed()
+{
+	GetCharacterMovement()->MaxWalkSpeed = curSpeed;
+}
 void APlayerCharacter::run() 
 {
 	if (isAbleToRun) {
 		isRunning = true;
 		curSpeed = runSpeed;
+		updateSpeed();
 	}
 }
 
@@ -305,6 +318,16 @@ void APlayerCharacter::stopRun()
 {
 	isRunning = false;
 	curSpeed = walkSpeed;
+	updateSpeed();
+}
+
+void APlayerCharacter::startJump()
+{
+	Jump();
+}
+void APlayerCharacter::jumpCompleted()
+{
+	StopJumping();
 }
 
 void APlayerCharacter::selectItem(int itemIndex)
@@ -395,13 +418,17 @@ void APlayerCharacter::selectPiece()
 
 void APlayerCharacter::placePiece()
 {
+	// piece enter be place into new square
 	detectedActor->BeInteracted(this);
 
 	if (selectedPiece->getPieceStatus() == EPieceStatus::EInBoard)
 	{
 		/* should run a timer to give few seconds before ending player turn */
 		URoundManager* roundManager = URoundManager::get();
-		roundManager->endCurPlayerTurn();
+		if (roundManager)
+		{
+			roundManager->endCurPlayerTurn();
+		}
 	}
 	else if (selectedPiece->getPieceStatus() == EPieceStatus::EInBench)
 	{
@@ -418,8 +445,11 @@ void APlayerCharacter::unselectPiece()
 {
 	selectedPiece = nullptr;
 
-	AEnvBoard* board = AEnvBoard::get();
-	board->resetBoard();
+	AEnvBoard* board = Cast<AGameplayGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->getBoard();
+	if (board)
+	{
+		board->resetBoard();
+	}
 }
 
 APiece* APlayerCharacter::getSelectedPiece()

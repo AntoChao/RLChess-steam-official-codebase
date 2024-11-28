@@ -2,6 +2,7 @@
 
 #include "EnvShop.h"
 #include "../Factory/FactoryPiece.h"
+#include "../../RLHighLevel/GameplayGameMode.h"
 #include "../Piece/Piece.h"
 #include "../Player/PlayerCharacter.h"
 
@@ -10,8 +11,11 @@ AEnvShop::AEnvShop()
 	piecesInShop.SetNum(piecesProductTotalNum);
 	createRandomShop();
 
-	shopHUD = CreateWidget<UShopWidget>(GetWorld(), shopWidgetClass);
-	shopHUD->setAllProducts(piecesInShop);
+	if (shopWidgetClass)
+	{
+		shopHUD = CreateWidget<UShopWidget>(GetWorld(), shopWidgetClass);
+		shopHUD->setAllProducts(piecesInShop);
+	}
 }
 
 FString AEnvShop::GetActorName()
@@ -41,13 +45,20 @@ void AEnvShop::BeUnInteracted(APlayerCharacter* Sender)
 
 void AEnvShop::createRandomShop()
 {
-	URLFactory* pieceFactory = UFactoryPiece::get();
-
-	for (APiece* eachPiece : piecesInShop)
+	AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	if (curGameMode)
 	{
-		if (!IsValid(eachPiece))
+		UFactoryPiece* pieceFactory = curGameMode->pieceFactoryInstance;
+
+		if (pieceFactory)
 		{
-			eachPiece = Cast<APiece>(pieceFactory->createRandom(FVector(0.0f, 0.0f, 0.0f), FRotator(0.0f, 0.0f, 0.0f)));
+			for (APiece* eachPiece : piecesInShop)
+			{
+				if (!IsValid(eachPiece))
+				{
+					eachPiece = Cast<APiece>(pieceFactory->createRandom(FVector(0.0f, 0.0f, 0.0f), FRotator(0.0f, 0.0f, 0.0f)));
+				}
+			}
 		}
 	}
 }

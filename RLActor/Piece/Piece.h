@@ -7,6 +7,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 
+#include "Kismet/GameplayStatics.h"
 #include "../RLActor.h"
 #include "../../CommonEnum.h"
 #include "Piece.generated.h"
@@ -46,14 +47,24 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	int pieceLevel;
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
-	virtual TArray<FVector2D> calculatePossibleMove();
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	EPieceStatus pieceStatus = EPieceStatus::EInShop;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	EPieceDirection pieceDirection = EPieceDirection::ENone;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	AEnvSquare* curSquare = nullptr;
+
+	UFUNCTION(BlueprintCallable, Category = "Piece Stats")
+	void initializeDirection(AEnvSquare* squareDestination);
+
+	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
+	virtual TArray<FVector2D> calculatePossibleMove();
+
+	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
+	virtual void dieEffect();
+
 
 /* piece collision*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Piece Collision")
@@ -73,6 +84,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Movement")
 	bool isMoving = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pawn Stats")
+	bool bHasMoved = false;
+
 public:
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	EPieceStatus getPieceStatus();
@@ -85,5 +99,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	void bePlaced(AEnvSquare* squareDestination);
 
+	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	virtual void firstMovedEffect(AEnvSquare* squareDestination);
 };
 

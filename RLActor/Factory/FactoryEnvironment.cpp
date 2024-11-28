@@ -3,13 +3,19 @@
 
 AActor* UFactoryEnvironment::createRLActor(const FString& name, FVector aLocation, FRotator aRotation)
 {
-    if (name == TEXT("SpecialActor"))
+    if (name == TEXT("Board"))
     {
-        // Spawn or create a specialized actor
-        // return GetWorld()->SpawnActor<AActor>(ActorToSpawn, aLocation, aRotation);
-        return nullptr;
+        return GetWorld()->SpawnActor<AEnvBoard>(boardClass, aLocation, aRotation);
     }
-
+    else if (name == TEXT("BlackSquare"))
+    {
+        return GetWorld()->SpawnActor<AEnvSquare>(blackSquareClass, aLocation, aRotation);
+    }
+    else if (name == TEXT("WhiteSquare"))
+    {
+        return GetWorld()->SpawnActor<AEnvSquare>(whiteSquareClass, aLocation, aRotation);
+    }
     // Fall back to base class implementation
     return Super::createRLActor(name, aLocation, aRotation);
 }
+

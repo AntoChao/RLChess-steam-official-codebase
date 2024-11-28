@@ -48,25 +48,21 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	float BodyHalfHeight = 96.0f;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	class USkeletalMeshComponent* body;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 	class UCameraComponent* camera;
-
-	/*
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
-	class APlayerRLController* controller;*/
 
 	/* character basic stats*/
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
 	FString playerName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	FString playerDescription;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
 	FColor playerColor;
+	 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
+	FString characterClassName; // by default
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
+	FString characterDescription; // by default
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
 	int playerSpeed;
@@ -80,12 +76,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
 	float walkSpeed = 400.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	float runSpeed = 600.0f;
+	float runSpeed = 1000.0f;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	float rangeUnitDistance = 500.0f;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
-	int rangeRank = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	int rangeRank = 1;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	int initMoney = 5;
@@ -118,6 +114,11 @@ protected:
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
+	void setControllerInfo(FString aPlayerName, FColor aPlayerColor);
+
+	UFUNCTION(BlueprintCallable, Category = "Player Stats")
+	FString getPlayerName();
+	UFUNCTION(BlueprintCallable, Category = "Player Stats")
 	FColor getPlayerColor();
 
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
@@ -226,11 +227,18 @@ public:
 	void move(FVector2D movementVector);
 
 	UFUNCTION(BlueprintCallable, Category = "Run Controller")
+	void updateSpeed();
+	UFUNCTION(BlueprintCallable, Category = "Run Controller")
 	void run();
 	UFUNCTION(BlueprintCallable, Category = "Run Controller")
 	void stopRun();
 
-	UFUNCTION(BlueprintCallable, Category = "Run Controller")
+	UFUNCTION(BlueprintCallable, Category = "jump Controller")
+	void startJump();
+	UFUNCTION(BlueprintCallable, Category = "jump Controller")
+	void jumpCompleted();
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction Controller")
 	void selectItem(int itemIndex);
 
 	/* controller interaction functions*/

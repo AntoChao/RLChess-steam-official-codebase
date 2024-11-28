@@ -1,6 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Piece.h"
+
+#include "../../RLHighLevel/GameplayGameMode.h"
+
 #include "../Environment/EnvShop.h"
 #include "../Player/PlayerCharacter.h"
 #include "../Environment/EnvSquare.h"
@@ -64,16 +67,22 @@ void APiece::BeInteracted(APlayerCharacter* Sender)
         }
         case EPieceStatus::EInBench:
         {
-            AEnvBoard* gameBoard = AEnvBoard::get();
-            gameBoard->setSpecificColor(pieceColor);
+            AEnvBoard* gameBoard = Cast<AGameplayGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->getBoard();
+            if (gameBoard)
+            {
+                gameBoard->setSpecificColor(pieceColor);
+            }
             break;
         }
         case EPieceStatus::EInBoard:
         {
             TArray<FVector2D> allPossibles = calculatePossibleMove();
 
-            AEnvBoard* gameBoard = AEnvBoard::get();
-            gameBoard->setPossibleMoves(allPossibles);
+            AEnvBoard* gameBoard = Cast<AGameplayGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->getBoard();
+            if (gameBoard)
+            {
+                gameBoard->setPossibleMoves(allPossibles, pieceColor);
+            }
             break;
         }
         default:
@@ -82,6 +91,24 @@ void APiece::BeInteracted(APlayerCharacter* Sender)
 }
 
 void APiece::BeUnInteracted(APlayerCharacter* Sender)
+{
+    return;
+}
+
+/* piece information*/
+void APiece::initializeDirection(AEnvSquare* squareDestination)
+{
+    AEnvBoard* gameBoard = Cast<AGameplayGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->getBoard();
+    pieceDirection = gameBoard->calculateInitDirection(squareDestination->getSquareLocation());
+}
+
+TArray<FVector2D> APiece::calculatePossibleMove()
+{
+    TArray<FVector2D> emptyArray;
+    return emptyArray;
+}
+
+void APiece::dieEffect()
 {
     return;
 }
@@ -123,13 +150,27 @@ int APiece::getLevel()
 /* setActor location in a time constraint*/
 void APiece::bePlaced(AEnvSquare* squareDestination)
 {
+    if (pieceStatus == EPieceStatus::EInShop)
+    {
+        initializeDirection(squareDestination);
+        setPieceStatus(EPieceStatus::EInBoard);
+    }
+
+    if (pieceStatus == EPieceStatus::EInBoard && !bHasMoved)
+    {
+        firstMovedEffect(squareDestination);
+    }
+
     if (IsValid(curSquare))
     {
         curSquare->occupiedPieceLeaved();
     }
-
     curSquare = squareDestination;
-
     // move to squareLocation
     SetActorLocation(curSquare->GetActorLocation());
+}
+
+void APiece::firstMovedEffect(AEnvSquare* squareDestination)
+{
+    bHasMoved = true;
 }

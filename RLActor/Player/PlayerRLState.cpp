@@ -8,7 +8,6 @@ void APlayerRLState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
     // Replicate properties
     DOREPLIFETIME(APlayerRLState, isReady);
     DOREPLIFETIME(APlayerRLState, playerName);
-    DOREPLIFETIME(APlayerRLState, characterName);
-    DOREPLIFETIME(APlayerRLState, playerPiecesName);
     DOREPLIFETIME(APlayerRLState, playerColor);
+    DOREPLIFETIME(APlayerRLState, characterName);
 }

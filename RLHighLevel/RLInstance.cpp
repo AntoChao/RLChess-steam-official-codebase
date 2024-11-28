@@ -3,7 +3,7 @@
 #include "RLInstance.h"
 
 URLInstance::URLInstance(){
-	curGameMode = EGameMode::EInit;
+	curGameMode = EGameMode::EGameplay;
 }
 
 void URLInstance::openNextLevel(EGameMode gameToOpen)

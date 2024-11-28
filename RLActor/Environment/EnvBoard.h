@@ -14,23 +14,8 @@ class AEnvBoard : public AActor, public IRLActor
 	GENERATED_BODY()
 
 public:
-	// Access the singleton instance
-	static AEnvBoard* get();
-
-	static TSubclassOf<AEnvBoard> boardClass;
-
-	UFUNCTION(BlueprintCallable, Category = "Setup")
-	static void setBoardClass(TSubclassOf<AEnvBoard> InBoardClass) { boardClass = InBoardClass; }
-
 	AEnvBoard();
 
-	// The singleton instance
-	static AEnvBoard* boardInstance;
-
-protected:
-	// Ensure singleton is initialized
-	static void initialize();
-	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	void createBoard();
@@ -47,8 +32,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	FVector getPlayerPlacementOffset(int playerIndex);
 
-protected:
+	UFUNCTION(BlueprintCallable, Category = "Board")
+	EPieceDirection calculateInitDirection(FVector2D initLocation);
 
+protected:
 	/* Board Stats*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board Stats")
 	int rowSize = 0;
@@ -57,6 +44,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board Stats")
 	int totalSquareNum = 0;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board Stats")
+	FVector2D centerLocation = FVector2D(0.0f, 0.0f);
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board Stats")
 	FVector boardCenter = FVector(0.0f, 0.0f, 0.0f);
 
@@ -90,13 +79,22 @@ public:
 	void BeUnInteracted(APlayerCharacter* Sender) override;
 
 public:
+	UFUNCTION(BlueprintCallable, Category = "Board Stats")
+	int getRowSize();
+	UFUNCTION(BlueprintCallable, Category = "Board Stats")
+	int getColumnSize();
+
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	void setSpecificColor(FColor aColor);
 
 	UFUNCTION(BlueprintCallable, Category = "Board")
-	void setPossibleMoves(TArray<FVector2D> allPossibles);
+	void setPossibleMoves(TArray<FVector2D> allPossibles, FColor pieceColor);
 
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	void resetBoard();
+
+	UFUNCTION(BlueprintCallable, Category = "Board")
+	bool isSquareOccupied(FVector2D aLocation);
+
 };
 

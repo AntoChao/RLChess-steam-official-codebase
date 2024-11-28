@@ -18,14 +18,11 @@ public:
         FString playerName;
 
     UPROPERTY(Replicated, BlueprintReadWrite, Category = "Player Stats")
-        FString characterName;
-
-    UPROPERTY(Replicated, BlueprintReadWrite, Category = "Player Stats")
-        TArray<FString> playerPiecesName;
-
-    UPROPERTY(Replicated, BlueprintReadWrite, Category = "Player Stats")
         FColor playerColor;
-    
+
+    UPROPERTY(Replicated, BlueprintReadWrite, Category = "Player Stats")
+        FString characterName = TEXT("testing");
+
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
 
