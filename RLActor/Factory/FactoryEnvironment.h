@@ -3,6 +3,9 @@
 #include "CoreMinimal.h"
 #include "RLFactory.h"
 #include "../Environment/EnvBoard.h"
+#include "../Environment/EnvShop.h"
+#include "../Environment/EnvSquare.h"
+
 #include "FactoryEnvironment.generated.h"
 
 class AEnvBoard;
@@ -24,5 +27,15 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
 		TSubclassOf<AEnvSquare> whiteSquareClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
+		TSubclassOf<AEnvSquare> benchSquareClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
+		TSubclassOf<AEnvSquare> invisibleSquare;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
+		TSubclassOf<AEnvShop> shopClass;
+
 };
 

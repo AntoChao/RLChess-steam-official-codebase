@@ -33,13 +33,15 @@ public:
 
 	virtual void BeUnInteracted(APlayerCharacter* Sender) override;
 
-
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* squareMesh;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* highlightMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USceneComponent* placeScene;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Materials")
 	UMaterialInterface* redMaterial;
@@ -73,7 +75,7 @@ protected:
 	APiece* occupiedPiece = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
-	FColor squareColorField;
+	FColor squareColorField = FColor::White;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
 	bool isPossibleMove = false;
@@ -87,7 +89,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Square Stats")
 	FVector2D getSquareLocation();
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Square Stats")
 	FColor getSquareColorField();
 
@@ -99,5 +101,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Square Stats")
 	bool getIsOccupied();
+
+	UFUNCTION(BlueprintCallable, Category = "Square Stats")
+	APiece* getOccupiedPiece();
+
+	UFUNCTION(BlueprintCallable, Category = "Square Stats")
+	FVector getPlacementLocation();
 };
 

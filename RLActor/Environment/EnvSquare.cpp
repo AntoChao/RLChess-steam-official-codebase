@@ -16,7 +16,10 @@ AEnvSquare::AEnvSquare()
 
 	highlightMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Highlight Mesh"));
 	highlightMesh->SetupAttachment(RootComponent);
-	highlightMesh->SetVisibility(false);
+	highlightMesh->SetVisibility(true);
+
+	placeScene = CreateDefaultSubobject<USceneComponent>(TEXT("Place Scene"));
+	placeScene->SetupAttachment(squareMesh);
 
 }
 
@@ -48,11 +51,6 @@ void AEnvSquare::setColor(const FColor& newColor)
 	{
 		highlightMesh->SetMaterial(0, colorToMaterial[newColor]);
 		highlightMesh->SetVisibility(true);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Square set color"));
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Square NOT set color"));
 	}
 }
 
@@ -68,7 +66,8 @@ FString AEnvSquare::GetDescription()
 
 bool AEnvSquare::IsAbleToBeInteracted(APlayerCharacter* Sender)
 {
-	return Sender->getPlayerColor() == squareColorField;
+	// Sender->getPlayerColor() == squareColorField &&
+	return isPossibleMove;
 }
 
 void AEnvSquare::BeInteracted(APlayerCharacter* Sender)
@@ -76,8 +75,10 @@ void AEnvSquare::BeInteracted(APlayerCharacter* Sender)
 	APiece* playerSelectedPiece = Sender->getSelectedPiece();
 	if (playerSelectedPiece)
 	{
+		// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PLACING PLAYER SELECTED PIECE"));
+		//beOccupied(playerSelectedPiece);
 		playerSelectedPiece->bePlaced(this);
-		beOccupied(playerSelectedPiece);
+		
 	}
 }
 
@@ -85,7 +86,8 @@ void AEnvSquare::beOccupied(APiece* aPiece)
 {
 	isOccupied = true;
 	occupiedPiece = aPiece;
-	occupiedPiece->bePlaced(this);
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("BEING OCCUPIED"));
+	// occupiedPiece->bePlaced(this);
 }
 
 void AEnvSquare::BeUnInteracted(APlayerCharacter* Sender)
@@ -101,7 +103,7 @@ void AEnvSquare::setSquareLocation(FVector2D aLocation)
 void AEnvSquare::setSquareColorField(FColor aColor)
 {
 	squareColorField = aColor;
-	setColor(aColor);
+	// setColor(aColor);
 }
 
 FVector2D AEnvSquare::getSquareLocation()
@@ -125,9 +127,21 @@ void AEnvSquare::occupiedPieceLeaved()
 {
 	isOccupied = false;
 	occupiedPiece = nullptr;
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PIECE LEAVED SQUARE"));
 }
 
 bool AEnvSquare::getIsOccupied()
 {
 	return isOccupied;
+}
+
+APiece* AEnvSquare::getOccupiedPiece()
+{
+	return occupiedPiece;
+}
+
+FVector AEnvSquare::getPlacementLocation()
+{
+	return placeScene->GetComponentLocation();
 }

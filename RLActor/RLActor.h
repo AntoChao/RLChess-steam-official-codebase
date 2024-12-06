@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "DrawDebugHelpers.h"
 #include "RLActor.generated.h"
 
 class APlayerCharacter;

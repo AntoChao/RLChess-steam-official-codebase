@@ -5,17 +5,16 @@
 #include "../Piece/Piece.h"
 #include "ShopWidget.generated.h"
 
+class AEnvShop;
+
 UCLASS()
 class UShopWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop Widget")
-	TArray<APiece*> allProducts;
-
 public:
-	UFUNCTION(BlueprintCallable, Category = "Shop Widget")
-	void setAllProducts(TArray<APiece*> products);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop Widget")
+	AEnvShop* shopReference;
+
 };
 

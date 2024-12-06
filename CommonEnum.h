@@ -17,7 +17,6 @@ UENUM(BlueprintType, Blueprintable)
 enum class EInteraction : uint8 {
 	EUseItem,
 	EPickUpItem,
-	EShop,
 	ESelectPiece,
 	EPlacePiece,
 	ENone
@@ -37,5 +36,18 @@ enum class EPieceDirection : uint8 {
 	EDown,
 	ELeft,
 	ERight,
+	EUpLeft,
+	EUpRight,
+	EDownLeft,
+	EDownRight,
+	ENone
+};
+
+UENUM(BlueprintType, Blueprintable)
+enum class EPieceMoveMode: uint8 {
+	EGround,
+	EParabolicJump,
+	EStaticJump,
+	ETeleport,
 	ENone
 };

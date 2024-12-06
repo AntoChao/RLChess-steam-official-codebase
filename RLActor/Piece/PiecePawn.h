@@ -15,11 +15,4 @@ public:
 public:
     // Override the function to calculate possible moves for the pawn
     virtual TArray<FVector2D> calculatePossibleMove() override;
-
-protected:
-    // Helper function to get the forward direction vector based on the pawn's direction
-    FVector2D GetForwardDirection() const;
-
-    // Helper function to get diagonal directions for capturing
-    TArray<FVector2D> GetDiagonalDirections() const;
 };

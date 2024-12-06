@@ -18,16 +18,15 @@ public:
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Board")
-	void createBoard();
+	void initialized(TArray<APlayerCharacter*> allPlayers);
 
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	void initializeBoardColor(TArray<APlayerCharacter*> allPlayers);
 
 	UFUNCTION(BlueprintCallable, Category = "Board")
-	void setUpPlayerBench(TArray<APlayerCharacter*> allPlayers);
-
-	UFUNCTION(BlueprintCallable, Category = "Board")
 	FVector getSpawnStartPositionForPlayer(int playerIndex);
+	UFUNCTION(BlueprintCallable, Category = "Board")
+	FRotator getSpawnStartRotationForPlayer(int playerIndex);
 
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	FVector getPlayerPlacementOffset(int playerIndex);
@@ -54,18 +53,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board Stats")
 	float squareLength = 300.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board Stats")
-	FRotator squareRotation = FRotator(0.0f, 0.0f, 1.0f);
+	FRotator squareRotation = FRotator(0.0f, 0.0f, 0.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board Stats")
 	float pieceDistance = 100.0f;
 
+protected:
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	FVector2D getLocationFromIndex(int aIndex);
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	int getIndexFromLocation(FVector2D aLocation);
-
-	UFUNCTION(BlueprintCallable, Category = "Board")
-	bool isValidLocation(FVector2D aLocation);
 
 public:
 	FString GetActorName() override;
@@ -84,8 +81,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Board Stats")
 	int getColumnSize();
 
+	UFUNCTION(BlueprintCallable, Category = "Board Stats")
+	int getSquareLength();
+	
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	void setSpecificColor(FColor aColor);
+
+	UFUNCTION(BlueprintCallable, Category = "Board")
+	void setAllUnoccupiedColor(FColor aColor);
 
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	void setPossibleMoves(TArray<FVector2D> allPossibles, FColor pieceColor);
@@ -96,5 +99,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	bool isSquareOccupied(FVector2D aLocation);
 
+	UFUNCTION(BlueprintCallable, Category = "Board")
+	bool isValidLocation(FVector2D aLocation);
+
+	UFUNCTION(BlueprintCallable, Category = "Board")
+	AEnvSquare* getSquareAtLocation(FVector2D aLocation);
+
+	UFUNCTION(BlueprintCallable, Category = "Board")
+	APiece* getPieceAtLocation(FVector2D aLocation);
+
+	UFUNCTION(BlueprintCallable, Category = "Board")
+	TArray<AEnvSquare*> getAllSquaresOfSpecificColor(FColor aColor);
 };
 

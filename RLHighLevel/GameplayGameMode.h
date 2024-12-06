@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "RLChessGameMode.h"
+#include "MapManager.h"
 #include "RoundManager.h"
 
 #include "../RLActor/Factory/FactoryEnvironment.h"
@@ -13,7 +14,8 @@
 
 #include "GameplayGameMode.generated.h"
 
-class ARoundManager;
+class URoundManager;
+class UMapManager;
 class UFactoryPlayer;
 class UFactoryEnvironment;
 class UFactoryItem;
@@ -34,6 +36,9 @@ protected:
 		URoundManager* roundManager = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+		UMapManager* mapManager = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board")
 		AEnvBoard* gameBoard = nullptr;
 
 	// all factory
@@ -48,26 +53,37 @@ protected:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Factory Class")
-	UFactoryPlayer* playerFactoryInstance = nullptr;
+		UFactoryPlayer* playerFactoryInstance = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Factory Class")
-	UFactoryEnvironment* environmentFactoryInstance = nullptr;
+		UFactoryEnvironment* environmentFactoryInstance = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Factory Class")
-	UFactoryItem* itemFactoryInstance = nullptr;
+		UFactoryItem* itemFactoryInstance = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Factory Class")
-	UFactoryPiece* pieceFactoryInstance = nullptr;
+		UFactoryPiece* pieceFactoryInstance = nullptr;
 
-protected:
 	// all locations
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+	float playerSpawnHeight = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Table Stats")
 		FVector tableLocation = FVector::ZeroVector;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Table Stats")
+		FRotator tableRotation = FRotator::ZeroRotator;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board Stats")
 		FVector boardLocation = FVector::ZeroVector;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board Stats")
+		FRotator boardRotation = FRotator::ZeroRotator;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-		TArray<FVector> timerLocations;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-		TArray<FVector> chairLocations;
+		int floorSize = 3;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop Stats")
+		FVector shopLocation = FVector::ZeroVector;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop Stats")
+		FRotator shopRotation = FRotator::ZeroRotator;
+
+protected:
 	// set up
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
 		void setupGame();
@@ -85,9 +101,6 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
 	void endGameplayGameMode(APlayerCharacter* winner);
-
-	UFUNCTION(BlueprintCallable, Category = "GameMode")
-	AEnvBoard* getBoard();
 };
 
 

@@ -45,6 +45,21 @@ void AItem::BeUnInteracted(APlayerCharacter* Sender)
 	return;
 }
 
+int AItem::GetProductCost()
+{
+	return 0;
+}
+
+FString AItem::GetProductName()
+{
+	return itemName;
+}
+
+UTexture2D* AItem::GetProductImage()
+{
+	return nullptr;
+}
+
 /* item usage*/
 bool AItem::isAbleToBeUsed(APlayerCharacter* user, TScriptInterface<IRLActor> target)
 {

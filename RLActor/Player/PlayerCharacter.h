@@ -19,6 +19,7 @@ class USoundBase;
 
 class APiece;
 class AItem;
+class AEnvShop;
 
 /* Debug Tool
 GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Control stop use weapon secondary"));
@@ -39,7 +40,7 @@ public:
 	APlayerCharacter();
 
 protected:
-	virtual void BeginPlay();
+	virtual void BeginPlay() override;
 
 	/* character basic components*/
 protected:
@@ -56,8 +57,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
 	FString playerName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	FColor playerColor;
-	 
+	FColor playerColor = FColor::Green;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
 	FString characterClassName; // by default
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
@@ -71,21 +72,24 @@ protected:
 	bool setUpTime = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	bool isAlive = false;
+	bool isAlive = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
 	float walkSpeed = 400.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
 	float runSpeed = 1000.0f;
 
+	/* detection*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	float rangeUnitDistance = 500.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	int rangeRank = 1;
 
+	/* shopping*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	int initMoney = 5;
 
+	/* inventory*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	int inventorySize = 3;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
@@ -94,21 +98,9 @@ protected:
 	TArray<AItem*> inventory;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
-	int benchSize = 10;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
-	int currentBenchOccupation = 0;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
-	TArray<APiece*> bench;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
-	FVector benchStartLocation;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
-	FVector benchOffset;
+	TArray<AEnvSquare*> playerBench;
 
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
-	int armyLevelCapacity = 10;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
-	int curArmyLevel = 0;
+	/* army*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	TArray<APiece*> army;
 
@@ -127,6 +119,9 @@ public:
 	void endSetup();
 
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
+	int getPlayerSpeed() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Character Stats")
 	bool checkIsAlive();
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
 	void setDied();
@@ -135,41 +130,41 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
 	void beCollidedByPiece(APiece* pieceCollided);
 
+	/* inventory functions*/
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
 	int getInventorySize();
 
-		/* bench functions*/
+	/* bench functions*/
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
-	void setBenchStartLocation(FVector aLocation);
-	UFUNCTION(BlueprintCallable, Category = "Character Stats")
-	void setBenchOffset(FVector aOffset);
-
+	void setPlayerBench(TArray<AEnvSquare*> allSquares);
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
 	bool isAbleToBenchPiece();
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
 	void benchAPiece(APiece* newPiece);
 
-		/* army functions*/
-	UFUNCTION(BlueprintCallable, Category = "Character Stats")
-	bool isAbleToRecruit(APiece* piece);
+	/*shop functions*/
+	UFUNCTION(BlueprintCallable, Category = "Shopoing Stats")
+	bool isEnableToBuyProduct(TScriptInterface<IRLProduct> aProduct);
+	UFUNCTION(BlueprintCallable, Category = "Shopoing Stats")
+	void payProduct(TScriptInterface<IRLProduct> aProduct);
+	UFUNCTION(BlueprintCallable, Category = "Shopoing Stats")
+	void receiveProduct(TScriptInterface<IRLProduct> aProduct);
 
-	UFUNCTION(BlueprintCallable, Category = "Character Stats")
-	void recruitArmy(APiece* pieceToRecruit);
-
+	/* army functions*/
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
 	void pieceDied(APiece* pieceDie);
-
-	UFUNCTION(BlueprintCallable, Category = "Character Stats")
-	int getArmySpeed();
 
 protected:
 	virtual void Tick(float DeltaTime) override;
 
 	/* detection*/
 protected:
-	
+
 	UFUNCTION(BlueprintCallable, Category = "Detection Control")
 	void detect();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Line Trace")
+	bool fireDrawLine = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection Control")
 	FVector start;
@@ -185,11 +180,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Detection Control")
 	void detectReaction();
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection Control")
-	IRLActor* detectedActor = nullptr; // has to be arlactor to ease
 	
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection Control")
-	IRLActor* inspectedActor = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection Control")
+	TScriptInterface<IRLActor> detectedActor;
 
 	/* turn base stats*/
 protected:
@@ -244,13 +237,11 @@ public:
 	/* controller interaction functions*/
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	void interact();
-	
+
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	void useItem();
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	void pickUpItem();
-	UFUNCTION(BlueprintCallable, Category = "Interact Control")
-	void shop();
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	void selectPiece();
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
@@ -290,7 +281,7 @@ protected:
 	// interaction stats
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	EInteraction curInteractionMode = EInteraction::ENone;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	bool isAbleToInteract = true;
 
@@ -303,9 +294,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	APiece* getSelectedPiece();
 
-	UFUNCTION(BlueprintCallable, Category = "Interact Control")
-	void attachHUDToViewport(UUserWidget* shopHUD);
-
 	/* item Effect*/
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Effect")
@@ -313,7 +301,6 @@ protected:
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Item Effect")
-	void desableItemsUsage(float duration); // run a counter 
-
+	void desableItemsUsage(float duration); // run a counter
 };
 

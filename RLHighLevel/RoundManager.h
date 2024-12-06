@@ -7,7 +7,7 @@
 
 #include "../RLActor/Environment/EnvBoard.h"
 #include "../RLActor/Player/PlayerCharacter.h"
-
+#include "../RLActor/Environment/EnvShop.h"
 #include "RoundManager.generated.h"
 
 UCLASS(minimalapi)
@@ -33,6 +33,8 @@ public:
     // Ensure singleton is initialized
     void setAllPlayers(TArray<APlayerCharacter*> players);
 
+    TArray<APlayerCharacter*> getAllPlayers();
+
     // called by gamemode to initialize
     UFUNCTION(BlueprintCallable, Category = "RoundManager")
         void startRoundManagerSetUpRound();
@@ -41,25 +43,41 @@ public:
         void startRoundManagerGameplayRound();
 
     UFUNCTION(BlueprintCallable, Category = "RoundManager")
-        void initialFreeTime();
+        void setPlayerInitLocation();
+
+    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+        void spawnShop();
+
+    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+        void startPlayerSetUpTime();
+    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+        void endPlayerSetUpTime();
 
     UFUNCTION(BlueprintCallable, Category = "RoundManager")
         void startTurns();
 
     UFUNCTION(BlueprintCallable, Category = "RoundManager")
-        bool getIsSetUpTurn();
+        bool getIsPlayerSetUpTime();
 
 protected:
     // gamemode, uobject doesnt have worldcontext
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-    AGameplayGameMode* gameModeInstance = nullptr;
+    AGameplayGameMode* gameplayGameMode = nullptr;
 
     // timerTime
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-        bool isSetupTurn = true;
+        bool isPlayerSetupTime = true;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+        FTimerHandle playerSetUpTimerHandle;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+        int playerSetUpTimerSegs = 10;
+
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-        int turnTime = 10; // in segs
+        FTimerHandle playerTurnTimerHandle;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+        int turnTimeInSegs = 10; // in segs
 
     // player and timers refences
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
@@ -78,10 +96,11 @@ protected:
         int curPlayerIndex = 0;
 
     UFUNCTION(BlueprintCallable, Category = "RoundManager")
-        int findInitPlayerIndex();
+        void orderPlayerBySpeed();
 
     UFUNCTION(BlueprintCallable, Category = "RoundManager")
         void checkIfGameEnd();
+
 
 public:
     UFUNCTION(BlueprintCallable, Category = "RoundManager")

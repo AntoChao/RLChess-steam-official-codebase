@@ -5,12 +5,13 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "../RLActor.h"
+#include "../RLProduct.h"
 #include "Item.generated.h"
 
 class ACharacterPlayer;
 
 UCLASS(BlueprintType, Blueprintable)
-class AItem : public AActor, public IRLActor
+class AItem : public AActor, public IRLActor, public IRLProduct
 {
 	GENERATED_BODY()
 
@@ -27,6 +28,12 @@ public:
 	virtual void BeInteracted(APlayerCharacter* Sender) override;
 
 	virtual void BeUnInteracted(APlayerCharacter* Sender) override;
+
+	virtual int GetProductCost() override;
+
+	virtual FString GetProductName() override;
+
+	virtual UTexture2D* GetProductImage() override;
 
 /* item stats*/
 protected:

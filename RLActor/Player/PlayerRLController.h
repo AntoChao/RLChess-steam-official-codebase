@@ -46,13 +46,14 @@ protected:
 
 	virtual void OnPossess(APawn* InPawn) override;
 
-	// set up input componnet
-	virtual void SetupInputComponent() override;
-
+protected:
 	// set up mapping context
 	void setupMappingContextBasedOnGameMode();
 	void setupLobbyInput(UEnhancedInputComponent* EnhancedInput);
 	void setupGameplayInput(UEnhancedInputComponent* EnhancedInput);
+
+	// set up input componnet
+	virtual void SetupInputComponent() override;
 
 	// mapping context
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -60,7 +61,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	class UInputMappingContext* gameplayMappingContext;
-
 
 	// all lobby action inputs
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -89,6 +89,9 @@ protected:
 	class UInputAction* interactAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	int curInteractionCount = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	class UInputAction* selectItemOne;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	class UInputAction* selectItemTwo;
@@ -98,6 +101,10 @@ protected:
 	class UInputAction* selectItemFour;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	class UInputAction* selectItemFive;
+
+
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void voidActionFunc(const FInputActionValue& Value);
 
 	// all lobby action functionalities
 	UFUNCTION(BlueprintCallable, Category = "Control")

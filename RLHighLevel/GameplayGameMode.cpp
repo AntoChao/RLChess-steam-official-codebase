@@ -4,6 +4,7 @@
 #include "../RLActor/Factory/FactoryPlayer.h"
 #include "../RLActor/Factory/FactoryEnvironment.h"
 #include "../RLActor/Player/PlayerRLController.h"
+#include "../RLActor/Player/PlayerCharacter.h"
 
 AGameplayGameMode::AGameplayGameMode() {
 	roundManager = NewObject<URoundManager>();
@@ -12,16 +13,16 @@ AGameplayGameMode::AGameplayGameMode() {
 void AGameplayGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-	setupGame();
-    startRoundSetUp();
-    startRoundGameplay();
+	setupGame(); // create everything
+    startRoundSetUp(); // set players to correct location
+    startRoundGameplay(); // start game
 }
 
 void AGameplayGameMode::setupGame()
 {
     setupSingletonClasses();
-    createEnvironment();
     createPlayers();
+    createEnvironment();
 }
 void AGameplayGameMode::setupSingletonClasses()
 {
@@ -31,17 +32,6 @@ void AGameplayGameMode::setupSingletonClasses()
     pieceFactoryInstance = NewObject<UFactoryPiece>(this, pieceFactoryClass);
 }
 
-void AGameplayGameMode::createEnvironment()
-{
-    if (environmentFactoryInstance)
-    {
-         AActor* spawnedBoard = environmentFactoryInstance->createRLActor(TEXT("Board"), boardLocation, FRotator::ZeroRotator);
-         if (spawnedBoard)
-         {
-             gameBoard = Cast<AEnvBoard>(spawnedBoard);
-         }
-    }
-}
 void AGameplayGameMode::createPlayers()
 {
     if (playerFactoryInstance)
@@ -56,11 +46,8 @@ void AGameplayGameMode::createPlayers()
             if (PC)
             {
                 FString characterName = PC->getCharacterName();
-                FVector spawnLocation = gameBoard->getSpawnStartPositionForPlayer(playerCounter);
-                FVector direction = (boardLocation - spawnLocation).GetSafeNormal();
-                FRotator rotation = direction.Rotation();
 
-                AActor* createdActor = playerFactoryInstance->createRLActor(characterName, spawnLocation, rotation);
+                AActor* createdActor = playerFactoryInstance->createRLActor(characterName, FVector::ZeroVector, FRotator::ZeroRotator);
                 APlayerCharacter* charact = Cast<APlayerCharacter>(createdActor);
                 if (charact)
                 {
@@ -77,6 +64,16 @@ void AGameplayGameMode::createPlayers()
             roundManager->setGameMode(this);
             roundManager->setAllPlayers(players);
         }
+    }
+}
+
+void AGameplayGameMode::createEnvironment()
+{
+    mapManager = UMapManager::get();
+    if (mapManager)
+    {
+        mapManager->setGameMode(this);
+        mapManager->createMap();
     }
 }
 
@@ -101,9 +98,4 @@ void AGameplayGameMode::startRoundGameplay()
 void AGameplayGameMode::endGameplayGameMode(APlayerCharacter* winner)
 {
     return;
-}
-
-AEnvBoard* AGameplayGameMode::getBoard()
-{
-    return gameBoard;
 }

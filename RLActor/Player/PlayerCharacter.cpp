@@ -40,7 +40,6 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	inventory.SetNum(inventorySize);
-	bench.SetNum(benchSize);
 }
 
 void APlayerCharacter::setControllerInfo(FString aPlayerName, FColor aPlayerColor)
@@ -52,12 +51,21 @@ void APlayerCharacter::setControllerInfo(FString aPlayerName, FColor aPlayerColo
 void APlayerCharacter::startSetup()
 {
 	setUpTime = true;
-	isPlayerTurn = true;
 }
 void APlayerCharacter::endSetup()
 {
+	// all pieces in bench should be in board right now
+	for (APiece* eachPiece : army)
+	{
+		eachPiece->setPieceStatus(EPieceStatus::EInBoard);
+	}
+
 	setUpTime = false;
-	isPlayerTurn = false;
+}
+
+int APlayerCharacter::getPlayerSpeed() const
+{
+	return playerSpeed;
 }
 
 bool APlayerCharacter::checkIsAlive()
@@ -65,6 +73,11 @@ bool APlayerCharacter::checkIsAlive()
 	return isAlive;
 }
 
+/*
+player die if:
+	got collided with a piece movement
+	player has no piece in board after initial setup
+*/
 void APlayerCharacter::setDied()
 {
 	isAlive = false;
@@ -76,6 +89,16 @@ void APlayerCharacter::setDied()
 		if (PlayerController)
 		{
 			PlayerController->UnPossessEffect();
+		}
+	}
+
+	// call round manager to end its turn if it is the current player playing
+	if (isPlayerTurn)
+	{
+		URoundManager* roundManager = URoundManager::get();
+		if (roundManager)
+		{
+			roundManager->endCurPlayerTurn();
 		}
 	}
 }
@@ -94,53 +117,73 @@ int APlayerCharacter::getInventorySize()
 }
 
 /* bench function*/
-void APlayerCharacter::setBenchStartLocation(FVector aLocation)
+void APlayerCharacter::setPlayerBench(TArray<AEnvSquare*> allSquares)
 {
-	benchStartLocation = aLocation;
+	playerBench = allSquares;
 }
-void APlayerCharacter::setBenchOffset(FVector aOffset)
-{
-	benchOffset = aOffset;
-}
-
 bool APlayerCharacter::isAbleToBenchPiece()
 {
-	return currentBenchOccupation <= benchSize;
+	for (AEnvSquare* aBenchSquare : playerBench)
+	{
+		if (!aBenchSquare->getIsOccupied())
+		{
+			return true;
+		}
+	}
+	return false;
 }
 void APlayerCharacter::benchAPiece(APiece* newPiece)
 {
-	for (int i = 0; i < benchSize; i++)
+	army.Add(newPiece);
+	for (AEnvSquare* aBenchSquare : playerBench)
 	{
-		APiece* firstEmptyPiece = bench[i];
-		if (firstEmptyPiece == nullptr)
+		if (!aBenchSquare->getIsOccupied())
 		{
-			firstEmptyPiece = newPiece;
-			firstEmptyPiece->SetActorLocation(benchStartLocation + (benchOffset * i));
+			newPiece->bePlaced(aBenchSquare);
+			// aBenchSquare->beOccupied(newPiece);
+			break;
 		}
 	}
 }
 
+/* shop functions*/
+bool APlayerCharacter::isEnableToBuyProduct(TScriptInterface<IRLProduct> aProduct)
+{
+	if (IRLProduct* specificProduct = aProduct.GetInterface())
+	{
+		int productCost = specificProduct->GetProductCost();
+
+		bool hasSufficientMoney = (initMoney - productCost) >= 0;
+		return isAbleToBenchPiece() && hasSufficientMoney;
+	}
+	return false;
+}
+void APlayerCharacter::payProduct(TScriptInterface<IRLProduct> aProduct)
+{
+	IRLProduct* specificProduct = aProduct.GetInterface();
+	int productCost = specificProduct->GetProductCost();
+
+	initMoney -= productCost;
+}
+void APlayerCharacter::receiveProduct(TScriptInterface<IRLProduct> aProduct)
+{
+	UObject* ProductObject = aProduct.GetObject(); // Get the underlying object
+	if (APiece* Piece = Cast<APiece>(ProductObject))
+	{
+		Piece->setPieceColor(playerColor);
+		benchAPiece(Piece);
+	}
+	else if (AItem* Item = Cast<AItem>(ProductObject))
+	{
+		return;
+	}
+}
+
 /* army function*/
-bool APlayerCharacter::isAbleToRecruit(APiece* piece)
-{
-	return (curArmyLevel + piece->getLevel()) <= armyLevelCapacity;
-}
-
-void APlayerCharacter::recruitArmy(APiece* pieceToRecruit)
-{
-	curArmyLevel += pieceToRecruit->getLevel();
-	army.Add(pieceToRecruit);
-}
-
 void APlayerCharacter::pieceDied(APiece* pieceDie)
 {
-	curArmyLevel -= pieceDie->getLevel();
+	// pieceDie->dieEffect();
 	army.Remove(pieceDie);
-}
-
-int APlayerCharacter::getArmySpeed()
-{
-	return playerSpeed;
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -159,8 +202,11 @@ void APlayerCharacter::detect()
 		forwardVector = camera->GetForwardVector();
 		end = ((forwardVector * rangeUnitDistance * rangeRank) + start);
 
-		DrawDebugLine(GetWorld(), start, end, FColor::Green, false, 1, 0, 1);
-
+		if (fireDrawLine)
+		{
+			DrawDebugLine(GetWorld(), start, end, FColor::Green, false, 1, 0, 1);
+		}
+		
 		GetWorld()->LineTraceSingleByChannel(detectHit, start, end, ECC_Visibility, DefaultComponentQueryParams, DefaultResponseParam);
 		detectReaction();
 	}
@@ -170,51 +216,57 @@ void APlayerCharacter::detectReaction()
 {
 	if (detectHit.bBlockingHit)
 	{
-		AActor* rlActor = detectHit.GetActor();
-		UClass* detectedActorClass = rlActor->GetClass(); // Fixed `Actor` to `rlActor`
+		AActor* hitActor = detectHit.GetActor();
+		UClass* detectedActorClass = hitActor->GetClass(); // Fixed `Actor` to `rlActor`
 
-		if (rlActor && detectedActorClass->ImplementsInterface(URLActor::StaticClass()))
+		if (hitActor && detectedActorClass->ImplementsInterface(URLActor::StaticClass()))
 		{
-			detectedActor = Cast<IRLActor>(rlActor);
+			// Safely retrieve the interface
+            IRLActor* DetectedInterface = Cast<IRLActor>(hitActor);
+            if (DetectedInterface)
+            {
+                // Create TScriptInterface for interaction
+                TScriptInterface<IRLActor> scriptInterface;
+				scriptInterface.SetObject(hitActor); // Set the UObject part
+				scriptInterface.SetInterface(DetectedInterface); // Set the interface pointer
 
-			if (detectedActor->IsAbleToBeInteracted(this))
-			{
-				TScriptInterface<IRLActor> ScriptInterface;
-				ScriptInterface.SetObject(Cast<UObject>(detectedActor));   // Set the UObject part
-				ScriptInterface.SetInterface(detectedActor);
+				// Update inspected actor
+				detectedActor = scriptInterface;
 
-				if (IsValid(inventory[selectedItemIndex]) && inventory[selectedItemIndex]->isAbleToBeUsed(this, ScriptInterface))
+				if (DetectedInterface->IsAbleToBeInteracted(this))
 				{
-					curInteractionMode = EInteraction::EUseItem;
-				}
-				else if (detectedActorClass->IsChildOf(AItem::StaticClass()) && isAbleToPickUpItem())
-				{
-					curInteractionMode = EInteraction::EPickUpItem;
-				}
-				else if (detectedActorClass->IsChildOf(AEnvShop::StaticClass())) // Missing closing parenthesis
-				{
-					curInteractionMode = EInteraction::EShop;
-				}
-				else if (isPlayerTurn && detectedActorClass->IsChildOf(APiece::StaticClass()))
-				{
-					curInteractionMode = EInteraction::ESelectPiece;
-				}
-				else if (isPlayerTurn && IsValid(selectedPiece) && detectedActorClass->IsChildOf(AEnvSquare::StaticClass()))
-				{
-					curInteractionMode = EInteraction::EPlacePiece;
+					// Interaction logic
+					if (IsValid(inventory[selectedItemIndex]) &&
+						inventory[selectedItemIndex]->isAbleToBeUsed(this, scriptInterface))
+					{
+						// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("DETECTION: USE ITEM"));
+						curInteractionMode = EInteraction::EUseItem;
+					}
+					else if (hitActor->IsA(AItem::StaticClass()) && isAbleToPickUpItem())
+					{
+						// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("DETECTION: PICK UP ITEM"));
+						curInteractionMode = EInteraction::EPickUpItem;
+					}
+					else if ((setUpTime || isPlayerTurn) && hitActor->IsA(APiece::StaticClass()))
+					{
+						// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("DETECTION: SELECT PIECE"));
+						curInteractionMode = EInteraction::ESelectPiece;
+					}
+					else if ((setUpTime || isPlayerTurn) && IsValid(selectedPiece) && hitActor->IsA(AEnvSquare::StaticClass()))
+					{
+						// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("DETECTION: PLACE PIECE"));
+						curInteractionMode = EInteraction::EPlacePiece;
+					}
+					else
+					{
+						curInteractionMode = EInteraction::ENone;
+					}
 				}
 				else
 				{
 					curInteractionMode = EInteraction::ENone;
 				}
-			}
-
-			/* inspection for details */
-			inspectedActor = detectedActor;
-		}
-		else
-		{
-			inspectedActor = nullptr;
+            }
 		}
 	}
 }
@@ -222,6 +274,7 @@ void APlayerCharacter::detectReaction()
 // turn control
 void APlayerCharacter::startTurn()
 {
+	UE_LOG(LogTemp, Warning, TEXT("LOGG: PLAYER STARTING TURN"));
 	isPlayerTurn = true;
 }
 
@@ -267,7 +320,6 @@ void APlayerCharacter::BeUnInteracted(APlayerCharacter* Sender)
 	return;
 }
 
-// controller
 void APlayerCharacter::openMenu(const FInputActionValue& Value)
 {
 	return;
@@ -351,11 +403,6 @@ void APlayerCharacter::interact()
 			pickUpItem();
 			break;
 		}
-		case EInteraction::EShop:
-		{
-			shop();
-			break;
-		}
 		case EInteraction::ESelectPiece:
 		{
 			selectPiece();
@@ -382,11 +429,7 @@ void APlayerCharacter::useItem()
 	// choose and use item
 	AItem* selectedItem = inventory[selectedItemIndex];
 
-	TScriptInterface<IRLActor> ScriptInterface;
-	ScriptInterface.SetObject(Cast<UObject>(detectedActor));   // Set the UObject part
-	ScriptInterface.SetInterface(detectedActor);
-
-	selectedItem->beUsed(this, ScriptInterface);
+	selectedItem->beUsed(this, detectedActor);
 	
 	// delete item
 	currentItemCount--;
@@ -405,15 +448,14 @@ void APlayerCharacter::pickUpItem()
 		}
 	}
 }
-void APlayerCharacter::shop()
-{
-	unselectPiece();
-	detectedActor->BeInteracted(this);
-}
 void APlayerCharacter::selectPiece()
 {
 	unselectPiece();
-	detectedActor->BeInteracted(this);
+	if (APiece* detectedPiece = Cast<APiece>(detectedActor.GetObject()))
+	{
+		selectedPiece = detectedPiece;
+		detectedPiece->BeInteracted(this);
+	}
 }
 
 void APlayerCharacter::placePiece()
@@ -421,19 +463,12 @@ void APlayerCharacter::placePiece()
 	// piece enter be place into new square
 	detectedActor->BeInteracted(this);
 
-	if (selectedPiece->getPieceStatus() == EPieceStatus::EInBoard)
+	/*
+	URoundManager* roundManager = URoundManager::get();
+	if (roundManager)
 	{
-		/* should run a timer to give few seconds before ending player turn */
-		URoundManager* roundManager = URoundManager::get();
-		if (roundManager)
-		{
-			roundManager->endCurPlayerTurn();
-		}
-	}
-	else if (selectedPiece->getPieceStatus() == EPieceStatus::EInBench)
-	{
-		// nothing, just let player place any amount of piece from bench to board
-	}
+		roundManager->endCurPlayerTurn();
+	}*/
 }
 
 bool APlayerCharacter::isAbleToPickUpItem()
@@ -443,23 +478,18 @@ bool APlayerCharacter::isAbleToPickUpItem()
 
 void APlayerCharacter::unselectPiece()
 {
-	selectedPiece = nullptr;
+	// selectedPiece = nullptr;
 
-	AEnvBoard* board = Cast<AGameplayGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->getBoard();
-	if (board)
+	AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
+	if (gameBoard)
 	{
-		board->resetBoard();
+		gameBoard->resetBoard();
 	}
 }
 
 APiece* APlayerCharacter::getSelectedPiece()
 {
 	return selectedPiece;
-}
-
-void APlayerCharacter::attachHUDToViewport(UUserWidget* shopHUD)
-{
-	shopHUD->AddToViewport();
 }
 
 /* item Effect*/

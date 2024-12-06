@@ -17,49 +17,24 @@ TArray<FVector2D> APieceRook::calculatePossibleMove()
         return PossibleMoves;
     }
 
-    // Directions for rook movement: Up, Down, Left, Right
-    TArray<FVector2D> Directions = {
-        FVector2D(0, 1),   // Up
-        FVector2D(0, -1),  // Down
-        FVector2D(-1, 0),  // Left
-        FVector2D(1, 0)    // Right
-    };
-
-    for (const FVector2D& Direction : Directions)
+    AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
+    if (gameBoard)
     {
-        GenerateDirectionalMoves(Direction, PossibleMoves);
+        FVector2D CurrentLocation = curSquare->getSquareLocation();
+
+        // Directions rook can move: up, down, left, right
+        TArray<EPieceDirection> Directions = {
+            EPieceDirection::EUp, EPieceDirection::EDown,
+            EPieceDirection::ELeft, EPieceDirection::ERight
+        };
+
+        // Iterate over each direction and calculate possible moves
+        for (EPieceDirection Direction : Directions)
+        {
+            TArray<FVector2D> LineMoves = getLineMoveWithFirstObstacle(CurrentLocation, Direction, INT_MAX); // INT_MAX to simulate unlimited range
+            PossibleMoves.Append(LineMoves);
+        }
     }
 
     return PossibleMoves;
-}
-
-void APieceRook::GenerateDirectionalMoves(const FVector2D& Direction, TArray<FVector2D>& OutMoves) const
-{
-    if (!curSquare)
-    {
-        return;
-    }
-
-    AEnvBoard* GameBoard = Cast<AGameplayGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->getBoard();
-    FVector2D CurrentLocation = curSquare->getSquareLocation();
-
-    if (GameBoard)
-    {
-        // Maximum number of steps based on the board size
-        int MaxSteps = FMath::Max(GameBoard->getRowSize(), GameBoard->getColumnSize());
-
-        for (int Step = 1; Step < MaxSteps; ++Step)
-        {
-            CurrentLocation += Direction;
-
-            // Add the move to the list
-            OutMoves.Add(CurrentLocation);
-
-            // Stop generating moves if the square is occupied
-            if (GameBoard->isSquareOccupied(CurrentLocation))
-            {
-                break;
-            }
-        }
-    }
 }

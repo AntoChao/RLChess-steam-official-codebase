@@ -10,8 +10,7 @@ APlayerRLController::APlayerRLController()
 void APlayerRLController::BeginPlay() {
 	Super::BeginPlay();
 
-	// Cast the PlayerState to your custom PlayerState class
-	// AMyPlayerState* MyPlayerState = GetPlayerState<AMyPlayerState>();
+	// Cast the PlayerState to custom PlayerState class
 	rlPlayerState = GetPlayerState<APlayerRLState>();
 	if (!rlPlayerState)
 	{
@@ -120,11 +119,16 @@ void APlayerRLController::setupGameplayInput(UEnhancedInputComponent* EnhancedIn
 
 	EnhancedInput->BindAction(interactAction, ETriggerEvent::Started, this, &APlayerRLController::interactFunc);
 	
-	EnhancedInput->BindAction(selectItemOne, ETriggerEvent::Triggered, this, &APlayerRLController::selectItemOneFunc);
-	EnhancedInput->BindAction(selectItemTwo, ETriggerEvent::Triggered, this, &APlayerRLController::selectItemTwoFunc);
-	EnhancedInput->BindAction(selectItemThree, ETriggerEvent::Triggered, this, &APlayerRLController::selectItemThreeFunc);
-	EnhancedInput->BindAction(selectItemFour, ETriggerEvent::Triggered, this, &APlayerRLController::selectItemFourFunc);
-	EnhancedInput->BindAction(selectItemFive, ETriggerEvent::Triggered, this, &APlayerRLController::selectItemFiveFunc);
+	EnhancedInput->BindAction(selectItemOne, ETriggerEvent::Started, this, &APlayerRLController::selectItemOneFunc);
+	EnhancedInput->BindAction(selectItemTwo, ETriggerEvent::Started, this, &APlayerRLController::selectItemTwoFunc);
+	EnhancedInput->BindAction(selectItemThree, ETriggerEvent::Started, this, &APlayerRLController::selectItemThreeFunc);
+	EnhancedInput->BindAction(selectItemFour, ETriggerEvent::Started, this, &APlayerRLController::selectItemFourFunc);
+	EnhancedInput->BindAction(selectItemFive, ETriggerEvent::Started, this, &APlayerRLController::selectItemFiveFunc);
+}
+
+void APlayerRLController::voidActionFunc(const FInputActionValue& Value)
+{
+	return;
 }
 
 void APlayerRLController::goBackFunc(const FInputActionValue& Value) {
@@ -200,10 +204,7 @@ void APlayerRLController::runFunc(const FInputActionValue& Value) {
 }
 void APlayerRLController::runEndFunc(const FInputActionValue& Value) {
 	if (rlPlayer) {
-		if (Value.Get<bool>())
-		{
-			rlPlayer->stopRun();
-		}
+		rlPlayer->stopRun();
 	}
 }
 
@@ -231,10 +232,14 @@ void APlayerRLController::interactFunc(const FInputActionValue& Value) {
 	if (rlPlayer) {
 		if (Value.Get<bool>())
 		{
-			// player is able to interact or not is responsability of player
-			rlPlayer->interact();
+			if (curInteractionCount % 2 == 0)
+			{
+				// player is able to interact or not is responsability of player
+				rlPlayer->interact();
+			}
 		}
 	}
+	curInteractionCount++;
 }
 
 void APlayerRLController::selectItemOneFunc(const FInputActionValue& Value)

@@ -2,6 +2,8 @@
 
 #include "RoundManager.h"
 #include "GameplayGameMode.h"
+#include "Algo/Sort.h"
+#include "MapManager.h"
 #include "Kismet/GameplayStatics.h"
 
 URoundManager* URoundManager::roundManagerInstance = nullptr;
@@ -30,7 +32,7 @@ void URoundManager::initialize()
 
 void URoundManager::setGameMode(AGameplayGameMode* curGameMode)
 {
-    gameModeInstance = curGameMode;
+    gameplayGameMode = curGameMode;
 }
 void URoundManager::setAllPlayers(TArray<APlayerCharacter*> players)
 {
@@ -38,78 +40,146 @@ void URoundManager::setAllPlayers(TArray<APlayerCharacter*> players)
     numPlayers = allPlayers.Num();
 }
 
+TArray<APlayerCharacter*> URoundManager::getAllPlayers()
+{
+    return allPlayers;
+}
+
 void URoundManager::startRoundManagerSetUpRound()
 {
-    AEnvBoard* gameBoard = gameModeInstance->getBoard();
-    
-    if (gameBoard)
-    {
-        gameBoard->createBoard();
-        gameBoard->initializeBoardColor(allPlayers);
-        gameBoard->setUpPlayerBench(allPlayers);
-    }
+    orderPlayerBySpeed();
+    setPlayerInitLocation();
+    spawnShop();
+}
+
+void URoundManager::orderPlayerBySpeed()
+{
+    // Use Unreal's built-in sorting algorithm with a custom predicate
+    Algo::Sort(allPlayers, [](const APlayerCharacter* A, const APlayerCharacter* B) {
+        return A->getPlayerSpeed() > B->getPlayerSpeed();
+        });
 }
 
 void URoundManager::startRoundManagerGameplayRound()
 {
-    initialFreeTime();
-    startTurns();
+    startPlayerSetUpTime();
+    // startTurns();
+}
+
+void URoundManager::setPlayerInitLocation()
+{
+    UMapManager* mapManager = UMapManager::get();
+    if (mapManager)
+    {
+        AEnvBoard* gameBoard = mapManager->getGameBoard();
+        
+        for (int i = 0; i < allPlayers.Num(); i++)
+        {
+            FVector spawnLocation = gameBoard->getSpawnStartPositionForPlayer(i) + FVector(0.0f, 0.0f, gameplayGameMode->playerSpawnHeight);
+            FRotator spawnRotation = gameBoard->getSpawnStartRotationForPlayer(i);
+
+            allPlayers[i]->SetActorLocation(spawnLocation);
+            allPlayers[i]->SetActorRotation(spawnRotation);
+        }
+    }
+}
+
+void URoundManager::spawnShop()
+{
+    UMapManager* mapManager = UMapManager::get();
+    if (mapManager)
+    {
+        mapManager->createShop();
+    }
 }
 
 // give one minutes to let player do anything they want
-void URoundManager::initialFreeTime()
+void URoundManager::startPlayerSetUpTime()
 {
-    return;
+    if (gameplayGameMode)
+    {
+        UWorld* gameWorld = gameplayGameMode->GetWorld();
+        if (gameWorld)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("START SET UP ROUND"));
+
+
+            for (APlayerCharacter* eachPlayer : allPlayers)
+            {
+                eachPlayer->startSetup();
+            }
+
+
+            // Clears any existing timer to avoid multiple teleportations
+            gameWorld->GetTimerManager().ClearTimer(playerSetUpTimerHandle);
+
+            FTimerDelegate playerSetUpTimerDel;
+            playerSetUpTimerDel.BindUFunction(this, FName("endPlayerSetUpTime"));
+            gameWorld->GetTimerManager().SetTimer(playerSetUpTimerHandle, playerSetUpTimerDel, playerSetUpTimerSegs, false);
+        }
+    }
+}
+
+void URoundManager::endPlayerSetUpTime()
+{
+    UMapManager* mapManager = UMapManager::get();
+    if (mapManager)
+    {
+        mapManager->closeShop();
+    }
+    
+    // let all players know that set up time finish
+    for (APlayerCharacter* eachPlayer : allPlayers)
+    {
+        eachPlayer->endSetup();
+    }
+
+    // start the turns
+    startTurns();
 }
 
 void URoundManager::startTurns()
 {
-    curPlayerIndex = findInitPlayerIndex();
-
     roundCounter++;
     startNextPlayerTurn();
 }
 
-int URoundManager::findInitPlayerIndex()
-{
-    int minSpeed = INT_MAX;
-    int minSpeedIndex = -1;
-    for (int i = 0; i < numPlayers; i++)
-    {
-        int curSpeed = allPlayers[i]->getArmySpeed();
-        if (curSpeed < minSpeed)
-        {
-            minSpeed = curSpeed;
-            minSpeedIndex = i;
-        }
-    }
-
-    return minSpeedIndex;
-}
-
 void URoundManager::startNextPlayerTurn()
 {
-    if (curPlayerIndex == -1)
-    {
-        turnCounter++;
-        if (allPlayers[curPlayerIndex]->checkIsAlive())
-        {
-            // enable player to move piece
-            allPlayers[curPlayerIndex]->startTurn();
-            // calculate the current turn and round
-            if (turnCounter % numPlayers == 0)
-            {
-                roundCounter++;
-                turnCounter = 0;
-            }
+    // check if game finished
+    /* uncomment for multiplayer
+    checkIfGameEnd() */
 
-            // turn the timer on
-            // allTimers[curPlayerIndex]->turnOn(turnTime);
-        }
-        else
+    turnCounter++;
+
+    if (allPlayers[curPlayerIndex]->checkIsAlive())
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("START NEXT PLAYER TURN"));
+
+        // enable player to move piece
+        allPlayers[curPlayerIndex]->startTurn();
+        // calculate the current turn and round
+        if (turnCounter % numPlayers == 0)
         {
-            endCurPlayerTurn();
+            roundCounter++;
+            turnCounter = 0;
         }
+        /*
+        // turn on the timer of player
+        UWorld* gameWorld = gameplayGameMode->GetWorld();
+        if (gameWorld)
+        {
+            gameWorld->GetTimerManager().ClearTimer(playerTurnTimerHandle);
+            GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("RESET TIMER"));
+
+            FTimerDelegate playerTurnTimerDel;
+            playerTurnTimerDel.BindUFunction(this, FName("endCurPlayerTurn"));
+            gameWorld->GetTimerManager().SetTimer(playerTurnTimerHandle, playerTurnTimerDel, turnTimeInSegs, false);
+        }*/
+    }
+    else
+    {
+        endCurPlayerTurn();
     }
 }
 
@@ -144,14 +214,14 @@ void URoundManager::checkIfGameEnd() {
 
     if (alivePlayerCounter <= 1)
     {
-        if (gameModeInstance)
+        if (gameplayGameMode)
         {
-            gameModeInstance->endGameplayGameMode(winner);
+            gameplayGameMode->endGameplayGameMode(winner);
         }
     }
 }
 
-bool URoundManager::getIsSetUpTurn()
+bool URoundManager::getIsPlayerSetUpTime()
 {
-    return isSetupTurn;
+    return isPlayerSetupTime;
 }

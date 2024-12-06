@@ -16,6 +16,8 @@ class AEnvShop : public AActor, public IRLActor
 
 public:
 	AEnvShop();
+	
+	virtual void BeginPlay() override;
 
 	virtual FString GetActorName() override;
 
@@ -28,27 +30,26 @@ public:
 	virtual void BeUnInteracted(APlayerCharacter* Sender) override;
 
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UStaticMeshComponent* shopMesh;
+
 	UFUNCTION(BlueprintCallable, Category = "Square Stats")
 	void createRandomShop();
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop Stats")
 	int piecesProductTotalNum = 25;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop Stats")
-	TArray<APiece*> piecesInShop;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop Widget")
-	TSubclassOf<UShopWidget> shopWidgetClass = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop Widget")
-	UShopWidget* shopHUD = nullptr;
+	TArray<TScriptInterface<IRLProduct>> productsInShop;
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "Square Stats")
-	void showShopHUDToPlayer(APlayerCharacter* player);
+	UFUNCTION(BlueprintCallable, Category = "Shop Stats")
+	void sellProduct(APlayerCharacter* player, TScriptInterface<IRLProduct> specificProduct);
 
-	UFUNCTION(BlueprintCallable, Category = "Square Stats")
-	void sellProduct(APlayerCharacter* player, APiece* specificPiece);
-
-	UFUNCTION(BlueprintCallable, Category = "Square Stats")
+	UFUNCTION(BlueprintCallable, Category = "Shop Stats")
 	void refreshShop(APlayerCharacter* player);
+
+	UFUNCTION(BlueprintCallable, Category = "Shop Stats")
+	void closeShop();
+
 };
 

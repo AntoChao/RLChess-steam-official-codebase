@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Class.h"
+#include "Math/UnrealMathUtility.h"
 #include "RLFactory.generated.h"
 
 UCLASS(Blueprintable)
