@@ -11,6 +11,8 @@ APieceGuard::APieceGuard()
 TArray<FVector2D> APieceGuard::calculatePossibleMove()
 {
     TArray<FVector2D> PossibleMoves;
+    specialPossibleMove.Empty();
+    moveMode = EPieceMoveMode::EGround;
 
     if (!curSquare) // Ensure the guard is on the board
     {
@@ -56,6 +58,7 @@ TArray<FVector2D> APieceGuard::calculatePossibleMove()
                             {
                                 TArray<FVector2D> LineMoves = getLineMoveWithNoObstacle(CheckLocation, Direction, movePoint);
                                 PossibleMoves.Append(LineMoves);
+                                specialPossibleMove.Append(LineMoves);
                             }
                         }
                     }
@@ -65,4 +68,9 @@ TArray<FVector2D> APieceGuard::calculatePossibleMove()
     }
 
     return PossibleMoves;
+}
+
+void APieceGuard::bePlacedSpecialSquareEffect(AEnvSquare* squareDestination)
+{
+    moveMode = EPieceMoveMode::ETeleport;
 }

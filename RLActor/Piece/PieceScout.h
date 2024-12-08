@@ -17,5 +17,5 @@ public:
     virtual TArray<FVector2D> calculatePossibleMove() override;
 
 protected:
-    virtual void inBenchSpecialEffect() override;
+    virtual void inBoardInteractedEffect(APlayerCharacter* Sender) override;
 };

@@ -327,6 +327,12 @@ bool AEnvBoard::isSquareOccupied(FVector2D aLocation)
     return targetSquare->getIsOccupied();
 }
 
+bool AEnvBoard::isPlayerOnTop(FVector2D aLocation)
+{
+    AEnvSquare* targetSquare = allSquares[getIndexFromLocation(aLocation)];
+    return targetSquare->getIsPlayerOnTop();
+}
+
 APiece* AEnvBoard::getPieceAtLocation(FVector2D aLocation)
 {
     AEnvSquare* targetSquare = allSquares[getIndexFromLocation(aLocation)];

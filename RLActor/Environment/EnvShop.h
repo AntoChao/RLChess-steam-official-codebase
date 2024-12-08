@@ -30,9 +30,6 @@ public:
 	virtual void BeUnInteracted(APlayerCharacter* Sender) override;
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UStaticMeshComponent* shopMesh;
-
 	UFUNCTION(BlueprintCallable, Category = "Square Stats")
 	void createRandomShop();
 	
@@ -44,6 +41,10 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable, Category = "Shop Stats")
 	void sellProduct(APlayerCharacter* player, TScriptInterface<IRLProduct> specificProduct);
+
+	UFUNCTION(BlueprintCallable, Category = "Shop Stats")
+	void refillProduct(TScriptInterface<IRLProduct> specificProduct);
+
 
 	UFUNCTION(BlueprintCallable, Category = "Shop Stats")
 	void refreshShop(APlayerCharacter* player);

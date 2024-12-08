@@ -54,7 +54,10 @@ public:
         void endPlayerSetUpTime();
 
     UFUNCTION(BlueprintCallable, Category = "RoundManager")
-        void startTurns();
+        void startPlayerPreparePhase();
+
+    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+        void startPieceMovingPhase();
 
     UFUNCTION(BlueprintCallable, Category = "RoundManager")
         bool getIsPlayerSetUpTime();
@@ -90,23 +93,27 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
         int roundCounter = 0;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-        int turnCounter = 0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-        int curPlayerIndex = 0;
+        int numReadyPlayers = 0;
 
     UFUNCTION(BlueprintCallable, Category = "RoundManager")
         void orderPlayerBySpeed();
 
     UFUNCTION(BlueprintCallable, Category = "RoundManager")
-        void checkIfGameEnd();
-
-
-public:
+        bool checkIfGameEnd();
     UFUNCTION(BlueprintCallable, Category = "RoundManager")
-    void startNextPlayerTurn();
-    UFUNCTION(BlueprintCallable, Category = "RoundManager")
-    void endCurPlayerTurn();
+        void gameEnd();
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+        APlayerCharacter* winner = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+        FTimerHandle playerPrepareTimerHandle;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+        int playerPrepareTimerSegs = 10;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+        FTimerHandle piecesMovedTimerHandle;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+        int piecesMovedTimerSegs = 5;
 };
 
 

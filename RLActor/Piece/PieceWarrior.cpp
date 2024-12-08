@@ -43,3 +43,37 @@ TArray<FVector2D> APieceWarrior::calculatePossibleMove()
 
     return PossibleMoves;
 }
+
+void APieceWarrior::endMoving()
+{
+    Super::endMoving();
+
+    AEnvBoard* GameBoard = UMapManager::get()->getGameBoard();
+    if (GameBoard)
+    {
+        FVector2D CurrentLocation = curSquare->getSquareLocation();
+        TArray<EPieceDirection> Directions = {
+            EPieceDirection::EUp, EPieceDirection::EDown,
+            EPieceDirection::ELeft, EPieceDirection::ERight
+        };
+
+        // Process each direction for free movement and obstacle detection
+        for (const EPieceDirection& Direction : Directions)
+        {
+            // Free movement within 2 squares
+            TArray<FVector2D> LineMoves = getLineMoveWithFirstObstacle(CurrentLocation, Direction, 1);
+
+            for (FVector2D locToCheck : LineMoves)
+            {
+                if (GameBoard->isSquareOccupied(locToCheck))
+                {
+                    APiece* checkPiece = GameBoard->getPieceAtLocation(locToCheck);
+                    if (checkPiece)
+                    {
+                        checkPiece->die();
+                    }
+                }
+            }
+        }
+    }
+}

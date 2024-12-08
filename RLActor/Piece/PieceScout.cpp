@@ -41,10 +41,11 @@ TArray<FVector2D> APieceScout::calculatePossibleMove()
     return PossibleMoves;
 }
 
-void APieceScout::inBenchSpecialEffect()
+void APieceScout::inBoardInteractedEffect(APlayerCharacter* Sender)
 {
     UMapManager* mapManager = UMapManager::get();
     AEnvBoard* gameBoard = mapManager->getGameBoard();
+
     if (gameBoard)
     {
         gameBoard->setAllUnoccupiedColor(pieceColor);

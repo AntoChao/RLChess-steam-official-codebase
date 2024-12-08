@@ -15,6 +15,8 @@ public:
 
 	virtual AActor* createRandom(FVector aLocation, FRotator aRotation) override;
 
+	virtual AActor* createRLActorByCode(int code, FVector aLocation, FRotator aRotation) override;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Factory Stats")
 	int totalPiecesClassNum = 0;

@@ -25,3 +25,9 @@ AActor* URLFactory::createRandom(FVector aLocation, FRotator aRotation)
     UE_LOG(LogTemp, Warning, TEXT("RLFactory: createRandom called"));
     return nullptr;
 }
+
+AActor* URLFactory::createRLActorByCode(int code, FVector aLocation, FRotator aRotation)
+{
+    UE_LOG(LogTemp, Warning, TEXT("RLFactory: createByCode called"));
+    return nullptr;
+}

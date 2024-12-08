@@ -41,10 +41,43 @@ TArray<FVector2D> APieceCowboy::calculatePossibleMove()
                 if (LineWithFirstObstacle.Num() > LineMoves.Num())  // Ensure there is an obstacle beyond free moves
                 {
                     PossibleMoves.Add(LineWithFirstObstacle[LineMoves.Num()]);  // The first obstacle after the last free move
+                    specialPossibleMove.Add(LineWithFirstObstacle[LineMoves.Num()]);
                 }
             }
         }
     }
 
     return PossibleMoves;
+}
+
+void APieceCowboy::bePlacedInBoardEffect(AEnvSquare* squareDestination)
+{
+    if (specialPossibleMove.Contains(squareDestination->getSquareLocation()))
+    {
+        bePlacedSpecialSquareEffect(squareDestination);
+    }
+    else
+    {
+        startMoving(squareDestination);
+    }
+}
+
+void APieceCowboy::bePlacedSpecialSquareEffect(AEnvSquare* squareDestination)
+{
+    FVector2D nextVector = getDirectionVector(lastMoveDirection);
+    FVector2D nextLocation = curSquare->getSquareLocation() + nextVector;
+
+    UMapManager* mapManager = UMapManager::get();
+    AEnvBoard* gameBoard = mapManager->getGameBoard();
+
+    if (gameBoard)
+    {
+        AEnvSquare* nextSquare = gameBoard->getSquareAtLocation(nextLocation);
+
+        if (squareDestination && squareDestination->getIsOccupied())
+        {
+            APiece* targetPiece = squareDestination->getOccupiedPiece();
+            targetPiece->startMoving(nextSquare);
+        }
+    }
 }

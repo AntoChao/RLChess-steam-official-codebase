@@ -36,10 +36,36 @@ TArray<FVector2D> APieceCatapult::calculatePossibleMove()
             // Check if the potential location is valid and occupied
             if (GameBoard->isValidLocation(PotentialLocation) && GameBoard->isSquareOccupied(PotentialLocation))
             {
-                PossibleMoves.Add(PotentialLocation);
+                EPieceDirection aDirection = directionVectorToEnum(Direction);
+                TArray<FVector2D> allLaunchablePlaces = getLineMove(CurrentLocation, aDirection, INT_MAX);
+
+                PossibleMoves.Append(allLaunchablePlaces);
+                // PossibleMoves.Add(PotentialLocation);
             }
         }
     }
 
     return PossibleMoves;
+}
+
+void APieceCatapult::bePlacedInBoardEffect(AEnvSquare* squareDestination)
+{
+    if (squareDestination)
+    {
+        lastMoveDirection = calculateMovingDirection(squareDestination);
+        FVector2D directionVector = getDirectionVector(lastMoveDirection);
+        FVector2D pieceLocation = curSquare->getSquareLocation() + directionVector;
+
+        AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
+        if (gameBoard)
+        {
+            APiece* targetPiece = gameBoard->getSquareAtLocation(pieceLocation)->getOccupiedPiece();
+            if (targetPiece)
+            {
+                targetPiece->beLaunchedTo(squareDestination);
+            }
+
+            gameBoard->resetBoard();
+        }
+    }
 }

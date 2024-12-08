@@ -18,6 +18,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "RLFactory")
     virtual AActor* createRandom(FVector aLocation, FRotator aRotation);
 
+    UFUNCTION(BlueprintCallable, Category = "RLFactory")
+    virtual AActor* createRLActorByCode(int code, FVector aLocation, FRotator aRotation);
+
 protected:
     // Protected constructor for singleton pattern
     URLFactory();

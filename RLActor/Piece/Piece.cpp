@@ -53,7 +53,7 @@ void APiece::BeginPlay()
 void APiece::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-    // movementTimeline.TickTimeline(DeltaTime);
+    movementTimeline.TickTimeline(DeltaTime);
 }
 
 FString APiece::GetActorName()
@@ -74,7 +74,7 @@ bool APiece::IsAbleToBeInteracted(APlayerCharacter* Sender)
     }
     else
     {
-        return Sender->getPlayerColor() == pieceColor;
+        return Sender->getPlayerColor() == pieceColor && !isMoving && !isResting;
     }
 	
 }
@@ -358,10 +358,44 @@ TArray<FVector2D> APiece::getLineMoveWithNoObstacle(FVector2D CurrentLocation, E
     return LineMoves;
 }
 
+EPieceDirection APiece::getOppositeDirection(EPieceDirection Direction)
+{
+    switch (Direction)
+    {
+    case EPieceDirection::EUp:
+        return EPieceDirection::EDown;
+    case EPieceDirection::EUpLeft:
+        return EPieceDirection::EDownRight;
+    case EPieceDirection::ELeft:
+        return EPieceDirection::ERight;
+    case EPieceDirection::EDownLeft:
+        return EPieceDirection::EUpRight;
+    case EPieceDirection::EDown:
+        return EPieceDirection::EUp;
+    case EPieceDirection::EDownRight:
+        return EPieceDirection::EUpLeft;
+    case EPieceDirection::ERight:
+        return EPieceDirection::ELeft;
+    case EPieceDirection::EUpRight:
+        return EPieceDirection::EDownLeft;
+    default:
+        return EPieceDirection::ENone;
+    }
+
+    return EPieceDirection::ENone;
+}
+
+void APiece::die()
+{
+    dieEffect();
+}
 
 void APiece::dieEffect()
 {
-    return;
+    if (isLaunched)
+    {
+        beExploted();
+    }
 }
 
 /* piece collision*/
@@ -373,14 +407,27 @@ void APiece::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Ot
     {
         if (isMoving)
         {
-            UE_LOG(LogTemp, Warning, TEXT("%s overlapped with %s"), *GetName(), *OtherActor->GetName());
-            if (OtherActor->IsA(APlayerCharacter::StaticClass()))
+            if (OtherActor->IsA(APiece::StaticClass()))
+            {
+                APiece* collidedPiece = Cast<APiece>(OtherActor);
+                collidedWithOtherPiece(collidedPiece);
+            }
+            else if (OtherActor->IsA(APlayerCharacter::StaticClass()))
             {
                 APlayerCharacter* playerCollided = Cast<APlayerCharacter>(OtherActor);
+                isKilledAnyActorThisTurn = true;
                 playerCollided->beCollidedByPiece(this);
             }
         }
     }
+}
+
+void APiece::collidedWithOtherPiece(APiece* collidedPiece)
+{
+    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("piece be collided with other piece"));
+
+    // if didnt got destory, it kill someone
+    isKilledAnyActorThisTurn = true;
 }
 
 /* piece moving*/
@@ -424,9 +471,28 @@ int APiece::getLevel()
     return pieceLevel;
 }
 
+void APiece::updateStatus()
+{
+    updateRestStatus();
+}
+void APiece::updateRestStatus()
+{
+    if (isResting)
+    {
+        curRestingCount++;
+        if (requiredRestingTurn % curRestingCount == 0)
+        {
+            isResting = false;
+            curRestingCount = 0;
+        }
+    }
+}
+
 /* setActor location in a time constraint*/
 void APiece::bePlaced(AEnvSquare* squareDestination)
 {
+    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PIECE BE PLACED"));
+
     if (pieceStatus == EPieceStatus::EInShop)
     {
         bePlacedInShopEffect(squareDestination);
@@ -517,8 +583,15 @@ void APiece::bePlacedInBoardEffect(AEnvSquare* squareDestination)
     {
         firstInBoardMovedEffect(squareDestination);
     }
+    if (specialPossibleMove.Contains(squareDestination->getSquareLocation()))
+    {
+        bePlacedSpecialSquareEffect(squareDestination);
+    }
     
-    startMoving(squareDestination);
+    if (!isMoving) // only move if it is not moving
+    {
+        startMoving(squareDestination);
+    }
 }
 
 void APiece::firstInBoardMovedEffect(AEnvSquare* squareDestination)
@@ -526,29 +599,278 @@ void APiece::firstInBoardMovedEffect(AEnvSquare* squareDestination)
     bHasMoved = true;
 }
 
+void APiece::bePlacedSpecialSquareEffect(AEnvSquare* squareDestination)
+{
+    return;
+}
+
 void APiece::startMoving(AEnvSquare* squareDestination)
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("CHECK"));
-
     if (IsValid(curSquare))
     {
         curSquare->occupiedPieceLeaved();
     }
 
-    FVector startLocation = GetActorLocation() + FVector(0.0f, 0.0f, 300.0f);
-    FVector endLocation = squareDestination->getPlacementLocation() + FVector(0.0f, 0.0f, 300.0f);
+    lastMoveDirection = calculateMovingDirection(squareDestination);
 
-    DrawDebugPoint(GetWorld(), startLocation, 10.0f, FColor::Green, false, 2.0f);
-    DrawDebugPoint(GetWorld(), endLocation, 10.0f, FColor::Red, false, 2.0f);
+    isMoving = true;
+    isKilledAnyActorThisTurn = false;
+    startLocation = GetActorLocation();
+    endLocation = squareDestination->getPlacementLocation();
+    targetSquare = squareDestination;
 
-    // moveBasedOnMove(squareDestination);
+    moveBasedOnMove(squareDestination);
 }
 
-void APiece::endMoving(AEnvSquare* squareDestination)
+EPieceDirection APiece::calculateMovingDirection(AEnvSquare* squareDestination)
 {
-    // SetActorLocation(endLocation);
+    if (!curSquare || !squareDestination)
+    {
+        return EPieceDirection::ENone;  // Check for valid pointers
+    }
 
-    curSquare = squareDestination;
+    int RowDiff = squareDestination->getSquareLocation().X - curSquare->getSquareLocation().X;
+    int ColDiff = squareDestination->getSquareLocation().Y - curSquare->getSquareLocation().Y;
+
+    // Determine the direction based on the row and column differences
+    if (RowDiff == 0 && ColDiff > 0)
+    {
+        return EPieceDirection::ERight;
+    }
+    else if (RowDiff == 0 && ColDiff < 0)
+    {
+        return EPieceDirection::ELeft;
+    }
+    else if (RowDiff > 0 && ColDiff == 0)
+    {
+        return EPieceDirection::EDown;
+    }
+    else if (RowDiff < 0 && ColDiff == 0)
+    {
+        return EPieceDirection::EUp;
+    }
+    else if (RowDiff < 0 && ColDiff > 0)
+    {
+        return EPieceDirection::EUpRight;
+    }
+    else if (RowDiff < 0 && ColDiff < 0)
+    {
+        return EPieceDirection::EUpLeft;
+    }
+    else if (RowDiff > 0 && ColDiff > 0)
+    {
+        return EPieceDirection::EDownRight;
+    }
+    else if (RowDiff > 0 && ColDiff < 0)
+    {
+        return EPieceDirection::EDownLeft;
+    }
+
+    return EPieceDirection::ENone;  // Default return if no direction is determined
+}
+
+void APiece::endMoving()
+{
+    SetActorLocation(endLocation);
+    isMoving = false;
+
+    curSquare = targetSquare;
     // teleport to squareLocation
     curSquare->beOccupied(this);
+
+    if (requireResting)
+    {
+        isResting = true;
+    }
+
+    if (isKilledAnyActorThisTurn)
+    {
+        killEffect();
+    }
+
+    if (isLaunched)
+    {
+        launchEndEffect();
+    }
+}
+
+void APiece::killEffect()
+{
+    return;
+}
+
+void APiece::moveBasedOnMove(AEnvSquare* squareDestination)
+{
+    switch (moveMode)
+    {
+    case EPieceMoveMode::EGround:
+    {
+        initiateGroundMovement(squareDestination);
+        break;
+    }
+
+    case EPieceMoveMode::EParabolicJump:
+    {
+        initiateParabolicJump(squareDestination);
+        break;
+    }
+
+    case EPieceMoveMode::EStaticJump:
+    {
+        initiateKnightJump(squareDestination);
+        break;
+    }
+    case EPieceMoveMode::ETeleport:
+    {
+        initializeTeleportation(squareDestination);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+void APiece::initiateGroundMovement(AEnvSquare* squareDestination)
+{
+    if (!movementCurve) return; // Ensure the curve asset is set			
+
+    FOnTimelineFloat ProgressFunction;
+    ProgressFunction.BindUFunction(this, FName("handleGroundMovementProgress"));
+    movementTimeline.AddInterpFloat(movementCurve, ProgressFunction);
+    
+    
+    FOnTimelineEvent FinishFunction;
+    FinishFunction.BindUFunction(this, FName("endMoving"));
+    movementTimeline.SetTimelineFinishedFunc(FinishFunction);
+    
+    movementTimeline.SetPlayRate(1.0f / movementDuration);
+    movementTimeline.SetLooping(false);
+
+    movementTimeline.PlayFromStart();			
+}
+
+void APiece::handleGroundMovementProgress(float value)
+{
+    // Linearly interpolate position based on the timeline's progress			
+    FVector newLocation = FMath::Lerp(startLocation, endLocation, value);
+    SetActorLocation(newLocation);
+}
+
+void APiece::initiateParabolicJump(AEnvSquare* SquareDestination)
+{
+    if (!movementCurve) return; // Ensure the curve asset is set			
+
+    FOnTimelineFloat ProgressFunction;
+    ProgressFunction.BindUFunction(this, FName("handleParabolicJumpProgress"));
+    movementTimeline.AddInterpFloat(movementCurve, ProgressFunction);
+
+    FOnTimelineEvent FinishFunction;
+    FinishFunction.BindUFunction(this, FName("endMoving"));
+    movementTimeline.SetTimelineFinishedFunc(FinishFunction);
+
+    movementTimeline.SetLooping(false);
+    movementTimeline.PlayFromStart();
+}
+
+void APiece::handleParabolicJumpProgress(float value)
+{
+    FVector NewLocation = FMath::Lerp(startLocation, endLocation, value);
+    float Parabola = -4 * jumpApexHeight * value * (value - 1);  // Parabolic formula			
+    NewLocation.Z += Parabola;
+    SetActorLocation(NewLocation);
+}
+
+void APiece::initiateKnightJump(AEnvSquare* SquareDestination)
+{
+    FOnTimelineFloat ProgressFunction;
+    ProgressFunction.BindUFunction(this, FName("handleKnightJumpProgress"));
+    movementTimeline.AddInterpFloat(movementCurve, ProgressFunction);
+
+    FOnTimelineEvent FinishFunction;
+    FinishFunction.BindUFunction(this, FName("endMoving"));
+    movementTimeline.SetTimelineFinishedFunc(FinishFunction);
+
+    movementTimeline.SetLooping(false);
+    movementTimeline.PlayFromStart();
+}
+
+void APiece::handleKnightJumpProgress(float value)
+{   
+    // Interpolate the horizontal position
+    FVector HorizontalMovement = FMath::Lerp(FVector(startLocation.X, startLocation.Y, 0), FVector(endLocation.X, endLocation.Y, 0), value);
+
+    // Calculate the vertical movement using a half sine wave that starts and ends at 0 height difference
+    float VerticalMovement = jumpApexHeight * FMath::Sin(FMath::DegreesToRadians(180.0f * value));
+
+    // Add the original starting Z position to the vertical movement
+    FVector FinalPosition = HorizontalMovement + FVector(0, 0, startLocation.Z + VerticalMovement);
+
+    SetActorLocation(FinalPosition);
+}
+
+void APiece::initializeTeleportation(AEnvSquare* SquareDestination)
+{
+    // Ensure we have a valid world context before setting a timer			
+    if (GetWorld())
+    {
+        // Clears any existing timer to avoid multiple teleportations			
+        GetWorld()->GetTimerManager().ClearTimer(TeleportTimerHandle);
+
+        // Set a timer to teleport the actor			
+        FTimerDelegate TimerDel;
+        TimerDel.BindUFunction(this, FName("endMoving"), SquareDestination);
+        GetWorld()->GetTimerManager().SetTimer(TeleportTimerHandle, TimerDel, movementDuration, false);
+    }
+}
+
+void APiece::beLaunchedTo(AEnvSquare* SquareDestination)
+{
+    isLaunched = true;
+    moveMode = EPieceMoveMode::EParabolicJump;
+
+    startMoving(SquareDestination);
+}
+
+void APiece::launchEndEffect()
+{
+    die();
+}
+
+void APiece::beExploted()
+{
+    AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
+    if (gameBoard)
+    {
+        FVector2D CurrentLocation = curSquare->getSquareLocation();
+
+        // Directions rook can move: up, down, left, right
+        TArray<EPieceDirection> Directions = {
+            EPieceDirection::EUp, EPieceDirection::EDown,
+            EPieceDirection::ELeft, EPieceDirection::ERight,
+            EPieceDirection::EUpLeft, EPieceDirection::EDownLeft,
+            EPieceDirection::EUpRight, EPieceDirection::EDownRight,
+        };
+
+        // Iterate over each direction and calculate possible moves
+        for (EPieceDirection Direction : Directions)
+        {
+            TArray<FVector2D> allMovesLocation = getLineMoveWithFirstObstacle(CurrentLocation, Direction, movePoint);
+            for (FVector2D moveLocation : allMovesLocation)
+            {
+                AEnvSquare* checkSquare = gameBoard->getSquareAtLocation(moveLocation);
+
+                if (checkSquare)
+                {
+                    if (checkSquare->getIsOccupied())
+                    {
+                        checkSquare->getOccupiedPiece()->die();
+                    }
+                    else if (checkSquare->getIsPlayerOnTop())
+                    {
+                        checkSquare->getPlayerOnTop()->startDying();
+                    }
+                }
+            }
+        }
+    }
 }

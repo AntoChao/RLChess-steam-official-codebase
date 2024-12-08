@@ -93,6 +93,7 @@ void APlayerCharacter::setDied()
 	}
 
 	// call round manager to end its turn if it is the current player playing
+	/*
 	if (isPlayerTurn)
 	{
 		URoundManager* roundManager = URoundManager::get();
@@ -100,7 +101,7 @@ void APlayerCharacter::setDied()
 		{
 			roundManager->endCurPlayerTurn();
 		}
-	}
+	}*/
 }
 void APlayerCharacter::startDying()
 {
@@ -108,6 +109,8 @@ void APlayerCharacter::startDying()
 }
 void APlayerCharacter::beCollidedByPiece(APiece* pieceCollided)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("player be collided"));
+
 	startDying();
 }
 
@@ -140,7 +143,6 @@ void APlayerCharacter::benchAPiece(APiece* newPiece)
 		if (!aBenchSquare->getIsOccupied())
 		{
 			newPiece->bePlaced(aBenchSquare);
-			// aBenchSquare->beOccupied(newPiece);
 			break;
 		}
 	}
@@ -192,6 +194,12 @@ void APlayerCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	detect();
+
+	// need a real time update of board status on the piece selection
+	if ((isPlayerTurn) && IsValid(selectedPiece))
+	{
+		selectedPiece->BeInteracted(this);
+	}
 }
 
 void APlayerCharacter::detect()
@@ -221,6 +229,9 @@ void APlayerCharacter::detectReaction()
 
 		if (hitActor && detectedActorClass->ImplementsInterface(URLActor::StaticClass()))
 		{
+			DrawDebugLine(GetWorld(), hitActor->GetActorLocation(), hitActor->GetActorLocation() + FVector(0.0f, 0.0f, 500.0f), FColor::Blue, false, 1, 0, 1);
+
+
 			// Safely retrieve the interface
             IRLActor* DetectedInterface = Cast<IRLActor>(hitActor);
             if (DetectedInterface)
@@ -259,11 +270,12 @@ void APlayerCharacter::detectReaction()
 					}
 					else
 					{
+						// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("DETECTION: PLACE PIECE"));
 						curInteractionMode = EInteraction::ENone;
 					}
 				}
 				else
-				{
+				{	
 					curInteractionMode = EInteraction::ENone;
 				}
             }
@@ -276,6 +288,13 @@ void APlayerCharacter::startTurn()
 {
 	UE_LOG(LogTemp, Warning, TEXT("LOGG: PLAYER STARTING TURN"));
 	isPlayerTurn = true;
+	selectedSquare = nullptr;
+	unselectPiece();
+
+	for (APiece* eachPiece : army)
+	{
+		eachPiece->updateStatus();
+	}
 }
 
 void APlayerCharacter::endTurn()
@@ -410,7 +429,7 @@ void APlayerCharacter::interact()
 		}
 		case EInteraction::EPlacePiece:
 		{
-			placePiece();
+			selectPlacePieceLocation();
 			break;
 		}
 		case EInteraction::ENone:
@@ -458,17 +477,26 @@ void APlayerCharacter::selectPiece()
 	}
 }
 
-void APlayerCharacter::placePiece()
+void APlayerCharacter::selectPlacePieceLocation()
 {
 	// piece enter be place into new square
-	detectedActor->BeInteracted(this);
-
-	/*
-	URoundManager* roundManager = URoundManager::get();
-	if (roundManager)
+	selectedSquare = detectedActor;
+	if (setUpTime)
 	{
-		roundManager->endCurPlayerTurn();
-	}*/
+		moveSelectedPiece();
+	}
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Selecting place piece location"));
+}
+
+void APlayerCharacter::moveSelectedPiece()
+{
+	if (selectedSquare)
+	{
+		// piece enter be place into new square
+		selectedSquare->BeInteracted(this);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Placing Piece"));
+	}
+	unselectPiece();
 }
 
 bool APlayerCharacter::isAbleToPickUpItem()
@@ -478,7 +506,7 @@ bool APlayerCharacter::isAbleToPickUpItem()
 
 void APlayerCharacter::unselectPiece()
 {
-	// selectedPiece = nullptr;
+	selectedPiece = nullptr;
 
 	AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
 	if (gameBoard)

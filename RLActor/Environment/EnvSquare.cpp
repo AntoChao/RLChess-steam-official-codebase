@@ -21,6 +21,13 @@ AEnvSquare::AEnvSquare()
 	placeScene = CreateDefaultSubobject<USceneComponent>(TEXT("Place Scene"));
 	placeScene->SetupAttachment(squareMesh);
 
+	// Create the BoxComponent and attach it to the root
+	squareCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("Square Collision"));
+	squareCollision->SetupAttachment(RootComponent);
+	squareCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	squareCollision->SetCollisionObjectType(ECC_WorldDynamic);
+	squareCollision->SetCollisionResponseToAllChannels(ECR_Overlap);
+
 }
 
 void AEnvSquare::BeginPlay()
@@ -32,6 +39,13 @@ void AEnvSquare::BeginPlay()
 
 	// Initially set to transparent
 	setColor(FColor::Transparent);
+
+	// Bind the overlap events
+	if (squareCollision)
+	{
+		squareCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnvSquare::OnOverlapBegin);
+		squareCollision->OnComponentEndOverlap.AddDynamic(this, &AEnvSquare::OnOverlapEnd);
+	}
 }
 
 void AEnvSquare::initializeMaterials()
@@ -75,7 +89,7 @@ void AEnvSquare::BeInteracted(APlayerCharacter* Sender)
 	APiece* playerSelectedPiece = Sender->getSelectedPiece();
 	if (playerSelectedPiece)
 	{
-		// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PLACING PLAYER SELECTED PIECE"));
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PLACING PLAYER SELECTED PIECE"));
 		//beOccupied(playerSelectedPiece);
 		playerSelectedPiece->bePlaced(this);
 		
@@ -128,7 +142,7 @@ void AEnvSquare::occupiedPieceLeaved()
 	isOccupied = false;
 	occupiedPiece = nullptr;
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PIECE LEAVED SQUARE"));
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PIECE LEAVED SQUARE"));
 }
 
 bool AEnvSquare::getIsOccupied()
@@ -141,7 +155,44 @@ APiece* AEnvSquare::getOccupiedPiece()
 	return occupiedPiece;
 }
 
+bool AEnvSquare::getIsPlayerOnTop()
+{
+	return isPlayerOnTop;
+}
+APlayerCharacter* AEnvSquare::getPlayerOnTop()
+{
+	return playerOnTop;
+}
+
 FVector AEnvSquare::getPlacementLocation()
 {
 	return placeScene->GetComponentLocation();
+}
+
+void AEnvSquare::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, 
+	AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, 
+	bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && OtherActor != this)
+	{
+		if (OtherActor->IsA(APlayerCharacter::StaticClass()))
+		{
+			isPlayerOnTop = true;
+			playerOnTop = Cast<APlayerCharacter>(OtherActor);
+		}
+	}
+}
+
+void AEnvSquare::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, 
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	// Handle overlap end
+	if (OtherActor && OtherActor != this)
+	{
+		if (OtherActor->IsA(APlayerCharacter::StaticClass()))
+		{
+			isPlayerOnTop = false;
+			playerOnTop = nullptr;
+		}
+	}
 }

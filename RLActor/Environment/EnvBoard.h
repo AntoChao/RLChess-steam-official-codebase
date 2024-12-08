@@ -98,6 +98,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	bool isSquareOccupied(FVector2D aLocation);
+	UFUNCTION(BlueprintCallable, Category = "Board")
+	bool isPlayerOnTop(FVector2D aLocation);
 
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	bool isValidLocation(FVector2D aLocation);

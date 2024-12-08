@@ -36,3 +36,19 @@ TArray<FVector2D> APieceMage::calculatePossibleMove()
 
     return PossibleMoves;
 }
+
+void APieceMage::endMoving()
+{
+    swapLocation(targetSquare);
+
+    isMoving = false;
+    /*
+    curSquare = targetSquare;
+    // teleport to squareLocation
+    curSquare->beOccupied(this);*/
+
+    if (isKilledAnyActorThisTurn)
+    {
+        killEffect();
+    }
+}

@@ -11,6 +11,8 @@ APieceCannon::APieceCannon()
 TArray<FVector2D> APieceCannon::calculatePossibleMove()
 {
     TArray<FVector2D> PossibleMoves;
+    specialPossibleMove.Empty();
+    moveMode = EPieceMoveMode::EGround;
 
     if (!curSquare) // Ensure the cannon is on the board
     {
@@ -41,7 +43,7 @@ TArray<FVector2D> APieceCannon::calculatePossibleMove()
             FVector2D obstaclePosition;
             for (const FVector2D& Pos : FullLineMoves)
             {
-                if (GameBoard->isSquareOccupied(Pos))
+                if (GameBoard->isSquareOccupied(Pos) || GameBoard->isPlayerOnTop(Pos))
                 {
                     if (!foundObstacle)
                     {
@@ -55,6 +57,7 @@ TArray<FVector2D> APieceCannon::calculatePossibleMove()
                         if (Pos != obstaclePosition)
                         {
                             PossibleMoves.Add(Pos);
+                            specialPossibleMove.Add(Pos);
                             break; // Stop after the first valid capture position to mimic jumping over one piece
                         }
                     }
@@ -64,4 +67,9 @@ TArray<FVector2D> APieceCannon::calculatePossibleMove()
     }
 
     return PossibleMoves;
+}
+
+void APieceCannon::bePlacedSpecialSquareEffect(AEnvSquare* squareDestination)
+{
+    moveMode = EPieceMoveMode::EParabolicJump;
 }

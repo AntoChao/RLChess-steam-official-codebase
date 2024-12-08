@@ -92,109 +92,94 @@ AActor* UFactoryPiece::createRandom(FVector aLocation, FRotator aRotation)
 {
     int randomInt = FMath::RandRange(1, totalPiecesClassNum);
     
-    switch (randomInt)
+    return createRLActorByCode(randomInt, aLocation, aRotation);
+}
+
+AActor* UFactoryPiece::createRLActorByCode(int code, FVector aLocation, FRotator aRotation)
+{
+    switch (code)
     {
-        case 1:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Pawn"), aLocation, aRotation);
-        }
-        case 2:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Rook"), aLocation, aRotation);
-        }
-        case 3:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Knight"), aLocation, aRotation);
-        }
-        case 4:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Bishop"), aLocation, aRotation);
-        }
-        case 5:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Queen"), aLocation, aRotation);
-        }
-        case 6:
-        {
-            // wild card 
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Cannon"), aLocation, aRotation);
-        }
-        case 7:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Ranger"), aLocation, aRotation);
-        }
-        case 8:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Assassin"), aLocation, aRotation);
-        }
-        case 9:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Mage"), aLocation, aRotation);
-        }
-        case 10:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Samurai"), aLocation, aRotation);
-        }
-        case 11:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Cultist"), aLocation, aRotation);
-        }
-        case 12:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Scout"), aLocation, aRotation);
-        }
-        case 13:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Cowboy"), aLocation, aRotation);
-        }
-        case 14:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Warrior"), aLocation, aRotation);
-        }
-        case 15:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Doggy"), aLocation, aRotation);
-        }
-        case 16:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Doctor"), aLocation, aRotation);
-        }
-        case 17:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Witch"), aLocation, aRotation);
-        }
-        case 18:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Guard"), aLocation, aRotation);
-        }
-        case 19:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Ninja"), aLocation, aRotation);
-        }
-        case 20:
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Generated Random Piece Index: %d"), randomInt);
-            return createRLActor(TEXT("Catapult"), aLocation, aRotation);
-        }
+    case 1:
+    {
+        return createRLActor(TEXT("Pawn"), aLocation, aRotation);
+    }
+    case 2:
+    {
+        return createRLActor(TEXT("Rook"), aLocation, aRotation);
+    }
+    case 3:
+    {
+        return createRLActor(TEXT("Knight"), aLocation, aRotation);
+    }
+    case 4:
+    {
+        return createRLActor(TEXT("Bishop"), aLocation, aRotation);
+    }
+    case 5:
+    {
+        return createRLActor(TEXT("Queen"), aLocation, aRotation);
+    }
+    case 6:
+    {
+        // wild card 
+        return createRLActor(TEXT("Cannon"), aLocation, aRotation);
+    }
+    case 7:
+    {
+        return createRLActor(TEXT("Ranger"), aLocation, aRotation);
+    }
+    case 8:
+    {
+        return createRLActor(TEXT("Assassin"), aLocation, aRotation);
+    }
+    case 9:
+    {
+        return createRLActor(TEXT("Mage"), aLocation, aRotation);
+    }
+    case 10:
+    {
+        return createRLActor(TEXT("Samurai"), aLocation, aRotation);
+    }
+    case 11:
+    {
+        return createRLActor(TEXT("Cultist"), aLocation, aRotation);
+    }
+    case 12:
+    {
+        return createRLActor(TEXT("Scout"), aLocation, aRotation);
+    }
+    case 13:
+    {
+        return createRLActor(TEXT("Cowboy"), aLocation, aRotation);
+    }
+    case 14:
+    {
+        return createRLActor(TEXT("Warrior"), aLocation, aRotation);
+    }
+    case 15:
+    {
+        return createRLActor(TEXT("Doggy"), aLocation, aRotation);
+    }
+    case 16:
+    {
+        return createRLActor(TEXT("Doctor"), aLocation, aRotation);
+    }
+    case 17:
+    {
+        return createRLActor(TEXT("Witch"), aLocation, aRotation);
+    }
+    case 18:
+    {
+        return createRLActor(TEXT("Guard"), aLocation, aRotation);
+    }
+    case 19:
+    {
+        return createRLActor(TEXT("Ninja"), aLocation, aRotation);
+    }
+    case 20:
+    {
+        return createRLActor(TEXT("Catapult"), aLocation, aRotation);
+    }
     }
 
     return nullptr;

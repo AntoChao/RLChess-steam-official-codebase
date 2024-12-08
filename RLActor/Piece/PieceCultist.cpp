@@ -31,10 +31,16 @@ TArray<FVector2D> APieceCultist::calculatePossibleMove()
         // Iterate over each direction and calculate possible moves
         for (EPieceDirection Direction : Directions)
         {
-            TArray<FVector2D> LineMoves = getLineMoveWithFirstObstacle(CurrentLocation, Direction, movePoint);
+            TArray<FVector2D> LineMoves = getLineMoveWithNoObstacle(CurrentLocation, Direction, movePoint);
             PossibleMoves.Append(LineMoves);
         }
     }
 
     return PossibleMoves;
+}
+
+void APieceCultist::dieEffect()
+{
+    Super::dieEffect();
+    beExploted();
 }

@@ -11,7 +11,8 @@ APieceRanger::APieceRanger()
 TArray<FVector2D> APieceRanger::calculatePossibleMove()
 {
     TArray<FVector2D> PossibleMoves;
-
+    moveMode = EPieceMoveMode::EGround;
+    
     if (!curSquare)
     {
         return PossibleMoves;
@@ -29,10 +30,29 @@ TArray<FVector2D> APieceRanger::calculatePossibleMove()
 
         for (EPieceDirection Direction : Directions)
         {
-            TArray<FVector2D> DiagonalMoves = getLineMoveWithFirstObstacle(CurrentLocation, Direction, movePoint);
-            PossibleMoves.Append(DiagonalMoves);
+            TArray<FVector2D> LineMoves = getLineMoveWithFirstObstacle(CurrentLocation, Direction, movePoint);
+            PossibleMoves.Append(LineMoves);
         }
     }
 
     return PossibleMoves;
+}
+
+void APieceRanger::killEffect()
+{
+    moveMode = EPieceMoveMode::EStaticJump;
+
+    EPieceDirection backDirection = getOppositeDirection(lastMoveDirection);
+    FVector2D backVector = getDirectionVector(backDirection);
+    FVector2D backLocation = curSquare->getSquareLocation() + backVector;
+
+    UMapManager* mapManager = UMapManager::get();
+    AEnvBoard* gameBoard = mapManager->getGameBoard();
+
+    if (gameBoard)
+    {
+        AEnvSquare* backSquare = gameBoard->getSquareAtLocation(backLocation);
+
+        startMoving(backSquare);
+    }
 }

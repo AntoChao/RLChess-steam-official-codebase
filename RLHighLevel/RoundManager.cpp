@@ -103,7 +103,6 @@ void URoundManager::startPlayerSetUpTime()
         {
             GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("START SET UP ROUND"));
 
-
             for (APlayerCharacter* eachPlayer : allPlayers)
             {
                 eachPlayer->startSetup();
@@ -135,73 +134,64 @@ void URoundManager::endPlayerSetUpTime()
     }
 
     // start the turns
-    startTurns();
+    startPlayerPreparePhase();
 }
 
-void URoundManager::startTurns()
+void URoundManager::startPlayerPreparePhase()
 {
     roundCounter++;
-    startNextPlayerTurn();
-}
-
-void URoundManager::startNextPlayerTurn()
-{
-    // check if game finished
-    /* uncomment for multiplayer
-    checkIfGameEnd() */
-
-    turnCounter++;
-
-    if (allPlayers[curPlayerIndex]->checkIsAlive())
+    /*if (checkIfGameEnd())
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("START NEXT PLAYER TURN"));
+        gameEnd();
+    }
+    else*/
 
-        // enable player to move piece
-        allPlayers[curPlayerIndex]->startTurn();
-        // calculate the current turn and round
-        if (turnCounter % numPlayers == 0)
-        {
-            roundCounter++;
-            turnCounter = 0;
-        }
-        /*
-        // turn on the timer of player
+    if (gameplayGameMode)
+    {
         UWorld* gameWorld = gameplayGameMode->GetWorld();
         if (gameWorld)
         {
-            gameWorld->GetTimerManager().ClearTimer(playerTurnTimerHandle);
-            GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("RESET TIMER"));
+            GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("START SET UP ROUND"));
 
-            FTimerDelegate playerTurnTimerDel;
-            playerTurnTimerDel.BindUFunction(this, FName("endCurPlayerTurn"));
-            gameWorld->GetTimerManager().SetTimer(playerTurnTimerHandle, playerTurnTimerDel, turnTimeInSegs, false);
-        }*/
-    }
-    else
-    {
-        endCurPlayerTurn();
+            for (APlayerCharacter* eachPlayer : allPlayers)
+            {
+                eachPlayer->startTurn();
+            }
+
+            gameWorld->GetTimerManager().ClearTimer(playerPrepareTimerHandle);
+            FTimerDelegate playerPrepareTimerDel;
+            playerPrepareTimerDel.BindUFunction(this, FName("startPieceMovingPhase"));
+            gameWorld->GetTimerManager().SetTimer(playerPrepareTimerHandle, playerPrepareTimerDel, playerPrepareTimerSegs, false);
+        }
     }
 }
 
-void URoundManager::endCurPlayerTurn()
+void URoundManager::startPieceMovingPhase()
 {
-    // unenable player to move piece
-    allPlayers[curPlayerIndex]->endTurn();
-
-    // calculate the next player index and start its turn
-    curPlayerIndex++;
-    if (curPlayerIndex % numPlayers == 0)
+    // let all player move their pieces
+    for (APlayerCharacter* eachPlayer : allPlayers)
     {
-        curPlayerIndex = 0;
+        eachPlayer->endTurn();
+        eachPlayer->moveSelectedPiece();
     }
-    startNextPlayerTurn();
+    
+    // run a timer to start the prepare phase
+    if (gameplayGameMode)
+    {
+        UWorld* gameWorld = gameplayGameMode->GetWorld();
+        if (gameWorld)
+        {
+            gameWorld->GetTimerManager().ClearTimer(piecesMovedTimerHandle);
+            FTimerDelegate piecesMovedTimerDel;
+            piecesMovedTimerDel.BindUFunction(this, FName("startPlayerPreparePhase"));
+            gameWorld->GetTimerManager().SetTimer(piecesMovedTimerHandle, piecesMovedTimerDel, playerPrepareTimerSegs, false);
+        }
+    }
 }
-
 
 // should be called after player finish its move
-void URoundManager::checkIfGameEnd() {
+bool URoundManager::checkIfGameEnd() {
     int alivePlayerCounter = 0;
-    APlayerCharacter* winner = nullptr;
 
     for (APlayerCharacter* aPlayer : allPlayers)
     {
@@ -212,12 +202,14 @@ void URoundManager::checkIfGameEnd() {
         }
     }
 
-    if (alivePlayerCounter <= 1)
+    return alivePlayerCounter <= 1;
+}
+
+void URoundManager::gameEnd()
+{
+    if (gameplayGameMode && winner)
     {
-        if (gameplayGameMode)
-        {
-            gameplayGameMode->endGameplayGameMode(winner);
-        }
+        gameplayGameMode->endGameplayGameMode(winner);
     }
 }
 

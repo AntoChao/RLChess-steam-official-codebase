@@ -245,7 +245,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	void selectPiece();
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
-	void placePiece();
+	void selectPlacePieceLocation();
+	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	void moveSelectedPiece();
 
 	/* controller helper functions*/
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
@@ -289,6 +291,9 @@ protected:
 	APiece* selectedPiece = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	int selectedItemIndex = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
+	TScriptInterface<IRLActor> selectedSquare = nullptr;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
