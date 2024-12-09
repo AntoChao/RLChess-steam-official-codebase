@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "../RLActor.h"
-#include "InputActionValue.h"
 #include "../../CommonEnum.h"
 #include "PlayerCharacter.generated.h"
 
@@ -13,9 +12,12 @@
 class USceneComponent;
 class USkeletalMeshComponent;
 class UCameraComponent;
+struct FInputActionValue;
 
 class UAnimMontage;
 class USoundBase;
+
+class AAIRLController;
 
 class APiece;
 class AItem;
@@ -298,6 +300,11 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	APiece* getSelectedPiece();
+	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	void setSelectedPiece(APiece* aPiece);
+
+	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	void setSelectedSquare(AEnvSquare* aSquare);
 
 	/* item Effect*/
 protected:
@@ -307,5 +314,32 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable, Category = "Item Effect")
 	void desableItemsUsage(float duration); // run a counter
+
+/* AI relatived*/
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Controller")
+	bool isAIPossessed = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Controller")
+	AAIRLController* myAIController = nullptr;
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "AI Controller")
+	void setIsPossessedByAI(bool status, AAIRLController* aAIController);
+
+	UFUNCTION(BlueprintCallable, Category = "AI Controller")
+	void initializeArmy();
+
+	UFUNCTION(BlueprintCallable, Category = "AI Controller")
+	TArray<APiece*> getArmy();
+
+	UFUNCTION(BlueprintCallable, Category = "AI Controller")
+	void setRandomBench();
+
+	UFUNCTION(BlueprintCallable, Category = "AI Controller")
+	AEnvSquare* selectRandomBenchSquare();
+
+	UFUNCTION(BlueprintCallable, Category = "AI Controller")
+	void aiSelectMovement();
 };
 

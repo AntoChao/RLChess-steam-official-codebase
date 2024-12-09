@@ -4,11 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-
-#include "../RLActor/Environment/EnvBoard.h"
-#include "../RLActor/Player/PlayerCharacter.h"
-#include "../RLActor/Environment/EnvShop.h"
 #include "MapManager.generated.h"
+
+class AEnvBoard;
+class APlayerCharacter;
+class AEnvShop;
+class AEnvSquare;
 
 UCLASS(minimalapi)
 class UMapManager : public UObject
@@ -28,8 +29,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map Manager")
     AGameplayGameMode* gameplayGameMode = nullptr;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map Manager")
-    TArray<AEnvSquare*> Buildings;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop")
     AEnvShop* shop = nullptr;
@@ -56,8 +55,4 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Shop")
     AEnvShop* getShop() const { return shop; }
 
-protected:
-    void createWalls();
-
-    TArray<FVector> CalculateWallPositions(const FVector& center, int rowSize, int wallHeight);
 };

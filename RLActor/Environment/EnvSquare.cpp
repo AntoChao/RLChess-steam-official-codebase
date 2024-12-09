@@ -1,6 +1,11 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "EnvSquare.h"
+
+#include "Components/StaticMeshComponent.h"
+#include "Components/PrimitiveComponent.h"
+#include "Components/BoxComponent.h"
+
 #include "../Player/PlayerCharacter.h"
 #include "../Piece/Piece.h"
 #include "../../CommonEnum.h"

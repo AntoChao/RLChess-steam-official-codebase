@@ -7,11 +7,14 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "PlayerRLController.h"
+#include "InputActionValue.h"
 
 #include "Kismet/GameplayStatics.h"
 
 #include "../../RLHighLevel/GameplayGameMode.h"
 #include "../../RLHighLevel/RoundManager.h"
+
+#include "../AI/AIRLController.h"
 
 #include "../RLActor.h"
 #include "../Item/Item.h"
@@ -195,11 +198,12 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	detect();
 
+	/*
 	// need a real time update of board status on the piece selection
 	if ((isPlayerTurn) && IsValid(selectedPiece))
 	{
 		selectedPiece->BeInteracted(this);
-	}
+	}*/
 }
 
 void APlayerCharacter::detect()
@@ -229,8 +233,6 @@ void APlayerCharacter::detectReaction()
 
 		if (hitActor && detectedActorClass->ImplementsInterface(URLActor::StaticClass()))
 		{
-			DrawDebugLine(GetWorld(), hitActor->GetActorLocation(), hitActor->GetActorLocation() + FVector(0.0f, 0.0f, 500.0f), FColor::Blue, false, 1, 0, 1);
-
 
 			// Safely retrieve the interface
             IRLActor* DetectedInterface = Cast<IRLActor>(hitActor);
@@ -300,6 +302,7 @@ void APlayerCharacter::startTurn()
 void APlayerCharacter::endTurn()
 {
 	isPlayerTurn = false;
+	moveSelectedPiece();
 	unselectPiece();
 }
 
@@ -493,7 +496,7 @@ void APlayerCharacter::moveSelectedPiece()
 	if (selectedSquare)
 	{
 		// piece enter be place into new square
-		selectedSquare->BeInteracted(this);
+ 		selectedSquare->BeInteracted(this);
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Placing Piece"));
 	}
 	unselectPiece();
@@ -519,9 +522,73 @@ APiece* APlayerCharacter::getSelectedPiece()
 {
 	return selectedPiece;
 }
+void APlayerCharacter::setSelectedPiece(APiece* aPiece)
+{
+	selectedPiece = aPiece;
+}
+
+void APlayerCharacter::setSelectedSquare(AEnvSquare* aSquare)
+{
+	IRLActor* squareInterface = Cast<IRLActor>(aSquare);
+	if (squareInterface)
+	{
+		TScriptInterface<IRLActor> scriptInterface;
+		scriptInterface.SetObject(aSquare);
+		scriptInterface.SetInterface(squareInterface);
+	}
+}
 
 /* item Effect*/
 void APlayerCharacter::desableItemsUsage(float duration)
 {
 	return;
+}
+
+/* AI relatived*/
+void APlayerCharacter::setIsPossessedByAI(bool status, AAIRLController* aAIController)
+{
+	isAIPossessed = status;
+	myAIController = aAIController;
+}
+
+// call at beginning of setup
+void APlayerCharacter::initializeArmy()
+{
+	AEnvShop* gameShop = UMapManager::get()->getShop();
+
+	gameShop->fullFill(this);
+}
+
+TArray<APiece*> APlayerCharacter::getArmy()
+{
+	return army;
+}
+
+// call at end of setup
+void APlayerCharacter::setRandomBench()
+{
+	for (APiece* eachPiece : army)
+	{
+		AEnvSquare* randomBenchSquare = selectRandomBenchSquare();
+
+		eachPiece->bePlaced(randomBenchSquare);
+	}
+}
+
+AEnvSquare* APlayerCharacter::selectRandomBenchSquare()
+{
+	int randomInt = FMath::RandRange(0, playerBench.Num() - 1);
+
+	return playerBench[randomInt];
+}
+
+// called at the end of selecting phrase
+void APlayerCharacter::aiSelectMovement()
+{
+	if (myAIController)
+	{
+		myAIController->setCurrentValueMap();
+		myAIController->makeTheBestMove();
+		moveSelectedPiece();
+	}
 }

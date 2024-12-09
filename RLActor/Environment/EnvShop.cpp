@@ -1,10 +1,14 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "EnvShop.h"
+#include "Kismet/GameplayStatics.h"
+
 #include "../Factory/FactoryPiece.h"
 #include "../../RLHighLevel/GameplayGameMode.h"
 #include "../Piece/Piece.h"
 #include "../Item/Item.h"
+#include "EnvSquare.h"
+#include "EnvBoard.h"
 #include "../Player/PlayerCharacter.h"
 
 AEnvShop::AEnvShop()
@@ -196,4 +200,24 @@ void AEnvShop::closeShop()
 	}
 
 	productsInShop.Empty();
+}
+
+// sell all pieces for ai
+void AEnvShop::fullFill(APlayerCharacter* controlledPlayer)
+{
+	TScriptInterface<IRLProduct> randomProduct = selectRandomProduct();
+	while (controlledPlayer->isEnableToBuyProduct(randomProduct))
+	{
+		if (APiece* randomPiece = Cast<APiece>(randomProduct.GetObject()))
+		{
+			randomPiece->BeInteracted(controlledPlayer);
+		}
+	}
+}
+
+TScriptInterface<IRLProduct> AEnvShop::selectRandomProduct()
+{
+	int randomInt = FMath::RandRange(0, productsInShop.Num() - 1);
+
+	return productsInShop[randomInt];
 }

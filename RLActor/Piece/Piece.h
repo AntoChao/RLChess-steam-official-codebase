@@ -4,18 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Components/StaticMeshComponent.h"
-#include "Components/BoxComponent.h"
-#include "Curves/CurveFloat.h"
-#include "Math/UnrealMathUtility.h"
+
 #include "TimerManager.h"
-#include "Kismet/GameplayStatics.h"
 #include "Components/TimelineComponent.h"
+#include "GeometryCollection/GeometryCollectionComponent.h"
 
 #include "../RLActor.h"
 #include "../RLProduct.h"
 #include "../../CommonEnum.h"
 #include "Piece.generated.h"
+
+class UBoxComponent;
+class UCurveFloat;
+class UStaticMeshComponent;
 
 UCLASS(BlueprintType, Blueprintable)
 class APiece : public AActor, public IRLActor, public IRLProduct
@@ -29,7 +30,7 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
-/* RLActor functions*/
+	/* RLActor functions*/
 public:
 	virtual FString GetActorName() override;
 
@@ -60,7 +61,7 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	virtual void inBoardInteractedEffect(APlayerCharacter* Sender);
 
-/* Piece material information*/
+	/* Piece material information*/
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	UMaterialInterface* silverMaterial; // gray is neutrol
@@ -81,7 +82,7 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Piece Stats")
 	void initializeMaterials();
 
-/* Piece information*/
+	/* Piece information*/
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	FString pieceName;
@@ -106,9 +107,6 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Piece Stats")
 	void initializeDirection(AEnvSquare* squareDestination);
-
-	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
-	virtual TArray<FVector2D> calculatePossibleMove();
 
 	// common calculatepossiblemove move function
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
@@ -135,17 +133,12 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	EPieceDirection getOppositeDirection(EPieceDirection Direction);
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
-	virtual void dieEffect();
-
-
 /* piece collision*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Piece Collision")
-	UStaticMeshComponent* pieceBody;
+	UStaticMeshComponent* pieceStaticBody;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Piece Collision")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
 	UBoxComponent* pieceCollision;
-
 
 	UFUNCTION(BlueprintCallable, Category = "Piece Collision")
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -154,6 +147,32 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Piece Collision")
 		void collidedWithOtherPiece(APiece* collidedPiece);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
+		int collisionPriority = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
+		bool isDied = false;
+
+	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
+		void die(APiece* killer);
+
+	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
+		virtual void dieEffect(APiece* killer);
+		
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
+		float collideImpulseStrength = 1000.0f; // Adjust this value based on desired effect
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	int getPiecePriority();
+
+	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	bool getIsMoving();
+
+	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
+	void kill(APiece* pieceToKill);
+
 /* piece movement */
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Movement")
@@ -176,14 +195,13 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pawn Stats")
 	bool isKilledAnyActorThisTurn = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pawn Stats")
+	bool isKillEffectActive = true;
 
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	virtual void killEffect();
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
-	void die();
-
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	EPieceStatus getPieceStatus();
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
@@ -214,8 +232,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	void swapLocation(AEnvSquare* squareDestination);
-
 	
+	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
+	virtual TArray<FVector2D> calculatePossibleMove();
+
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	virtual void bePlacedInBoardEffect(AEnvSquare* squareDestination);
 

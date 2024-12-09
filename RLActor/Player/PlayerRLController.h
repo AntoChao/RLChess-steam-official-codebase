@@ -4,14 +4,14 @@
 #include "Engine/EngineTypes.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
-#include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
-#include "InputActionValue.h"
 
 #include "../../CommonEnum.h"
-#include "PlayerRLState.h"
 
 #include "PlayerRLController.generated.h"
+
+class APlayerRLState;
+struct FInputActionValue;
+class UEnhancedInputComponent;
 
 UCLASS(BlueprintType, Blueprintable)
 class APlayerRLController : public APlayerController

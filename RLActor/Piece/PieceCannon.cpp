@@ -33,33 +33,30 @@ TArray<FVector2D> APieceCannon::calculatePossibleMove()
         // Iterate over each direction for movement and capturing
         for (EPieceDirection Direction : Directions)
         {
-            // First, add all possible moves until the first obstacle or end of board
-            TArray<FVector2D> LineMovesNoObstacle = getLineMoveWithNoObstacle(CurrentLocation, Direction, INT_MAX);
-            PossibleMoves.Append(LineMovesNoObstacle);
-
-            // Then, find the first obstacle and any potential capture targets beyond it
-            TArray<FVector2D> FullLineMoves = getLineMove(CurrentLocation, Direction, INT_MAX);
             bool foundObstacle = false;
-            FVector2D obstaclePosition;
+            TArray<FVector2D> FullLineMoves = getLineMove(CurrentLocation, Direction, INT_MAX);
             for (const FVector2D& Pos : FullLineMoves)
             {
-                if (GameBoard->isSquareOccupied(Pos) || GameBoard->isPlayerOnTop(Pos))
+                if (!foundObstacle)
                 {
-                    if (!foundObstacle)
+                    if (GameBoard->isSquareOccupied(Pos))
                     {
-                        foundObstacle = true;
-                        obstaclePosition = Pos;
-                        continue; // Continue to find a capture target beyond this obstacle
+                        foundObstacle = true; // First obstacle found, next occupied square can be a capture target
+                        continue;
                     }
                     else
                     {
-                        // Check for capture target beyond the first obstacle
-                        if (Pos != obstaclePosition)
-                        {
-                            PossibleMoves.Add(Pos);
-                            specialPossibleMove.Add(Pos);
-                            break; // Stop after the first valid capture position to mimic jumping over one piece
-                        }
+                        PossibleMoves.Add(Pos); // Add as a potential move if no obstacle yet
+                    }
+                }
+                else
+                {
+                    // After finding the first obstacle, look for the next occupied square to capture
+                    if (GameBoard->isSquareOccupied(Pos))
+                    {
+                        PossibleMoves.Add(Pos); // Add this position as a special move
+                        specialPossibleMove.Add(Pos);
+                        break; // Stop searching in this direction after finding a capture target
                     }
                 }
             }

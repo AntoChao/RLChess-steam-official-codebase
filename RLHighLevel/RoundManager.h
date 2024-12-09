@@ -5,10 +5,12 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 
-#include "../RLActor/Environment/EnvBoard.h"
-#include "../RLActor/Player/PlayerCharacter.h"
-#include "../RLActor/Environment/EnvShop.h"
 #include "RoundManager.generated.h"
+
+class AEnvBoard;
+class APlayerCharacter;
+class AEnvShop;
+class APiece;
 
 UCLASS(minimalapi)
 class URoundManager : public UObject

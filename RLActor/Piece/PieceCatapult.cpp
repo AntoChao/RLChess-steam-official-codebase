@@ -24,9 +24,7 @@ TArray<FVector2D> APieceCatapult::calculatePossibleMove()
 
         TArray<FVector2D> AdjacentDirections = {
             FVector2D(-1, 0), FVector2D(1, 0),  // Up, Down
-            FVector2D(0, -1), FVector2D(0, 1),  // Left, Right
-            FVector2D(-1, -1), FVector2D(-1, 1), // UpLeft, UpRight
-            FVector2D(1, -1), FVector2D(1, 1)   // DownLeft, DownRight
+            FVector2D(0, -1), FVector2D(0, 1)  // Left, Right
         };
 
         for (const FVector2D& Direction : AdjacentDirections)

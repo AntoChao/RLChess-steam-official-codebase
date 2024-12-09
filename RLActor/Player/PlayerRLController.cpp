@@ -2,6 +2,11 @@
 #include "../../RLHighLevel/RLInstance.h"
 #include "PlayerCharacter.h"
 
+#include "PlayerRLState.h"
+#include "InputActionValue.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+
 APlayerRLController::APlayerRLController()
 {
 	

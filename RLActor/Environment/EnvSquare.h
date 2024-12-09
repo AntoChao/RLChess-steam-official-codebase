@@ -5,11 +5,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "../RLActor.h"
-#include "Components/StaticMeshComponent.h"
-#include "Components/PrimitiveComponent.h"
-#include "Components/BoxComponent.h"
 #include "Materials/MaterialInterface.h"
 #include "EnvSquare.generated.h"
+
+class UStaticMeshComponent;
+class UPrimitiveComponent;
+class UBoxComponent;
 
 UCLASS(BlueprintType, Blueprintable)
 class AEnvSquare : public AActor, public IRLActor

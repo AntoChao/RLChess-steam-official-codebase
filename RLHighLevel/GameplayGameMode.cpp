@@ -4,6 +4,9 @@
 #include "../RLActor/Factory/FactoryPlayer.h"
 #include "../RLActor/Factory/FactoryEnvironment.h"
 #include "../RLActor/Player/PlayerRLController.h"
+#include "../RLActor/Factory/FactoryItem.h"
+#include "../RLActor/Factory/FactoryPiece.h"
+
 #include "../RLActor/Player/PlayerCharacter.h"
 
 AGameplayGameMode::AGameplayGameMode() {

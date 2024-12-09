@@ -2,13 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "RLFactory.h"
-#include "../Environment/EnvBoard.h"
-#include "../Environment/EnvShop.h"
-#include "../Environment/EnvSquare.h"
 
 #include "FactoryEnvironment.generated.h"
 
 class AEnvBoard;
+class AEnvShop;
+class AEnvSquare;
 
 UCLASS(Blueprintable)
 class UFactoryEnvironment : public URLFactory

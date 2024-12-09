@@ -41,7 +41,7 @@ TArray<FVector2D> APieceScout::calculatePossibleMove()
     return PossibleMoves;
 }
 
-void APieceScout::inBoardInteractedEffect(APlayerCharacter* Sender)
+void APieceScout::inBenchInteractedEffect(APlayerCharacter* Sender)
 {
     UMapManager* mapManager = UMapManager::get();
     AEnvBoard* gameBoard = mapManager->getGameBoard();
@@ -49,5 +49,31 @@ void APieceScout::inBoardInteractedEffect(APlayerCharacter* Sender)
     if (gameBoard)
     {
         gameBoard->setAllUnoccupiedColor(pieceColor);
+    }
+}
+
+void APieceScout::bePlacedInBenchEffect(AEnvSquare* squareDestination)
+{
+    // enable swap position
+    if (squareDestination->getIsOccupied())
+    {
+        if (curSquare->getSquareColorField() == pieceColor && 
+            squareDestination->getSquareColorField() == pieceColor)
+        {
+            swapLocation(squareDestination);
+        }
+    }
+    else
+    {
+        // setPieceStatus(EPieceStatus::EInBoard);
+        if (IsValid(curSquare))
+        {
+            curSquare->occupiedPieceLeaved();
+        }
+
+        // teleport to squareLocation
+        curSquare = squareDestination;
+        curSquare->beOccupied(this);
+        SetActorLocation(curSquare->getPlacementLocation());
     }
 }

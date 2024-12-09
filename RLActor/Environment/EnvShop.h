@@ -5,8 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "../RLActor.h"
-#include "UObject/Class.h"
-#include "ShopWidget.h"
 #include "EnvShop.generated.h"
 
 UCLASS(BlueprintType, Blueprintable)
@@ -51,6 +49,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Shop Stats")
 	void closeShop();
+
+	UFUNCTION(BlueprintCallable, Category = "Shop Stats")
+	void fullFill(APlayerCharacter* controlledPlayer);
+
+	UFUNCTION(BlueprintCallable, Category = "Shop Stats")
+	TScriptInterface<IRLProduct> selectRandomProduct();
 
 };
 

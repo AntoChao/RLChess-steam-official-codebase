@@ -34,15 +34,10 @@ TArray<FVector2D> APieceCowboy::calculatePossibleMove()
             PossibleMoves.Append(LineMoves);
 
             // Detect the first obstacle in the same directions beyond the free movement
-            TArray<FVector2D> LineWithFirstObstacle = getLineMoveWithFirstObstacle(CurrentLocation, Direction, INT_MAX);
-            if (!LineWithFirstObstacle.IsEmpty())
+            TArray<FVector2D> LineWithFirstObstacle = getLineMoveWithFirstObstacle(CurrentLocation, Direction, movePoint + 2);
+            if (LineWithFirstObstacle.Num() > movePoint)
             {
-                // Only add the position of the first obstacle, which is the first element after the free moves
-                if (LineWithFirstObstacle.Num() > LineMoves.Num())  // Ensure there is an obstacle beyond free moves
-                {
-                    PossibleMoves.Add(LineWithFirstObstacle[LineMoves.Num()]);  // The first obstacle after the last free move
-                    specialPossibleMove.Add(LineWithFirstObstacle[LineMoves.Num()]);
-                }
+                specialPossibleMove.Add(LineWithFirstObstacle[LineWithFirstObstacle.Num()]);
             }
         }
     }

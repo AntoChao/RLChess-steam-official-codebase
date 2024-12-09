@@ -2,6 +2,12 @@
 
 #include "Piece.h"
 
+#include "Kismet/GameplayStatics.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/BoxComponent.h"
+#include "Curves/CurveFloat.h"
+#include "Math/UnrealMathUtility.h"
+
 #include "../../RLHighLevel/GameplayGameMode.h"
 
 #include "../Environment/EnvShop.h"
@@ -16,21 +22,19 @@ APiece::APiece()
     SetRootComponent(Root);
 
     // Create the StaticMeshComponent and attach it to the root
-    pieceBody = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Body"));
-    pieceBody->SetupAttachment(RootComponent);
+    pieceStaticBody = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Destructable Body"));
+
+    pieceStaticBody->SetupAttachment(RootComponent);
+    pieceStaticBody->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    pieceStaticBody->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+
 
     // Create the BoxComponent and attach it to the root
     pieceCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision"));
     pieceCollision->SetupAttachment(RootComponent);
-
-    // Configure Collision Settings
-    pieceCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    pieceCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
     pieceCollision->SetCollisionObjectType(ECC_WorldDynamic);
     pieceCollision->SetCollisionResponseToAllChannels(ECR_Overlap);
-    pieceCollision->SetBoxExtent(FVector(50.0f, 50.0f, 50.0f));
-
-    // Movement
-    // movementTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("MovementTimeline"));
 
     PrimaryActorTick.bCanEverTick = true;
 }
@@ -114,6 +118,8 @@ void APiece::inShopInteractedEffect(APlayerCharacter* Sender)
         pieceAsProduct.SetInterface(Cast<IRLProduct>(this));
 
         gameShop->sellProduct(Sender, pieceAsProduct);
+        
+        setPieceStatus(EPieceStatus::EInBench);
     }
 }
 
@@ -201,21 +207,21 @@ FVector2D APiece::getDirectionVector(EPieceDirection Direction) const
     switch (Direction)
     {
     case EPieceDirection::EUp:
-        return FVector2D(0, 1);
-    case EPieceDirection::EDown:
-        return FVector2D(0, -1);
-    case EPieceDirection::ELeft:
         return FVector2D(-1, 0);
-    case EPieceDirection::ERight:
+    case EPieceDirection::EDown:
         return FVector2D(1, 0);
+    case EPieceDirection::ELeft:
+        return FVector2D(0, -1);
+    case EPieceDirection::ERight:
+        return FVector2D(0, 1);
     case EPieceDirection::EUpLeft:
-        return FVector2D(-1, 1);
-    case EPieceDirection::EUpRight:
-        return FVector2D(1, 1);
-    case EPieceDirection::EDownLeft:
         return FVector2D(-1, -1);
-    case EPieceDirection::EDownRight:
+    case EPieceDirection::EUpRight:
+        return FVector2D(-1, 1);
+    case EPieceDirection::EDownLeft:
         return FVector2D(1, -1);
+    case EPieceDirection::EDownRight:
+        return FVector2D(1, 1);
     default:
         return FVector2D(0, 0); // Should ideally never be hit
     }
@@ -224,14 +230,14 @@ FVector2D APiece::getDirectionVector(EPieceDirection Direction) const
 EPieceDirection APiece::directionVectorToEnum(FVector2D DirectionVector) const
 {
     // Mapping direction vectors to the corresponding enum values for all eight directions
-    if (DirectionVector == FVector2D(0, 1)) return EPieceDirection::EUp;
-    if (DirectionVector == FVector2D(0, -1)) return EPieceDirection::EDown;
-    if (DirectionVector == FVector2D(-1, 0)) return EPieceDirection::ELeft;
-    if (DirectionVector == FVector2D(1, 0)) return EPieceDirection::ERight;
-    if (DirectionVector == FVector2D(-1, 1)) return EPieceDirection::EUpLeft;
-    if (DirectionVector == FVector2D(1, 1)) return EPieceDirection::EUpRight;
-    if (DirectionVector == FVector2D(-1, -1)) return EPieceDirection::EDownLeft;
-    if (DirectionVector == FVector2D(1, -1)) return EPieceDirection::EDownRight;
+    if (DirectionVector == FVector2D(-1, 0)) return EPieceDirection::EUp;
+    if (DirectionVector == FVector2D(1, 0)) return EPieceDirection::EDown;
+    if (DirectionVector == FVector2D(0, -1)) return EPieceDirection::ELeft;
+    if (DirectionVector == FVector2D(0, 1)) return EPieceDirection::ERight;
+    if (DirectionVector == FVector2D(-1, -1)) return EPieceDirection::EUpLeft;
+    if (DirectionVector == FVector2D(-1, 1)) return EPieceDirection::EUpRight;
+    if (DirectionVector == FVector2D(1, -1)) return EPieceDirection::EDownLeft;
+    if (DirectionVector == FVector2D(1, 1)) return EPieceDirection::EDownRight;
     return EPieceDirection::ENone; // Return a default case if no direction matches
 }
 
@@ -385,17 +391,45 @@ EPieceDirection APiece::getOppositeDirection(EPieceDirection Direction)
     return EPieceDirection::ENone;
 }
 
-void APiece::die()
+void APiece::die(APiece* killer)
 {
-    dieEffect();
+    dieEffect(killer);
 }
 
-void APiece::dieEffect()
+void APiece::dieEffect(APiece* killer)
 {
+    DrawDebugPoint(GetWorld(), GetActorLocation(), 300.0f, FColor::Red, false, 5.0f);
+
+    if (killer)
+    {
+        FVector KillerLocation = killer->GetActorLocation();
+        FVector MyLocation = GetActorLocation();
+
+        // Calculate the direction vector from the killer to this piece
+        FVector Direction = (MyLocation - KillerLocation).GetSafeNormal();
+
+        
+
+        // Apply the impulse to the piece's body
+        pieceStaticBody->AddImpulse(Direction * collideImpulseStrength, NAME_None, true);
+    }
+
+    // Additional logic to handle the piece's death, such as removing it from the game board
+
     if (isLaunched)
     {
         beExploted();
     }
+}
+
+int APiece::getPiecePriority()
+{
+    return collisionPriority;
+}
+
+bool APiece::getIsMoving()
+{
+    return isMoving;
 }
 
 /* piece collision*/
@@ -409,8 +443,14 @@ void APiece::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Ot
         {
             if (OtherActor->IsA(APiece::StaticClass()))
             {
-                APiece* collidedPiece = Cast<APiece>(OtherActor);
-                collidedWithOtherPiece(collidedPiece);
+
+                DrawDebugLine(GetWorld(), GetActorLocation(), OtherActor->GetActorLocation() + FVector(0.0f, 0.0f, 500.0f), FColor::Blue, false, 1, 0, 1);
+
+                if (OtherActor != this)
+                {
+                    APiece* collidedPiece = Cast<APiece>(OtherActor);
+                    collidedWithOtherPiece(collidedPiece);
+                }
             }
             else if (OtherActor->IsA(APlayerCharacter::StaticClass()))
             {
@@ -425,8 +465,35 @@ void APiece::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 void APiece::collidedWithOtherPiece(APiece* collidedPiece)
 {
     GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("piece be collided with other piece"));
+    
+    if (collidedPiece)
+    {
+        if (collidedPiece->getIsMoving())
+        {
+            if (collisionPriority > collidedPiece->getPiecePriority())
+            {
+                kill(collidedPiece);
+            }
+            else if (collisionPriority > collidedPiece->getPiecePriority())
+            {
+                collidedPiece->kill(this);
+            }
+            else
+            {
+                kill(collidedPiece);
+                die(collidedPiece);
+            }
+        }
+        else
+        {
+            kill(collidedPiece);
+        }
+    }
+}
 
-    // if didnt got destory, it kill someone
+void APiece::kill(APiece* pieceToKill)
+{
+    pieceToKill->die(this);
     isKilledAnyActorThisTurn = true;
 }
 
@@ -448,16 +515,16 @@ void APiece::setPieceColor(FColor aColor)
     {
         UMaterialInterface* SelectedMaterial = colorToMaterial[aColor];
 
-        if (SelectedMaterial && pieceBody)
+        if (SelectedMaterial && pieceStaticBody)
         {
-            int32 MaterialCount = pieceBody->GetNumMaterials(); // Get the number of materials on the mesh
+            int32 MaterialCount = pieceStaticBody->GetNumMaterials(); // Get the number of materials on the mesh
             for (int32 Index = 0; Index < MaterialCount; ++Index)
             {
-                pieceBody->SetMaterial(Index, SelectedMaterial); // Set the material for each index
+                pieceStaticBody->SetMaterial(Index, SelectedMaterial); // Set the material for each index
             }
         }
 
-        pieceBody->SetVisibility(true); // Ensure the piece is visible after setting the materials
+        pieceStaticBody->SetVisibility(true); // Ensure the piece is visible after setting the materials
     }
 }
 
@@ -515,7 +582,7 @@ void APiece::bePlaced(AEnvSquare* squareDestination)
 
 void APiece::bePlacedInShopEffect(AEnvSquare* squareDestination)
 {
-    setPieceStatus(EPieceStatus::EInBench);
+    // setPieceStatus(EPieceStatus::EInBench);
 
     if (IsValid(curSquare))
     {
@@ -524,7 +591,7 @@ void APiece::bePlacedInShopEffect(AEnvSquare* squareDestination)
 
     // teleport to squareLocation
     curSquare = squareDestination;
-    initializeDirection(squareDestination); // initialize the direction
+    initializeDirection(curSquare); // initialize the direction
 
     curSquare->beOccupied(this);
     SetActorLocation(curSquare->getPlacementLocation());
@@ -539,7 +606,6 @@ void APiece::bePlacedInBenchEffect(AEnvSquare* squareDestination)
     }
     else
     {
-        // setPieceStatus(EPieceStatus::EInBoard);
         if (IsValid(curSquare))
         {
             curSquare->occupiedPieceLeaved();
@@ -683,7 +749,7 @@ void APiece::endMoving()
         isResting = true;
     }
 
-    if (isKilledAnyActorThisTurn)
+    if (isKillEffectActive && isKilledAnyActorThisTurn)
     {
         killEffect();
     }
@@ -833,7 +899,7 @@ void APiece::beLaunchedTo(AEnvSquare* SquareDestination)
 
 void APiece::launchEndEffect()
 {
-    die();
+    die(this);
 }
 
 void APiece::beExploted()
@@ -863,7 +929,7 @@ void APiece::beExploted()
                 {
                     if (checkSquare->getIsOccupied())
                     {
-                        checkSquare->getOccupiedPiece()->die();
+                        checkSquare->getOccupiedPiece()->die(this);
                     }
                     else if (checkSquare->getIsPlayerOnTop())
                     {

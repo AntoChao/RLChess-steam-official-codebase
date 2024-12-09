@@ -70,7 +70,7 @@ void APieceWarrior::endMoving()
                     APiece* checkPiece = GameBoard->getPieceAtLocation(locToCheck);
                     if (checkPiece)
                     {
-                        checkPiece->die();
+                        kill(checkPiece);
                     }
                 }
             }

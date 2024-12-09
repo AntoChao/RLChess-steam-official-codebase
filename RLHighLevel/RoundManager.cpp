@@ -6,6 +6,10 @@
 #include "MapManager.h"
 #include "Kismet/GameplayStatics.h"
 
+#include "../RLActor/Environment/EnvBoard.h"
+#include "../RLActor/Player/PlayerCharacter.h"
+#include "../RLActor/Environment/EnvShop.h"
+
 URoundManager* URoundManager::roundManagerInstance = nullptr;
 
 URoundManager::URoundManager(){
@@ -172,7 +176,7 @@ void URoundManager::startPieceMovingPhase()
     for (APlayerCharacter* eachPlayer : allPlayers)
     {
         eachPlayer->endTurn();
-        eachPlayer->moveSelectedPiece();
+        // eachPlayer->moveSelectedPiece();
     }
     
     // run a timer to start the prepare phase

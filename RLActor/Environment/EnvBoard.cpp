@@ -4,6 +4,7 @@
 #include "../Factory/FactoryEnvironment.h"
 #include "../../RLHighLevel/GameplayGameMode.h"
 #include "EnvSquare.h"
+#include "Kismet/GameplayStatics.h"
 #include "../Player/PlayerCharacter.h"
 
 AEnvBoard::AEnvBoard() {
@@ -168,36 +169,21 @@ FVector AEnvBoard::getPlayerPlacementOffset(int playerIndex)
 
 EPieceDirection AEnvBoard::calculateInitDirection(FVector2D initLocation)
 {
-    // Calculate the direction vector
-    FVector2D directionVector = centerLocation - initLocation;
-
-    // Normalize the vector to find the dominant direction
-    directionVector.Normalize();
-
-    // Determine the direction based on the vector components
-    if (FMath::Abs(directionVector.X) > FMath::Abs(directionVector.Y))
+    if (initLocation.X < 2)
     {
-        // Horizontal dominance
-        if (directionVector.X > 0)
-        {
-            return EPieceDirection::ERight;
-        }
-        else
-        {
-            return EPieceDirection::ELeft;
-        }
+        return EPieceDirection::ERight;
     }
-    else
+    if (initLocation.X >= (rowSize - 2))
     {
-        // Vertical dominance
-        if (directionVector.Y > 0)
-        {
-            return EPieceDirection::EUp;
-        }
-        else
-        {
-            return EPieceDirection::EDown;
-        }
+        return EPieceDirection::EUp;
+    }
+    if (initLocation.Y < 2)
+    {
+        return EPieceDirection::ELeft;
+    }
+    if (initLocation.Y >= (rowSize - 2))
+    {
+        return EPieceDirection::ERight;
     }
 
     return EPieceDirection::ENone; // Fallback (e.g., when InitPoint == CenterLocation)

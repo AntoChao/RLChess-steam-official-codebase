@@ -1,6 +1,10 @@
 #include "FactoryEnvironment.h"
 #include "../RLActor.h"
 
+#include "../Environment/EnvBoard.h"
+#include "../Environment/EnvShop.h"
+#include "../Environment/EnvSquare.h"
+
 AActor* UFactoryEnvironment::createRLActor(const FString& name, FVector aLocation, FRotator aRotation)
 {
     if (name == TEXT("Board"))

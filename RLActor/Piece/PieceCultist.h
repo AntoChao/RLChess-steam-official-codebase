@@ -16,5 +16,5 @@ public:
     // Override the function to calculate possible moves for the rook
     virtual TArray<FVector2D> calculatePossibleMove() override;
 
-    virtual void dieEffect() override;
+    virtual void dieEffect(APiece* killer) override;
 };

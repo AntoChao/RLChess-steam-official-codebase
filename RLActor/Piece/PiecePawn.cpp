@@ -26,7 +26,13 @@ TArray<FVector2D> APiecePawn::calculatePossibleMove()
         FVector2D ForwardDirection = getDirectionVector(pieceDirection);
 
         // Forward movement up to movePoint spaces, handling initial move scenarios
-        TArray<FVector2D> ForwardMoves = getLineMoveWithFirstObstacle(CurrentLocation, pieceDirection, movePoint);
+        int curMovePoint = movePoint;
+        if (!bHasMoved)
+        {
+            curMovePoint = curMovePoint + 1;
+        }
+
+        TArray<FVector2D> ForwardMoves = getLineMoveWithFirstObstacle(CurrentLocation, pieceDirection, curMovePoint);
         PossibleMoves.Append(ForwardMoves);
 
         // Diagonal capturing: Check each diagonal direction for potential captures
