@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "../RLActor.h"
+#include "../RLProduct.h"
+
 #include "EnvShop.generated.h"
 
 UCLASS(BlueprintType, Blueprintable)
@@ -15,6 +17,8 @@ class AEnvShop : public AActor, public IRLActor
 public:
 	AEnvShop();
 	
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	virtual void BeginPlay() override;
 
 	virtual FString GetActorName() override;
@@ -28,33 +32,33 @@ public:
 	virtual void BeUnInteracted(APlayerCharacter* Sender) override;
 
 protected:
-	UFUNCTION(BlueprintCallable, Category = "Square Stats")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Square Stats")
 	void createRandomShop();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop Stats")
 	int piecesProductTotalNum = 25;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Shop Stats")
 	TArray<TScriptInterface<IRLProduct>> productsInShop;
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "Shop Stats")
-	void sellProduct(APlayerCharacter* player, TScriptInterface<IRLProduct> specificProduct);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Shop Stats")
+	void sellProduct(APlayerCharacter* player, APiece* specificProduct);
 
-	UFUNCTION(BlueprintCallable, Category = "Shop Stats")
-	void refillProduct(TScriptInterface<IRLProduct> specificProduct);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Shop Stats")
+	void refillProduct(APiece* specificProduct);
 
 
-	UFUNCTION(BlueprintCallable, Category = "Shop Stats")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Shop Stats")
 	void refreshShop(APlayerCharacter* player);
 
-	UFUNCTION(BlueprintCallable, Category = "Shop Stats")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Shop Stats")
 	void closeShop();
 
-	UFUNCTION(BlueprintCallable, Category = "Shop Stats")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Shop Stats")
 	void fullFill(APlayerCharacter* controlledPlayer);
 
 	UFUNCTION(BlueprintCallable, Category = "Shop Stats")
-	TScriptInterface<IRLProduct> selectRandomProduct();
+	APiece* selectRandomProduct();
 
 };
 

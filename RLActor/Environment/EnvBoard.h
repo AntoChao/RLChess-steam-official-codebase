@@ -18,7 +18,7 @@ public:
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Board")
-	void initialized(TArray<APlayerCharacter*> allPlayers);
+	void initialized();
 
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	void initializeBoardColor(TArray<APlayerCharacter*> allPlayers);

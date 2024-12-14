@@ -7,6 +7,7 @@
 #include "Components/BoxComponent.h"
 #include "Curves/CurveFloat.h"
 #include "Math/UnrealMathUtility.h"
+#include "Net/UnrealNetwork.h"
 
 #include "../../RLHighLevel/GameplayGameMode.h"
 
@@ -17,6 +18,9 @@
 
 APiece::APiece()
 {
+    // Enable network replication
+    bReplicates = true;
+
     // Create and set the root component as a SceneComponent
     USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
     SetRootComponent(Root);
@@ -37,6 +41,28 @@ APiece::APiece()
     pieceCollision->SetCollisionResponseToAllChannels(ECR_Overlap);
 
     PrimaryActorTick.bCanEverTick = true;
+}
+
+void APiece::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    //Replicate current health.
+    DOREPLIFETIME(APiece, pieceStatus);
+    DOREPLIFETIME(APiece, pieceDirection);
+    DOREPLIFETIME(APiece, movePoint);
+    DOREPLIFETIME(APiece, requireResting);
+    DOREPLIFETIME(APiece, curRestingCount);
+    DOREPLIFETIME(APiece, bHasMoved);
+    DOREPLIFETIME(APiece, isKilledAnyActorThisTurn);
+    DOREPLIFETIME(APiece, curSquare);
+    DOREPLIFETIME(APiece, isDied);
+    DOREPLIFETIME(APiece, isResting);
+    DOREPLIFETIME(APiece, isMoving);
+
+    DOREPLIFETIME(APiece, isKillEffectActive);
+    DOREPLIFETIME(APiece, moveMode);
+    DOREPLIFETIME(APiece, isLaunched);
 }
 
 void APiece::BeginPlay()
@@ -113,11 +139,12 @@ void APiece::inShopInteractedEffect(APlayerCharacter* Sender)
     AEnvShop* gameShop = mapManager->getShop();
     if (gameShop)
     {
+        /*
         TScriptInterface<IRLProduct> pieceAsProduct;
         pieceAsProduct.SetObject(this);
-        pieceAsProduct.SetInterface(Cast<IRLProduct>(this));
+        pieceAsProduct.SetInterface(Cast<IRLProduct>(this));*/
 
-        gameShop->sellProduct(Sender, pieceAsProduct);
+        gameShop->sellProduct(Sender, this);
         
         setPieceStatus(EPieceStatus::EInBench);
     }
@@ -188,7 +215,7 @@ void APiece::initializeMaterials()
 }
 
 /* piece information*/
-void APiece::initializeDirection(AEnvSquare* squareDestination)
+void APiece::initializeDirection_Implementation(AEnvSquare* squareDestination)
 {
     AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
     pieceDirection = gameBoard->calculateInitDirection(squareDestination->getSquareLocation());
@@ -391,12 +418,12 @@ EPieceDirection APiece::getOppositeDirection(EPieceDirection Direction)
     return EPieceDirection::ENone;
 }
 
-void APiece::die(APiece* killer)
+void APiece::die_Implementation(APiece* killer)
 {
     dieEffect(killer);
 }
 
-void APiece::dieEffect(APiece* killer)
+void APiece::dieEffect_Implementation(APiece* killer)
 {
     DrawDebugPoint(GetWorld(), GetActorLocation(), 300.0f, FColor::Red, false, 5.0f);
 
@@ -462,7 +489,7 @@ void APiece::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Ot
     }
 }
 
-void APiece::collidedWithOtherPiece(APiece* collidedPiece)
+void APiece::collidedWithOtherPiece_Implementation(APiece* collidedPiece)
 {
     GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("piece be collided with other piece"));
     
@@ -491,7 +518,7 @@ void APiece::collidedWithOtherPiece(APiece* collidedPiece)
     }
 }
 
-void APiece::kill(APiece* pieceToKill)
+void APiece::kill_Implementation(APiece* pieceToKill)
 {
     pieceToKill->die(this);
     isKilledAnyActorThisTurn = true;
@@ -502,12 +529,12 @@ EPieceStatus APiece::getPieceStatus()
 {
     return pieceStatus;
 }
-void APiece::setPieceStatus(EPieceStatus newStatus)
+void APiece::setPieceStatus_Implementation(EPieceStatus newStatus)
 {
     pieceStatus = newStatus;
 }
 
-void APiece::setPieceColor(FColor aColor)
+void APiece::setPieceColor_Implementation(FColor aColor)
 {
     pieceColor = aColor;
 
@@ -538,11 +565,11 @@ int APiece::getLevel()
     return pieceLevel;
 }
 
-void APiece::updateStatus()
+void APiece::updateStatusByTurn_Implementation()
 {
     updateRestStatus();
 }
-void APiece::updateRestStatus()
+void APiece::updateRestStatus_Implementation()
 {
     if (isResting)
     {
@@ -580,7 +607,7 @@ void APiece::bePlaced(AEnvSquare* squareDestination)
     }
 }
 
-void APiece::bePlacedInShopEffect(AEnvSquare* squareDestination)
+void APiece::bePlacedInShopEffect_Implementation(AEnvSquare* squareDestination)
 {
     // setPieceStatus(EPieceStatus::EInBench);
 
@@ -597,7 +624,7 @@ void APiece::bePlacedInShopEffect(AEnvSquare* squareDestination)
     SetActorLocation(curSquare->getPlacementLocation());
 }
 
-void APiece::bePlacedInBenchEffect(AEnvSquare* squareDestination)
+void APiece::bePlacedInBenchEffect_Implementation(AEnvSquare* squareDestination)
 {
     // enable swap position
     if (squareDestination->getIsOccupied())
@@ -618,7 +645,7 @@ void APiece::bePlacedInBenchEffect(AEnvSquare* squareDestination)
     }
 }
 
-void APiece::swapLocation(AEnvSquare* squareDestination)
+void APiece::swapLocation_Implementation(AEnvSquare* squareDestination)
 {
     if (squareDestination && curSquare)
     {
@@ -643,7 +670,7 @@ void APiece::swapLocation(AEnvSquare* squareDestination)
 }
 
 // all pieces are inboard when setup time is finished
-void APiece::bePlacedInBoardEffect(AEnvSquare* squareDestination)
+void APiece::bePlacedInBoardEffect_Implementation(AEnvSquare* squareDestination)
 {
     if (!bHasMoved)
     {
@@ -660,17 +687,17 @@ void APiece::bePlacedInBoardEffect(AEnvSquare* squareDestination)
     }
 }
 
-void APiece::firstInBoardMovedEffect(AEnvSquare* squareDestination)
+void APiece::firstInBoardMovedEffect_Implementation(AEnvSquare* squareDestination)
 {
     bHasMoved = true;
 }
 
-void APiece::bePlacedSpecialSquareEffect(AEnvSquare* squareDestination)
+void APiece::bePlacedSpecialSquareEffect_Implementation(AEnvSquare* squareDestination)
 {
     return;
 }
 
-void APiece::startMoving(AEnvSquare* squareDestination)
+void APiece::startMoving_Implementation(AEnvSquare* squareDestination)
 {
     if (IsValid(curSquare))
     {
@@ -735,7 +762,7 @@ EPieceDirection APiece::calculateMovingDirection(AEnvSquare* squareDestination)
     return EPieceDirection::ENone;  // Default return if no direction is determined
 }
 
-void APiece::endMoving()
+void APiece::endMoving_Implementation()
 {
     SetActorLocation(endLocation);
     isMoving = false;
@@ -760,12 +787,12 @@ void APiece::endMoving()
     }
 }
 
-void APiece::killEffect()
+void APiece::killEffect_Implementation()
 {
     return;
 }
 
-void APiece::moveBasedOnMove(AEnvSquare* squareDestination)
+void APiece::moveBasedOnMove_Implementation(AEnvSquare* squareDestination)
 {
     switch (moveMode)
     {
@@ -796,7 +823,7 @@ void APiece::moveBasedOnMove(AEnvSquare* squareDestination)
     }
 }
 
-void APiece::initiateGroundMovement(AEnvSquare* squareDestination)
+void APiece::initiateGroundMovement_Implementation(AEnvSquare* squareDestination)
 {
     if (!movementCurve) return; // Ensure the curve asset is set			
 
@@ -815,14 +842,14 @@ void APiece::initiateGroundMovement(AEnvSquare* squareDestination)
     movementTimeline.PlayFromStart();			
 }
 
-void APiece::handleGroundMovementProgress(float value)
+void APiece::handleGroundMovementProgress_Implementation(float value)
 {
     // Linearly interpolate position based on the timeline's progress			
     FVector newLocation = FMath::Lerp(startLocation, endLocation, value);
     SetActorLocation(newLocation);
 }
 
-void APiece::initiateParabolicJump(AEnvSquare* SquareDestination)
+void APiece::initiateParabolicJump_Implementation(AEnvSquare* SquareDestination)
 {
     if (!movementCurve) return; // Ensure the curve asset is set			
 
@@ -838,7 +865,7 @@ void APiece::initiateParabolicJump(AEnvSquare* SquareDestination)
     movementTimeline.PlayFromStart();
 }
 
-void APiece::handleParabolicJumpProgress(float value)
+void APiece::handleParabolicJumpProgress_Implementation(float value)
 {
     FVector NewLocation = FMath::Lerp(startLocation, endLocation, value);
     float Parabola = -4 * jumpApexHeight * value * (value - 1);  // Parabolic formula			
@@ -846,7 +873,7 @@ void APiece::handleParabolicJumpProgress(float value)
     SetActorLocation(NewLocation);
 }
 
-void APiece::initiateKnightJump(AEnvSquare* SquareDestination)
+void APiece::initiateKnightJump_Implementation(AEnvSquare* SquareDestination)
 {
     FOnTimelineFloat ProgressFunction;
     ProgressFunction.BindUFunction(this, FName("handleKnightJumpProgress"));
@@ -860,7 +887,7 @@ void APiece::initiateKnightJump(AEnvSquare* SquareDestination)
     movementTimeline.PlayFromStart();
 }
 
-void APiece::handleKnightJumpProgress(float value)
+void APiece::handleKnightJumpProgress_Implementation(float value)
 {   
     // Interpolate the horizontal position
     FVector HorizontalMovement = FMath::Lerp(FVector(startLocation.X, startLocation.Y, 0), FVector(endLocation.X, endLocation.Y, 0), value);
@@ -874,7 +901,7 @@ void APiece::handleKnightJumpProgress(float value)
     SetActorLocation(FinalPosition);
 }
 
-void APiece::initializeTeleportation(AEnvSquare* SquareDestination)
+void APiece::initializeTeleportation_Implementation(AEnvSquare* SquareDestination)
 {
     // Ensure we have a valid world context before setting a timer			
     if (GetWorld())
@@ -889,7 +916,7 @@ void APiece::initializeTeleportation(AEnvSquare* SquareDestination)
     }
 }
 
-void APiece::beLaunchedTo(AEnvSquare* SquareDestination)
+void APiece::beLaunchedTo_Implementation(AEnvSquare* SquareDestination)
 {
     isLaunched = true;
     moveMode = EPieceMoveMode::EParabolicJump;
@@ -897,12 +924,12 @@ void APiece::beLaunchedTo(AEnvSquare* SquareDestination)
     startMoving(SquareDestination);
 }
 
-void APiece::launchEndEffect()
+void APiece::launchEndEffect_Implementation()
 {
     die(this);
 }
 
-void APiece::beExploted()
+void APiece::beExploted_Implementation()
 {
     AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
     if (gameBoard)

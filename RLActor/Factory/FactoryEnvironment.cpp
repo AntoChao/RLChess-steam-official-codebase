@@ -1,38 +1,45 @@
 #include "FactoryEnvironment.h"
 #include "../RLActor.h"
+#include "Net/UnrealNetwork.h"
 
 #include "../Environment/EnvBoard.h"
 #include "../Environment/EnvShop.h"
 #include "../Environment/EnvSquare.h"
 
-AActor* UFactoryEnvironment::createRLActor(const FString& name, FVector aLocation, FRotator aRotation)
+void UFactoryEnvironment::spawnRLActor_Implementation(const FString& name, FVector aLocation, FRotator aRotation)
 {
-    if (name == TEXT("Board"))
-    {
-        return GetWorld()->SpawnActor<AEnvBoard>(boardClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("BlackSquare"))
-    {
-        return GetWorld()->SpawnActor<AEnvSquare>(blackSquareClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("WhiteSquare"))
-    {
-        return GetWorld()->SpawnActor<AEnvSquare>(whiteSquareClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("BenchSquare"))
-    {
-        return GetWorld()->SpawnActor<AEnvSquare>(benchSquareClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Shop"))
-    {
-        return GetWorld()->SpawnActor<AEnvShop>(shopClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("InvisibleSquare"))
-    {
-        return GetWorld()->SpawnActor<AEnvSquare>(invisibleSquare, aLocation, aRotation);
-    }
+    UE_LOG(LogTemp, Warning, TEXT("RLFactory Environment: create RLActor_Implementataion"));
 
-    // Fall back to base class implementation
-    return Super::createRLActor(name, aLocation, aRotation);
+    if (gameWorld)
+    {
+        if (name == TEXT("Board"))
+        {
+            createdActor = gameWorld->SpawnActor<AEnvBoard>(boardClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("BlackSquare"))
+        {
+            createdActor = gameWorld->SpawnActor<AEnvSquare>(blackSquareClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("WhiteSquare"))
+        {
+            createdActor = gameWorld->SpawnActor<AEnvSquare>(whiteSquareClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("BenchSquare"))
+        {
+            createdActor = gameWorld->SpawnActor<AEnvSquare>(benchSquareClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Shop"))
+        {
+            createdActor = gameWorld->SpawnActor<AEnvShop>(shopClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("InvisibleSquare"))
+        {
+            createdActor = gameWorld->SpawnActor<AEnvSquare>(invisibleSquare, aLocation, aRotation);
+        }
+    }
+    else
+    {
+        createdActor = nullptr;
+    }
 }
 

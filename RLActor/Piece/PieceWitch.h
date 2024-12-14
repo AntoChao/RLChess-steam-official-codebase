@@ -16,6 +16,6 @@ public:
     // Override the function to calculate possible moves for the rook
     virtual TArray<FVector2D> calculatePossibleMove() override;
 
-    virtual void startMoving(AEnvSquare* squareDestination) override;
+    virtual void startMoving_Implementation(AEnvSquare* squareDestination) override;
 
 };

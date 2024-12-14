@@ -37,6 +37,7 @@ TArray<FVector2D> APieceCowboy::calculatePossibleMove()
             TArray<FVector2D> LineWithFirstObstacle = getLineMoveWithFirstObstacle(CurrentLocation, Direction, movePoint + 2);
             if (LineWithFirstObstacle.Num() > movePoint)
             {
+                // POSSIBLE ERROR
                 specialPossibleMove.Add(LineWithFirstObstacle[LineWithFirstObstacle.Num()]);
             }
         }
@@ -45,7 +46,7 @@ TArray<FVector2D> APieceCowboy::calculatePossibleMove()
     return PossibleMoves;
 }
 
-void APieceCowboy::bePlacedInBoardEffect(AEnvSquare* squareDestination)
+void APieceCowboy::bePlacedInBoardEffect_Implementation(AEnvSquare* squareDestination)
 {
     if (specialPossibleMove.Contains(squareDestination->getSquareLocation()))
     {
@@ -57,7 +58,7 @@ void APieceCowboy::bePlacedInBoardEffect(AEnvSquare* squareDestination)
     }
 }
 
-void APieceCowboy::bePlacedSpecialSquareEffect(AEnvSquare* squareDestination)
+void APieceCowboy::bePlacedSpecialSquareEffect_Implementation(AEnvSquare* squareDestination)
 {
     FVector2D nextVector = getDirectionVector(lastMoveDirection);
     FVector2D nextLocation = curSquare->getSquareLocation() + nextVector;

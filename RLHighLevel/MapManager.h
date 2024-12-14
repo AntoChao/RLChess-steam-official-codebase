@@ -19,33 +19,40 @@ class UMapManager : public UObject
 public:
     static UMapManager* Instance;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map Manager")
+    UMapManager();
+
+    void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Map Manager")
     AEnvBoard* GameBoard;
 
     UFUNCTION(BlueprintCallable, Category = "Map Manager")
     void setGameMode(AGameplayGameMode* curGameMode);
 
     // gamemode, uobject doesnt have worldcontext
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map Manager")
+    UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Map Manager")
     AGameplayGameMode* gameplayGameMode = nullptr;
 
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop")
+    UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Shop")
     AEnvShop* shop = nullptr;
-
-    UMapManager();
 
 public:
     static UMapManager* get();
     static void initialize();
 
+    UFUNCTION(Server, Reliable, BlueprintCallable, Category = "MapManager")
     void createMap();
-    void createBoard(const TArray<APlayerCharacter*>& AllPlayers);
+    UFUNCTION(Server, Reliable, BlueprintCallable, Category = "MapManager")
+    void createBoard();
+    UFUNCTION(Server, Reliable, BlueprintCallable, Category = "MapManager")
     void createBench(const TArray<APlayerCharacter*>& AllPlayers);
 
+    UFUNCTION(Server, Reliable, BlueprintCallable, Category = "MapManager")
     void createShop();
+    UFUNCTION(Server, Reliable, BlueprintCallable, Category = "MapManager")
     void closeShop();
 
+    UFUNCTION(BlueprintCallable, Category = "MapManager")
     void createBuilding();  // Future implementation
 
 

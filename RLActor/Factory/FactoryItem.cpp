@@ -1,15 +1,20 @@
 #include "FactoryItem.h"
 #include "../RLActor.h" // Include your actor class header
+#include "Net/UnrealNetwork.h"
 
-AActor* UFactoryItem::createRLActor(const FString& name, FVector aLocation, FRotator aRotation)
+void UFactoryItem::spawnRLActor_Implementation(const FString& name, FVector aLocation, FRotator aRotation)
 {
-    if (name == TEXT("SpecialActor"))
+    if (gameWorld)
     {
-        // Spawn or create a specialized actor
-        // return GetWorld()->SpawnActor<AActor>(ActorToSpawn, aLocation, aRotation);
-        return nullptr;
+        if (name == TEXT("SpecialActor"))
+        {
+            // Spawn or create a specialized actor
+            // return GetWorld()->SpawnActor<AActor>(ActorToSpawn, aLocation, aRotation);
+            createdActor = nullptr;
+        }
     }
-
-    // Fall back to base class implementation
-    return Super::createRLActor(name, aLocation, aRotation);
+    else
+    {
+        createdActor = nullptr;
+    }
 }

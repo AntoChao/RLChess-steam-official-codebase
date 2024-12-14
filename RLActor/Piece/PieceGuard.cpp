@@ -70,7 +70,7 @@ TArray<FVector2D> APieceGuard::calculatePossibleMove()
     return PossibleMoves;
 }
 
-void APieceGuard::bePlacedSpecialSquareEffect(AEnvSquare* squareDestination)
+void APieceGuard::bePlacedSpecialSquareEffect_Implementation(AEnvSquare* squareDestination)
 {
     moveMode = EPieceMoveMode::ETeleport;
 }

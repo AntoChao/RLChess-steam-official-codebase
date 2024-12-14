@@ -25,6 +25,11 @@ public:
 public:
 	APlayerRLController();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+	FTimerHandle mappingContextTimerHandle;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+	int mappingContextTimerSegs = 3;
+
 public:
 	UFUNCTION(BlueprintCallable, Category = "Control")
 		FString getPlayerName();
@@ -37,8 +42,19 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void UnPossessEffect();
 
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Control")
+	void setupMappingContextBasedOnGameModeMulticast();
+
 protected:
 	virtual void BeginPlay();
+
+	virtual void Tick(float DeltaTime) override;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	bool isLocalPlayerValid;
+
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Control")
+	void setupControllerBody();
 
 	// possessed player
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -48,7 +64,6 @@ protected:
 
 protected:
 	// set up mapping context
-	void setupMappingContextBasedOnGameMode();
 	void setupLobbyInput(UEnhancedInputComponent* EnhancedInput);
 	void setupGameplayInput(UEnhancedInputComponent* EnhancedInput);
 

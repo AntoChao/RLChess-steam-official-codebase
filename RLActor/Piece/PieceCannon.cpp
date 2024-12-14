@@ -66,7 +66,7 @@ TArray<FVector2D> APieceCannon::calculatePossibleMove()
     return PossibleMoves;
 }
 
-void APieceCannon::bePlacedSpecialSquareEffect(AEnvSquare* squareDestination)
+void APieceCannon::bePlacedSpecialSquareEffect_Implementation(AEnvSquare* squareDestination)
 {
     moveMode = EPieceMoveMode::EParabolicJump;
 }

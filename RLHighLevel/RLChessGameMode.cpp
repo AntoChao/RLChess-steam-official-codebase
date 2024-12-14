@@ -6,5 +6,5 @@
 
 ARLChessGameMode::ARLChessGameMode()
 {
-	PlayerStateClass = APlayerRLState::StaticClass();
+	
 }

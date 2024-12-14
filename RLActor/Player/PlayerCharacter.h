@@ -6,6 +6,9 @@
 #include "GameFramework/Character.h"
 #include "../RLActor.h"
 #include "../../CommonEnum.h"
+
+#include "../RLProduct.h"
+
 #include "PlayerCharacter.generated.h"
 
 // forward declaration
@@ -41,6 +44,8 @@ class APlayerCharacter : public ACharacter, public IRLActor
 public:
 	APlayerCharacter();
 
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -57,23 +62,12 @@ protected:
 	/* character basic stats*/
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	FString playerName;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	FColor playerColor = FColor::Green;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	FString characterClassName; // by default
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	FString characterDescription; // by default
-
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
 	int playerSpeed;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
 	bool setUpTime = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
 	bool isAlive = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
@@ -88,28 +82,27 @@ protected:
 	int rangeRank = 1;
 
 	/* shopping*/
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
-	int initMoney = 5;
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	int totalMoney = 5;
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	int curMoney = 5;
 
 	/* inventory*/
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	int inventorySize = 3;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	int currentItemCount = 0;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	TArray<AItem*> inventory;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	TArray<AEnvSquare*> playerBench;
 
 	/* army*/
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	TArray<APiece*> army;
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "Character Stats")
-	void setControllerInfo(FString aPlayerName, FColor aPlayerColor);
-
 	UFUNCTION(BlueprintCallable, Category = "Player Stats")
 	FString getPlayerName();
 	UFUNCTION(BlueprintCallable, Category = "Player Stats")
@@ -119,9 +112,6 @@ public:
 	void startSetup();
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
 	void endSetup();
-
-	UFUNCTION(BlueprintCallable, Category = "Character Stats")
-	int getPlayerSpeed() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
 	bool checkIsAlive();
@@ -141,16 +131,16 @@ public:
 	void setPlayerBench(TArray<AEnvSquare*> allSquares);
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
 	bool isAbleToBenchPiece();
-	UFUNCTION(BlueprintCallable, Category = "Character Stats")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Character Stats")
 	void benchAPiece(APiece* newPiece);
 
 	/*shop functions*/
 	UFUNCTION(BlueprintCallable, Category = "Shopoing Stats")
-	bool isEnableToBuyProduct(TScriptInterface<IRLProduct> aProduct);
+	bool isEnableToBuyProduct(APiece* aProduct);
 	UFUNCTION(BlueprintCallable, Category = "Shopoing Stats")
-	void payProduct(TScriptInterface<IRLProduct> aProduct);
-	UFUNCTION(BlueprintCallable, Category = "Shopoing Stats")
-	void receiveProduct(TScriptInterface<IRLProduct> aProduct);
+	void payProduct(APiece* aProduct);
+	UFUNCTION(Server, Reliable, Category = "Shopoing Stats")
+	void receiveProduct(APiece* aProduct);
 
 	/* army functions*/
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
@@ -188,7 +178,7 @@ protected:
 
 	/* turn base stats*/
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Components")
 	bool isPlayerTurn = false;
 
 public:
@@ -233,29 +223,29 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "jump Controller")
 	void jumpCompleted();
 
-	UFUNCTION(BlueprintCallable, Category = "Interaction Controller")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interaction Controller")
 	void selectItem(int itemIndex);
 
 	/* controller interaction functions*/
-	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void interact();
 
-	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void useItem();
-	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void pickUpItem();
-	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void selectPiece();
-	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void selectPlacePieceLocation();
-	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void moveSelectedPiece();
 
 	/* controller helper functions*/
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	bool isAbleToPickUpItem();
 
-	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void unselectPiece();
 
 protected:
@@ -268,18 +258,18 @@ protected:
 	float baseLookUpRate = 45.0f;
 
 	// move stats
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	bool isAbleToMove = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	float move_XSensitivity = 1.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	float move_YSensitivity = 1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	bool isRunning = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	bool isAbleToRun = true;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	float curSpeed = 0.0f;
 
 	// interaction stats
@@ -289,12 +279,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	bool isAbleToInteract = true;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	APiece* selectedPiece = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	int selectedItemIndex = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	TScriptInterface<IRLActor> selectedSquare = nullptr;
 
 public:
@@ -317,7 +307,7 @@ public:
 
 /* AI relatived*/
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Controller")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "AI Controller")
 	bool isAIPossessed = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Controller")

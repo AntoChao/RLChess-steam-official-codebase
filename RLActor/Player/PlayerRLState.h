@@ -11,6 +11,8 @@ class APlayerRLState : public APlayerState
 
 public:
 
+    APlayerRLState();
+
     // Properties
     UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Player Stats")
         bool isReady;

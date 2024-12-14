@@ -1,23 +1,35 @@
 #include "RLFactory.h"
+#include "Net/UnrealNetwork.h"
 
 URLFactory::URLFactory()
 {
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    SpawnParams.Owner = nullptr; // No specific owner unless necessary
-    SpawnParams.Instigator = nullptr;
+    // SpawnParams.Owner = nullptr; // No specific owner unless necessary
+    // SpawnParams.Instigator = nullptr;
+}
+
+void URLFactory::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    //Replicate current health.
+    DOREPLIFETIME(URLFactory, createdActor);
 }
 
 AActor* URLFactory::createRLActor(const FString& name, FVector aLocation, FRotator aRotation)
 {
+    spawnRLActor(name, aLocation, aRotation);
+    return createdActor;
+}
+
+void URLFactory::spawnRLActor_Implementation(const FString& name, FVector aLocation, FRotator aRotation)
+{
+    UE_LOG(LogTemp, Warning, TEXT("RLFactory: create RLActor_Implementataion"));
+
     if (!GEngine || !GWorld)
     {
         UE_LOG(LogTemp, Warning, TEXT("RLFactory: Engine or World context is null!"));
-        return nullptr;
     }
-
-    // Add logic to create actors here
-    UE_LOG(LogTemp, Warning, TEXT("RLFactory: createRLActor called for %s"), *name);
-    return nullptr;
 }
 
 AActor* URLFactory::createRandom(FVector aLocation, FRotator aRotation)

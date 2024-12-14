@@ -4,6 +4,7 @@
 #include "GameplayGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Net/UnrealNetwork.h"
 
 #include "../RLActor/Factory/FactoryEnvironment.h"
 #include "../RLActor/Environment/EnvBoard.h"
@@ -16,6 +17,16 @@ UMapManager::UMapManager()
 {
     // Constructor logic here
     Instance = nullptr;
+}
+
+void UMapManager::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    //Replicate current health.
+    DOREPLIFETIME(UMapManager, GameBoard);
+    DOREPLIFETIME(UMapManager, gameplayGameMode);
+    DOREPLIFETIME(UMapManager, shop);
 }
 
 UMapManager* UMapManager::get()
@@ -36,19 +47,12 @@ void UMapManager::initialize()
     }
 }
 
-void UMapManager::createMap()
+void UMapManager::createMap_Implementation()
 {
-    TArray<APlayerCharacter*> allPlayers;
+    // TArray<APlayerCharacter*> allPlayers;
 
-    URoundManager* roundManager = URoundManager::get();
-    if (roundManager)
-    {
-        allPlayers = roundManager->getAllPlayers();
-
-        createBoard(allPlayers);
-        createBench(allPlayers);
-        createBuilding();
-    }
+    createBoard();
+    createBuilding();
 }
 
 void UMapManager::setGameMode(AGameplayGameMode* curGameMode)
@@ -56,7 +60,7 @@ void UMapManager::setGameMode(AGameplayGameMode* curGameMode)
     gameplayGameMode = curGameMode;
 }
 
-void UMapManager::createBoard(const TArray<APlayerCharacter*>& AllPlayers)
+void UMapManager::createBoard_Implementation()
 {
     UFactoryEnvironment* environmentFactory = gameplayGameMode->environmentFactoryInstance;
     FVector boardLocation = gameplayGameMode->boardLocation;
@@ -65,26 +69,23 @@ void UMapManager::createBoard(const TArray<APlayerCharacter*>& AllPlayers)
     GameBoard = Cast<AEnvBoard>(environmentFactory->createRLActor(TEXT("Board"), boardLocation, boardRotation));
     if (GameBoard)
     {
-        GameBoard->initialized(AllPlayers);
+        GameBoard->initialized();
     }
 }
 
-void UMapManager::createBench(const TArray<APlayerCharacter*>& AllPlayers)
+void UMapManager::createBench_Implementation(const TArray<APlayerCharacter*>& AllPlayers)
 {
-    /*
-    if (AllPlayers.Num() < 2 || AllPlayers.Num() > 4)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Invalid number of players! Must be between 2 and 4."));
-        return;
-    }*/
-
     for (APlayerCharacter* eachPlayer : AllPlayers)
     {
-        eachPlayer->setPlayerBench(GameBoard->getAllSquaresOfSpecificColor(eachPlayer->getPlayerColor()));
+        if (eachPlayer)
+        {
+            eachPlayer->setPlayerBench(GameBoard->getAllSquaresOfSpecificColor(eachPlayer->getPlayerColor()));
+
+        }
     }
 }
 
-void UMapManager::createShop()
+void UMapManager::createShop_Implementation()
 {
     UFactoryEnvironment* shopFactory = gameplayGameMode->environmentFactoryInstance;
     if (!shopFactory) return;
@@ -92,7 +93,7 @@ void UMapManager::createShop()
     shop = Cast<AEnvShop>(shopFactory->createRLActor(TEXT("Shop"), gameplayGameMode->shopLocation, gameplayGameMode->shopRotation));
 }
 
-void UMapManager::closeShop()
+void UMapManager::closeShop_Implementation()
 {
     if (shop)
     {

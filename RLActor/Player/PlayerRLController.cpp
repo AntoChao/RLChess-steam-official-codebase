@@ -1,6 +1,10 @@
 #include "PlayerRLController.h"
 #include "../../RLHighLevel/RLInstance.h"
 #include "PlayerCharacter.h"
+#include "Engine/LocalPlayer.h"
+
+#include "Net/UnrealNetwork.h"
+#include "../../RLHighLevel/GameplayGameMode.h"
 
 #include "PlayerRLState.h"
 #include "InputActionValue.h"
@@ -15,26 +19,109 @@ APlayerRLController::APlayerRLController()
 void APlayerRLController::BeginPlay() {
 	Super::BeginPlay();
 
-	// Cast the PlayerState to custom PlayerState class
-	rlPlayerState = GetPlayerState<APlayerRLState>();
-	if (!rlPlayerState)
+	/*
+	if (IsLocalPlayerController())
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerRLState not found!"));
+		// Cast the PlayerState to custom PlayerState class
+		rlPlayerState = GetPlayerState<APlayerRLState>();
+		if (!rlPlayerState)
+		{
+			UE_LOG(LogTemp, Error, TEXT("RLCONTROLLER %s, BeginPlay, PlayerRLState not found!"), *this->GetName());
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("RLCONTROLLER, BeginPlay, PlayerRLState not found!"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("RLCONTROLLER %s, BeginPlay, PlayerRLState FOUND!"), *this->GetName());
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("RLCONTROLLER, BeginPlay, PlayerRLState FOUND!"));
+		}
+
+		// setupControllerBody();
+	}*/
+}
+
+void APlayerRLController::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	isLocalPlayerValid = GetLocalPlayer() != nullptr;
+}
+
+void APlayerRLController::setupControllerBody_Implementation()
+{
+	if (IsLocalPlayerController())
+	{
+		if (GetLocalRole() == ROLE_Authority)
+		{
+			// Server-specific logic here
+			AGameplayGameMode* myGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
+			if (myGameMode)
+			{
+				// Successfully cast to MyCustomGameMode, now you can access its members
+				rlPlayer = myGameMode->getPlayerBody();
+
+				if (rlPlayer)
+				{
+					Possess(rlPlayer);
+					setupMappingContextBasedOnGameModeMulticast();
+				}
+
+			}
+		}
+		else if (GetLocalRole() == ROLE_AutonomousProxy)
+		{
+			// Client owning the actor
+			// Server-specific logic here
+			AGameplayGameMode* MyGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
+			UE_LOG(LogTemp, Error, TEXT("MIAUMIAUMIAU"));
+			if (MyGameMode)
+			{
+				// Successfully cast to MyCustomGameMode, now you can access its members
+				rlPlayer = MyGameMode->getPlayerBody();
+
+				if (rlPlayer)
+				{
+					Possess(rlPlayer);
+					setupMappingContextBasedOnGameModeMulticast();
+				}
+
+			}
+		}
+		else if (GetLocalRole() == ROLE_SimulatedProxy)
+		{
+			// Other clients
+		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerRLState FOUND!"));
+		UE_LOG(LogTemp, Error, TEXT("MIAUMIAUMIAU"));
 	}
-
 }
 
 FString APlayerRLController::getPlayerName()
 {
-	return rlPlayerState->playerName;
+	if (rlPlayerState)
+	{
+		UE_LOG(LogTemp, Error, TEXT("RLCONTROLLER %s, getPlayerName, PlayerRLState EXIST!"), *this->GetName());
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("RLCONTROLLER, getPlayerName, PlayerRLState EXIST!"));
+
+		return rlPlayerState->playerName;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("RLCONTROLLER %s, getPlayerName, PlayerRLState NOT EXIST"), *this->GetName());
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("RLCONTROLLER, getPlayerName, PlayerRLState NOT EXIST"));
+		return TEXT("no rl state");
+	}
 }
 FColor APlayerRLController::getPlayerColor()
 {
-	return rlPlayerState->playerColor;
+	if (rlPlayerState)
+	{
+		return rlPlayerState->playerColor;
+	}
+	else
+	{
+		return FColor::Green;
+	}
 }
 
 FString APlayerRLController::getCharacterName()
@@ -49,40 +136,175 @@ FString APlayerRLController::getCharacterName()
 void APlayerRLController::OnPossess(APawn* InPawn) {
 	Super::OnPossess(InPawn);
 
-	// Rebind input mappings if the pawn changes
-	rlPlayer = Cast<APlayerCharacter>(InPawn);
-	if (IsLocalController() && rlPlayer) {
-		setupMappingContextBasedOnGameMode();
-		rlPlayer->setControllerInfo(getPlayerName(), getPlayerColor());
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		// Server-specific logic here
+		UE_LOG(LogTemp, Warning, TEXT("Player CONTROLLER %s ON POSSESS"), *this->GetName());
+
+		FString Message = FString::Printf(TEXT("Player CONTROLLER %s ON POSSESS"), *this->GetName());
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
+
+		// Rebind input mappings if the pawn changes
+		APlayerCharacter* aMiddlePassway = Cast<APlayerCharacter>(InPawn);
+
+		rlPlayer = aMiddlePassway;
+
+		if (rlPlayer)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Player CONTROLLER %s POSSESSES RLPLAYER SUCCESSFUL"), *this->GetName());
+			Message = FString::Printf(TEXT("Player CONTROLLER %s POSSESSES RLPLAYER SUCCESSFUL"), *this->GetName());
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
+
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Player CONTROLLER %s POSSESSES RLPLAYER FAIL"), *this->GetName());
+			Message = FString::Printf(TEXT("Player CONTROLLER %s POSSESSES RLPLAYER FAIL"), *this->GetName());
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
+		}
 	}
+	else if (GetLocalRole() == ROLE_AutonomousProxy)
+	{
+		// Client owning the actor
+		UE_LOG(LogTemp, Warning, TEXT("Player CONTROLLER %s POSSESSES RLPLAYER FAIL"), *this->GetName());
+	
+		// Server-specific logic here
+		UE_LOG(LogTemp, Warning, TEXT("Player CONTROLLER %s ON POSSESS"), *this->GetName());
+
+		FString Message = FString::Printf(TEXT("Player CONTROLLER %s ON POSSESS"), *this->GetName());
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
+
+		// Rebind input mappings if the pawn changes
+		APlayerCharacter* aMiddlePassway = Cast<APlayerCharacter>(InPawn);
+
+		rlPlayer = aMiddlePassway;
+
+		if (rlPlayer)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Player CONTROLLER %s POSSESSES RLPLAYER SUCCESSFUL"), *this->GetName());
+			Message = FString::Printf(TEXT("Player CONTROLLER %s POSSESSES RLPLAYER SUCCESSFUL"), *this->GetName());
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
+
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Player CONTROLLER %s POSSESSES RLPLAYER FAIL"), *this->GetName());
+			Message = FString::Printf(TEXT("Player CONTROLLER %s POSSESSES RLPLAYER FAIL"), *this->GetName());
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
+		}
+	
+	}
+	else if (GetLocalRole() == ROLE_SimulatedProxy)
+	{
+		// Other clients
+		UE_LOG(LogTemp, Warning, TEXT("Player CONTROLLER %s POSSESSES RLPLAYER FAIL"), *this->GetName());
+	}
+
+	
 }
 
 void APlayerRLController::UnPossessEffect() {
-	setupMappingContextBasedOnGameMode();
+	setupMappingContextBasedOnGameModeMulticast();
 }
 
-void APlayerRLController::setupMappingContextBasedOnGameMode() {
-	if (IsLocalController())
+void APlayerRLController::setupMappingContextBasedOnGameModeMulticast_Implementation() {
+	if (GetLocalRole() == ROLE_Authority)
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+		if (IsLocalPlayerController())
 		{
-			URLInstance* curGameInstance = Cast<URLInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
-			EGameMode curGameMode = curGameInstance->getCurGameMode();
+			if (GetLocalPlayer() != nullptr)
+			{
+				UEnhancedInputLocalPlayerSubsystem* subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
 
-			if (curGameMode == EGameMode::EGameplay) {
-				subsystem->AddMappingContext(gameplayMappingContext, 0);
-				bShowMouseCursor = false;
-				SetInputMode(FInputModeGameOnly());
-			}
-			else if (curGameMode == EGameMode::ELobby) {
-				subsystem->AddMappingContext(lobbyMappingContext, 0);
-				bShowMouseCursor = true;
-				SetInputMode(FInputModeUIOnly());
-			}
+				UE_LOG(LogTemp, Warning, TEXT("SET UP MAPPING CONTEXT BASE ON GAMEMODE"));
+				FString Message = FString::Printf(TEXT("SET UP MAPPING CONTEXT BASE ON GAMEMODE"));
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
 
-			SetupInputComponent();
+				if (subsystem)
+				{
+					URLInstance* curGameInstance = Cast<URLInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+					EGameMode curGameMode = curGameInstance->getCurGameMode();
+
+					if (curGameMode == EGameMode::EGameplay) {
+						subsystem->AddMappingContext(gameplayMappingContext, 0);
+						bShowMouseCursor = false;
+						SetInputMode(FInputModeGameOnly());
+					}
+					else if (curGameMode == EGameMode::ELobby) {
+						subsystem->AddMappingContext(lobbyMappingContext, 0);
+						bShowMouseCursor = true;
+						SetInputMode(FInputModeUIOnly());
+					}
+					else // JUST FOR DEBUG
+					{
+						subsystem->AddMappingContext(gameplayMappingContext, 0);
+						bShowMouseCursor = false;
+						SetInputMode(FInputModeGameOnly());
+					}
+
+					SetupInputComponent();
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("SET UP MAPPING CONTEXT BASE ON GAMEMODE FAIL "));
+				FString Message = FString::Printf(TEXT("SET UP MAPPING CONTEXT BASE ON GAMEMODE FAIL"));
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
+
+			}
 		}
 	}
+	else if (GetLocalRole() == ROLE_AutonomousProxy)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("ROLE_AutonomousProxy"));
+		if (GetLocalPlayer() != nullptr)
+		{
+			UEnhancedInputLocalPlayerSubsystem* subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
+
+			UE_LOG(LogTemp, Warning, TEXT("SET UP MAPPING CONTEXT BASE ON GAMEMODE"));
+			FString Message = FString::Printf(TEXT("SET UP MAPPING CONTEXT BASE ON GAMEMODE"));
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
+
+			if (subsystem)
+			{
+				URLInstance* curGameInstance = Cast<URLInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+				EGameMode curGameMode = curGameInstance->getCurGameMode();
+
+				if (curGameMode == EGameMode::EGameplay) {
+					subsystem->AddMappingContext(gameplayMappingContext, 0);
+					bShowMouseCursor = false;
+					SetInputMode(FInputModeGameOnly());
+				}
+				else if (curGameMode == EGameMode::ELobby) {
+					subsystem->AddMappingContext(lobbyMappingContext, 0);
+					bShowMouseCursor = true;
+					SetInputMode(FInputModeUIOnly());
+				}
+				else // JUST FOR DEBUG
+				{
+					subsystem->AddMappingContext(gameplayMappingContext, 0);
+					bShowMouseCursor = false;
+					SetInputMode(FInputModeGameOnly());
+				}
+
+				SetupInputComponent();
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("SET UP MAPPING CONTEXT BASE ON GAMEMODE FAIL "));
+			FString Message = FString::Printf(TEXT("SET UP MAPPING CONTEXT BASE ON GAMEMODE FAIL"));
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
+
+		}
+	
+	}
+	else if (GetLocalRole() == ROLE_SimulatedProxy)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("ROLE_SimulatedProxy"));
+	}
+
+	
 }
 
 void APlayerRLController::SetupInputComponent() {
@@ -99,6 +321,10 @@ void APlayerRLController::SetupInputComponent() {
 		else if (curGameMode == EGameMode::ELobby)
 		{
 			setupLobbyInput(EnhancedInput);
+		}
+		else // JUST FOR DEBUG
+		{
+			setupGameplayInput(EnhancedInput);
 		}
 	}
 }

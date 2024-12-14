@@ -1,91 +1,97 @@
 #include "FactoryPiece.h"
 #include "../RLActor.h"
+#include "Net/UnrealNetwork.h"
 
-AActor* UFactoryPiece::createRLActor(const FString& name, FVector aLocation, FRotator aRotation)
+void UFactoryPiece::spawnRLActor_Implementation(const FString& name, FVector aLocation, FRotator aRotation)
 {
-    UE_LOG(LogTemp, Warning, TEXT("STOPPPPP"));
-    if (name == TEXT("Pawn"))
+    // UE_LOG(LogTemp, Warning, TEXT("RLFactory Piece"));
+    if (gameWorld)
     {
-        return GetWorld()->SpawnActor<APiece>(pawnClass, aLocation, aRotation);
+        if (name == TEXT("Pawn"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(pawnClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Rook"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(rookClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Knight"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(knightClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Bishop"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(bishopClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Queen"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(queenClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Cannon"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(cannonClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Ranger"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(rangerClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Assassin"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(assassinClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Mage"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(mageClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Samurai"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(samuraiClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Cultist"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(cultistClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Scout"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(scoutClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Cowboy"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(cowboyClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Warrior"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(warrriorClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Doggy"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(doggyClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Doctor"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(doctorClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Witch"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(witchClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Guard"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(guardClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Ninja"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(ninjaClass, aLocation, aRotation);
+        }
+        else if (name == TEXT("Catapult"))
+        {
+            createdActor = gameWorld->SpawnActor<APiece>(catapultClass, aLocation, aRotation);
+        }
     }
-    else if (name == TEXT("Rook"))
+    else
     {
-        return GetWorld()->SpawnActor<APiece>(rookClass, aLocation, aRotation);
+        createdActor = nullptr;
     }
-    else if (name == TEXT("Knight"))
-    {
-        return GetWorld()->SpawnActor<APiece>(knightClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Bishop"))
-    {
-        return GetWorld()->SpawnActor<APiece>(bishopClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Queen"))
-    {
-        return GetWorld()->SpawnActor<APiece>(queenClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Cannon"))
-    {
-        return GetWorld()->SpawnActor<APiece>(cannonClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Ranger"))
-    {
-        return GetWorld()->SpawnActor<APiece>(rangerClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Assassin"))
-    {
-        return GetWorld()->SpawnActor<APiece>(assassinClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Mage"))
-    {
-        return GetWorld()->SpawnActor<APiece>(mageClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Samurai"))
-    {
-        return GetWorld()->SpawnActor<APiece>(samuraiClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Cultist"))
-    {
-        return GetWorld()->SpawnActor<APiece>(cultistClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Scout"))
-    {
-        return GetWorld()->SpawnActor<APiece>(scoutClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Cowboy"))
-    {
-        return GetWorld()->SpawnActor<APiece>(cowboyClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Warrior"))
-    {
-        return GetWorld()->SpawnActor<APiece>(warrriorClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Doggy"))
-    {
-        return GetWorld()->SpawnActor<APiece>(doggyClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Doctor"))
-    {
-        return GetWorld()->SpawnActor<APiece>(doctorClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Witch"))
-    {
-        return GetWorld()->SpawnActor<APiece>(witchClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Guard"))
-    {
-        return GetWorld()->SpawnActor<APiece>(guardClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Ninja"))
-    {
-        return GetWorld()->SpawnActor<APiece>(ninjaClass, aLocation, aRotation);
-    }
-    else if (name == TEXT("Catapult"))
-    {
-        return GetWorld()->SpawnActor<APiece>(catapultClass, aLocation, aRotation);
-    }
-    // Fall back to base class implementation
-    return Super::createRLActor(name, aLocation, aRotation);
 }
 
 AActor* UFactoryPiece::createRandom(FVector aLocation, FRotator aRotation)

@@ -39,7 +39,7 @@ TArray<FVector2D> APieceRanger::calculatePossibleMove()
     return PossibleMoves;
 }
 
-void APieceRanger::killEffect()
+void APieceRanger::killEffect_Implementation()
 {
     moveMode = EPieceMoveMode::EStaticJump;
 

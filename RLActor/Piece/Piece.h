@@ -26,6 +26,8 @@ class APiece : public AActor, public IRLActor, public IRLProduct
 public:
 	APiece();
 
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	virtual void BeginPlay() override;
 
 	virtual void Tick(float DeltaTime) override;
@@ -96,16 +98,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	int pieceLevel;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	EPieceStatus pieceStatus = EPieceStatus::EInShop;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	EPieceDirection pieceDirection = EPieceDirection::ENone;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	AEnvSquare* curSquare = nullptr;
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Stats")
+	UFUNCTION(Server, Unreliable, Category = "Piece Stats")
 	void initializeDirection(AEnvSquare* squareDestination);
 
 	// common calculatepossiblemove move function
@@ -140,26 +142,28 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
 	UBoxComponent* pieceCollision;
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Collision")
+	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Piece Collision")
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
 		bool bFromSweep, const FHitResult& SweepResult);
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Collision")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Collision")
 		void collidedWithOtherPiece(APiece* collidedPiece);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
 		int collisionPriority = 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
 		bool isDied = false;
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Interaction")
 		void die(APiece* killer);
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
-		virtual void dieEffect(APiece* killer);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Interaction")
+		void dieEffect(APiece* killer);
 		
+	virtual void dieEffect_Implementation(APiece* killer);
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
 		float collideImpulseStrength = 1000.0f; // Adjust this value based on desired effect
 
@@ -170,44 +174,46 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	bool getIsMoving();
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Interaction")
 	void kill(APiece* pieceToKill);
 
 /* piece movement */
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Movement")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Movement")
 	int movePoint = 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Movement")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Movement")
 	bool requireResting = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Movement")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Movement")
 	bool isResting = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Movement")
 	int requiredRestingTurn = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Movement")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Movement")
 	int curRestingCount = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Movement")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Movement")
 	bool isMoving = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pawn Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Pawn Stats")
 	bool bHasMoved = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pawn Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Pawn Stats")
 	bool isKilledAnyActorThisTurn = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pawn Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Pawn Stats")
 	bool isKillEffectActive = true;
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
-	virtual void killEffect();
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
+	void killEffect();
+
+	virtual void killEffect_Implementation();
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	EPieceStatus getPieceStatus();
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, Category = "Piece Movement")
 	void setPieceStatus(EPieceStatus newStatus);
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, Category = "Piece Movement")
 	void setPieceColor(FColor aColor);
 	
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
@@ -216,52 +222,61 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	int getLevel();
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
-	void updateStatus();
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
+	void updateStatusByTurn();
+	UFUNCTION(Server, Reliable, Category = "Piece Movement")
 	void updateRestStatus();
 
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	void bePlaced(AEnvSquare* squareDestination);
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	virtual void bePlacedInShopEffect(AEnvSquare* squareDestination);
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
-	virtual void bePlacedInBenchEffect(AEnvSquare* squareDestination);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
+	void bePlacedInBenchEffect(AEnvSquare* squareDestination);
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	virtual void bePlacedInBenchEffect_Implementation(AEnvSquare* squareDestination);
+
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	void swapLocation(AEnvSquare* squareDestination);
 	
 	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
 	virtual TArray<FVector2D> calculatePossibleMove();
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
-	virtual void bePlacedInBoardEffect(AEnvSquare* squareDestination);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
+	void bePlacedInBoardEffect(AEnvSquare* squareDestination);
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	virtual void bePlacedInBoardEffect_Implementation(AEnvSquare* squareDestination);
+
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	virtual void firstInBoardMovedEffect(AEnvSquare* squareDestination);
 
 	TArray<FVector2D> specialPossibleMove;
-	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
-	virtual void bePlacedSpecialSquareEffect(AEnvSquare* squareDestination);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Interaction")
+	void bePlacedSpecialSquareEffect(AEnvSquare* squareDestination);
+
+	virtual void bePlacedSpecialSquareEffect_Implementation(AEnvSquare* squareDestination);
 
 	/* all specific movement*/
 
 	// just override start moving and end moving to simulate the type
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
-	virtual void startMoving(AEnvSquare* squareDestination);
+	UFUNCTION(Server, Reliable, Category = "Piece Movement")
+	void startMoving(AEnvSquare* squareDestination);
+
+	virtual void startMoving_Implementation(AEnvSquare* squareDestination);
 
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	EPieceDirection calculateMovingDirection(AEnvSquare* squareDestination);
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
-	virtual void endMoving();
+	UFUNCTION(Server, Reliable, Category = "Piece Movement")
+	void endMoving();
 
-	
+	virtual void endMoving_Implementation();
+
 protected:
 	/* general movement*/
-	UPROPERTY(EditAnywhere, Category = "Piece Movement")
+	UPROPERTY(Replicated, EditAnywhere, Category = "Piece Movement")
 	EPieceMoveMode moveMode = EPieceMoveMode::EGround;
 
 	UPROPERTY(EditAnywhere, Category = "Piece Movement")
@@ -288,47 +303,47 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Piece Movement")
 	FTimerHandle TeleportTimerHandle;
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, Category = "Piece Movement")
 	void moveBasedOnMove(AEnvSquare* squareDestination);
 
 	/* ground movement*/
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, Category = "Piece Movement")
 	void initiateGroundMovement(AEnvSquare* SquareDestination);
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, Category = "Piece Movement")
 	void handleGroundMovementProgress(float Value);
 
 	/* parabolic jump*/
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, Category = "Piece Movement")
 	void initiateParabolicJump(AEnvSquare* SquareDestination);
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, Category = "Piece Movement")
 	void handleParabolicJumpProgress(float value);
 
 	/* parabolic jump*/
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, Category = "Piece Movement")
 	void initiateKnightJump(AEnvSquare* SquareDestination);
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, Category = "Piece Movement")
 	void handleKnightJumpProgress(float value);
 
 	/* teleport*/
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, Category = "Piece Movement")
 	void initializeTeleportation(AEnvSquare* SquareDestination);
 
 
 	/* special interaction*/
 protected:
-	UPROPERTY(EditAnywhere, Category = "Piece Movement")
+	UPROPERTY(Replicated, EditAnywhere, Category = "Piece Movement")
 	bool isLaunched = false;
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	void launchEndEffect();
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	void beExploted();
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	void beLaunchedTo(AEnvSquare* SquareDestination);
 
 

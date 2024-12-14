@@ -46,7 +46,7 @@ TArray<FVector2D> APieceCatapult::calculatePossibleMove()
     return PossibleMoves;
 }
 
-void APieceCatapult::bePlacedInBoardEffect(AEnvSquare* squareDestination)
+void APieceCatapult::bePlacedInBoardEffect_Implementation(AEnvSquare* squareDestination)
 {
     if (squareDestination)
     {

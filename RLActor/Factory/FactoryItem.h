@@ -10,6 +10,6 @@ class UFactoryItem : public URLFactory
 	GENERATED_BODY()
 	
 public:
-	virtual AActor* createRLActor(const FString& name, FVector aLocation, FRotator aRotation) override;
+	virtual void spawnRLActor_Implementation(const FString& name, FVector aLocation, FRotator aRotation) override;
 };
 

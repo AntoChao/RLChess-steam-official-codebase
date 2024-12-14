@@ -52,7 +52,7 @@ void APieceScout::inBenchInteractedEffect(APlayerCharacter* Sender)
     }
 }
 
-void APieceScout::bePlacedInBenchEffect(AEnvSquare* squareDestination)
+void APieceScout::bePlacedInBenchEffect_Implementation(AEnvSquare* squareDestination)
 {
     // enable swap position
     if (squareDestination->getIsOccupied())

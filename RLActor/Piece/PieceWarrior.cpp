@@ -44,7 +44,7 @@ TArray<FVector2D> APieceWarrior::calculatePossibleMove()
     return PossibleMoves;
 }
 
-void APieceWarrior::endMoving()
+void APieceWarrior::endMoving_Implementation()
 {
     Super::endMoving();
 

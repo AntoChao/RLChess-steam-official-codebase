@@ -2,6 +2,7 @@
 
 #include "EnvShop.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 #include "../Factory/FactoryPiece.h"
 #include "../../RLHighLevel/GameplayGameMode.h"
@@ -17,13 +18,20 @@ AEnvShop::AEnvShop()
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 }
 
+void AEnvShop::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	//Replicate current health.
+	DOREPLIFETIME(AEnvShop, productsInShop);
+}
+
 void AEnvShop::BeginPlay()
 {
 	Super::BeginPlay();
 
 	// Shop pieces
 	createRandomShop();
-
 }
 
 FString AEnvShop::GetActorName()
@@ -51,7 +59,7 @@ void AEnvShop::BeUnInteracted(APlayerCharacter* Sender)
 	return;
 }
 
-void AEnvShop::createRandomShop()
+void AEnvShop::createRandomShop_Implementation()
 {
 	AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 	
@@ -124,7 +132,7 @@ void AEnvShop::createRandomShop()
 }
 
 
-void AEnvShop::sellProduct(APlayerCharacter* player, TScriptInterface<IRLProduct> specificProduct)
+void AEnvShop::sellProduct_Implementation(APlayerCharacter* player, APiece* specificProduct)
 {
 	if (player && specificProduct)
 	{
@@ -139,9 +147,9 @@ void AEnvShop::sellProduct(APlayerCharacter* player, TScriptInterface<IRLProduct
 	}
 }
 
-void AEnvShop::refillProduct(TScriptInterface<IRLProduct> specificProduct)
+void AEnvShop::refillProduct_Implementation(APiece* specificProduct)
 {
-	APiece* pieceToDuplicate = Cast<APiece>(specificProduct.GetObject());
+	APiece* pieceToDuplicate = specificProduct;
 	if (pieceToDuplicate)
 	{
 		// Get the class of the actor you want to duplicate
@@ -179,13 +187,13 @@ void AEnvShop::refillProduct(TScriptInterface<IRLProduct> specificProduct)
 	}
 }
 
-void AEnvShop::refreshShop(APlayerCharacter* player)
+void AEnvShop::refreshShop_Implementation(APlayerCharacter* player)
 {
 	productsInShop.Empty();
 	createRandomShop();
 }
 
-void AEnvShop::closeShop()
+void AEnvShop::closeShop_Implementation()
 {
 	for (TScriptInterface<IRLProduct>& Product : productsInShop)
 	{
@@ -203,21 +211,22 @@ void AEnvShop::closeShop()
 }
 
 // sell all pieces for ai
-void AEnvShop::fullFill(APlayerCharacter* controlledPlayer)
+void AEnvShop::fullFill_Implementation(APlayerCharacter* controlledPlayer)
 {
-	TScriptInterface<IRLProduct> randomProduct = selectRandomProduct();
+	APiece* randomProduct = selectRandomProduct();
 	while (controlledPlayer->isEnableToBuyProduct(randomProduct))
 	{
-		if (APiece* randomPiece = Cast<APiece>(randomProduct.GetObject()))
+		if (randomProduct)
 		{
-			randomPiece->BeInteracted(controlledPlayer);
+			randomProduct->BeInteracted(controlledPlayer);
 		}
+		randomProduct = selectRandomProduct();
 	}
 }
 
-TScriptInterface<IRLProduct> AEnvShop::selectRandomProduct()
+APiece* AEnvShop::selectRandomProduct()
 {
 	int randomInt = FMath::RandRange(0, productsInShop.Num() - 1);
-
-	return productsInShop[randomInt];
+	APiece* randomPiece = Cast<APiece>(productsInShop[randomInt].GetObject());
+	return randomPiece;
 }

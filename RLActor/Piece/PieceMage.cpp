@@ -37,7 +37,7 @@ TArray<FVector2D> APieceMage::calculatePossibleMove()
     return PossibleMoves;
 }
 
-void APieceMage::endMoving()
+void APieceMage::endMoving_Implementation()
 {
     swapLocation(targetSquare);
 

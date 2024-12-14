@@ -9,6 +9,7 @@
 #include "PlayerRLController.h"
 #include "InputActionValue.h"
 
+#include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 
 #include "../../RLHighLevel/GameplayGameMode.h"
@@ -28,6 +29,9 @@ APlayerCharacter::APlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	// Enable network replication
+	bReplicates = true;
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 		
@@ -38,17 +42,35 @@ APlayerCharacter::APlayerCharacter()
 	camera->bUsePawnControlRotation = true; // Rotate camera with controller
 }
 
+void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	//Replicate current health.
+	DOREPLIFETIME(APlayerCharacter, setUpTime);
+	DOREPLIFETIME(APlayerCharacter, isAlive);
+	DOREPLIFETIME(APlayerCharacter, totalMoney);
+	DOREPLIFETIME(APlayerCharacter, curMoney);
+	DOREPLIFETIME(APlayerCharacter, inventorySize);
+	DOREPLIFETIME(APlayerCharacter, currentItemCount);
+	DOREPLIFETIME(APlayerCharacter, inventory);
+	DOREPLIFETIME(APlayerCharacter, playerBench);
+	DOREPLIFETIME(APlayerCharacter, isPlayerTurn);
+	DOREPLIFETIME(APlayerCharacter, isAbleToMove);
+	DOREPLIFETIME(APlayerCharacter, isRunning);
+	DOREPLIFETIME(APlayerCharacter, isAbleToRun);
+	DOREPLIFETIME(APlayerCharacter, curSpeed);
+	DOREPLIFETIME(APlayerCharacter, isAIPossessed);
+	DOREPLIFETIME(APlayerCharacter, selectedPiece);
+	DOREPLIFETIME(APlayerCharacter, selectedSquare);
+}
+
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
 	inventory.SetNum(inventorySize);
-}
-
-void APlayerCharacter::setControllerInfo(FString aPlayerName, FColor aPlayerColor)
-{
-	playerName = aPlayerName;
-	playerColor = aPlayerColor;
+	curMoney = totalMoney;
 }
 
 void APlayerCharacter::startSetup()
@@ -64,11 +86,6 @@ void APlayerCharacter::endSetup()
 	}
 
 	setUpTime = false;
-}
-
-int APlayerCharacter::getPlayerSpeed() const
-{
-	return playerSpeed;
 }
 
 bool APlayerCharacter::checkIsAlive()
@@ -94,17 +111,6 @@ void APlayerCharacter::setDied()
 			PlayerController->UnPossessEffect();
 		}
 	}
-
-	// call round manager to end its turn if it is the current player playing
-	/*
-	if (isPlayerTurn)
-	{
-		URoundManager* roundManager = URoundManager::get();
-		if (roundManager)
-		{
-			roundManager->endCurPlayerTurn();
-		}
-	}*/
 }
 void APlayerCharacter::startDying()
 {
@@ -138,7 +144,7 @@ bool APlayerCharacter::isAbleToBenchPiece()
 	}
 	return false;
 }
-void APlayerCharacter::benchAPiece(APiece* newPiece)
+void APlayerCharacter::benchAPiece_Implementation(APiece* newPiece)
 {
 	army.Add(newPiece);
 	for (AEnvSquare* aBenchSquare : playerBench)
@@ -152,35 +158,31 @@ void APlayerCharacter::benchAPiece(APiece* newPiece)
 }
 
 /* shop functions*/
-bool APlayerCharacter::isEnableToBuyProduct(TScriptInterface<IRLProduct> aProduct)
+bool APlayerCharacter::isEnableToBuyProduct(APiece* aProduct)
 {
-	if (IRLProduct* specificProduct = aProduct.GetInterface())
+	if (aProduct)
 	{
-		int productCost = specificProduct->GetProductCost();
+		int productCost = aProduct->GetProductCost();
 
-		bool hasSufficientMoney = (initMoney - productCost) >= 0;
+		bool hasSufficientMoney = (curMoney - productCost) >= 0;
 		return isAbleToBenchPiece() && hasSufficientMoney;
 	}
 	return false;
 }
-void APlayerCharacter::payProduct(TScriptInterface<IRLProduct> aProduct)
+	// no server because others dont care the money 
+void APlayerCharacter::payProduct(APiece* aProduct)
 {
-	IRLProduct* specificProduct = aProduct.GetInterface();
-	int productCost = specificProduct->GetProductCost();
+	// IRLProduct* specificProduct = aProduct.GetInterface();
+	int productCost = aProduct->GetProductCost();
 
-	initMoney -= productCost;
+	curMoney -= productCost;
 }
-void APlayerCharacter::receiveProduct(TScriptInterface<IRLProduct> aProduct)
+void APlayerCharacter::receiveProduct_Implementation(APiece* aProduct)
 {
-	UObject* ProductObject = aProduct.GetObject(); // Get the underlying object
-	if (APiece* Piece = Cast<APiece>(ProductObject))
+	if (aProduct)
 	{
-		Piece->setPieceColor(playerColor);
-		benchAPiece(Piece);
-	}
-	else if (AItem* Item = Cast<AItem>(ProductObject))
-	{
-		return;
+		aProduct->setPieceColor(getPlayerColor());
+		benchAPiece(aProduct);
 	}
 }
 
@@ -295,7 +297,7 @@ void APlayerCharacter::startTurn()
 
 	for (APiece* eachPiece : army)
 	{
-		eachPiece->updateStatus();
+		eachPiece->updateStatusByTurn();
 	}
 }
 
@@ -309,22 +311,31 @@ void APlayerCharacter::endTurn()
 // RL actor functions
 FString APlayerCharacter::getPlayerName()
 {
-	return playerName;
+	if (APlayerRLController* PC = Cast<APlayerRLController>(GetController()))
+	{
+		return PC->getPlayerName();
+	}
+	return TEXT("");
 }
 
 FColor APlayerCharacter::getPlayerColor()
 {
-	return playerColor;
+	return FColor::Green;
+	if (APlayerRLController* PC = Cast<APlayerRLController>(GetController()))
+	{
+		return PC->getPlayerColor();
+	}
+	return FColor::Black;
 }
 
 FString APlayerCharacter::GetActorName()
 {
-	return characterClassName;
+	return getPlayerName();
 }
 
 FString APlayerCharacter::GetDescription()
 {
-	return characterDescription;
+	return TEXT("");
 }
 
 bool APlayerCharacter::IsAbleToBeInteracted(APlayerCharacter* Sender)
@@ -404,12 +415,12 @@ void APlayerCharacter::jumpCompleted()
 	StopJumping();
 }
 
-void APlayerCharacter::selectItem(int itemIndex)
+void APlayerCharacter::selectItem_Implementation(int itemIndex)
 {
 	selectedItemIndex = itemIndex;
 }
 
-void APlayerCharacter::interact()
+void APlayerCharacter::interact_Implementation()
 {
 	if (isAbleToInteract)
 	{
@@ -446,7 +457,7 @@ void APlayerCharacter::interact()
 	}
 }
 
-void APlayerCharacter::useItem()
+void APlayerCharacter::useItem_Implementation()
 {
 	// choose and use item
 	AItem* selectedItem = inventory[selectedItemIndex];
@@ -458,7 +469,7 @@ void APlayerCharacter::useItem()
 	inventory[selectedItemIndex] = nullptr;
 	selectedItem->Destroy();
 }
-void APlayerCharacter::pickUpItem()
+void APlayerCharacter::pickUpItem_Implementation()
 {
 	for (AItem* eachItem : inventory)
 	{
@@ -470,7 +481,7 @@ void APlayerCharacter::pickUpItem()
 		}
 	}
 }
-void APlayerCharacter::selectPiece()
+void APlayerCharacter::selectPiece_Implementation()
 {
 	unselectPiece();
 	if (APiece* detectedPiece = Cast<APiece>(detectedActor.GetObject()))
@@ -480,7 +491,7 @@ void APlayerCharacter::selectPiece()
 	}
 }
 
-void APlayerCharacter::selectPlacePieceLocation()
+void APlayerCharacter::selectPlacePieceLocation_Implementation()
 {
 	// piece enter be place into new square
 	selectedSquare = detectedActor;
@@ -491,7 +502,7 @@ void APlayerCharacter::selectPlacePieceLocation()
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Selecting place piece location"));
 }
 
-void APlayerCharacter::moveSelectedPiece()
+void APlayerCharacter::moveSelectedPiece_Implementation()
 {
 	if (selectedSquare)
 	{
@@ -507,7 +518,7 @@ bool APlayerCharacter::isAbleToPickUpItem()
 	return currentItemCount >= 0 && currentItemCount <= inventorySize;
 }
 
-void APlayerCharacter::unselectPiece()
+void APlayerCharacter::unselectPiece_Implementation()
 {
 	selectedPiece = nullptr;
 

@@ -5,6 +5,7 @@
 #include "Algo/Sort.h"
 #include "MapManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 #include "../RLActor/Environment/EnvBoard.h"
 #include "../RLActor/Player/PlayerCharacter.h"
@@ -44,33 +45,55 @@ void URoundManager::setAllPlayers(TArray<APlayerCharacter*> players)
     numPlayers = allPlayers.Num();
 }
 
+void URoundManager::addPlayers(APlayerCharacter* aPlayer)
+{
+    if (aPlayer)
+    {
+        allPlayers.Add(aPlayer);
+        numPlayers = allPlayers.Num();
+    }
+}
+
 TArray<APlayerCharacter*> URoundManager::getAllPlayers()
 {
     return allPlayers;
 }
 
-void URoundManager::startRoundManagerSetUpRound()
+void URoundManager::startRoundManagerSetUpRound_Implementation()
 {
-    orderPlayerBySpeed();
+    setMapColor();
+    setPlayerBench();
     setPlayerInitLocation();
     spawnShop();
 }
 
-void URoundManager::orderPlayerBySpeed()
-{
-    // Use Unreal's built-in sorting algorithm with a custom predicate
-    Algo::Sort(allPlayers, [](const APlayerCharacter* A, const APlayerCharacter* B) {
-        return A->getPlayerSpeed() > B->getPlayerSpeed();
-        });
-}
-
-void URoundManager::startRoundManagerGameplayRound()
+void URoundManager::startRoundManagerGameplayRound_Implementation()
 {
     startPlayerSetUpTime();
-    // startTurns();
 }
 
-void URoundManager::setPlayerInitLocation()
+void URoundManager::setMapColor()
+{
+    UMapManager* mapManager = UMapManager::get();
+    if (mapManager)
+    {
+        AEnvBoard* gameBoard = mapManager->getGameBoard();
+        if (gameBoard)
+        {
+            gameBoard->initializeBoardColor(allPlayers);
+            gameBoard->resetBoard();
+        }
+    }
+}
+void URoundManager::setPlayerBench()
+{
+    UMapManager* mapManager = UMapManager::get();
+    if (mapManager)
+    {
+        mapManager->createBench(allPlayers);
+    }
+}
+void URoundManager::setPlayerInitLocation_Implementation()
 {
     UMapManager* mapManager = UMapManager::get();
     if (mapManager)
@@ -79,16 +102,20 @@ void URoundManager::setPlayerInitLocation()
         
         for (int i = 0; i < allPlayers.Num(); i++)
         {
-            FVector spawnLocation = gameBoard->getSpawnStartPositionForPlayer(i) + FVector(0.0f, 0.0f, gameplayGameMode->playerSpawnHeight);
-            FRotator spawnRotation = gameBoard->getSpawnStartRotationForPlayer(i);
+            if (allPlayers[i])
+            {
+                FVector spawnLocation = gameBoard->getSpawnStartPositionForPlayer(i) + FVector(0.0f, 0.0f, gameplayGameMode->playerSpawnHeight);
+                FRotator spawnRotation = gameBoard->getSpawnStartRotationForPlayer(i);
 
-            allPlayers[i]->SetActorLocation(spawnLocation);
-            allPlayers[i]->SetActorRotation(spawnRotation);
+            
+                allPlayers[i]->SetActorLocation(spawnLocation);
+                allPlayers[i]->SetActorRotation(spawnRotation);
+            }
         }
     }
 }
 
-void URoundManager::spawnShop()
+void URoundManager::spawnShop_Implementation()
 {
     UMapManager* mapManager = UMapManager::get();
     if (mapManager)
@@ -98,7 +125,7 @@ void URoundManager::spawnShop()
 }
 
 // give one minutes to let player do anything they want
-void URoundManager::startPlayerSetUpTime()
+void URoundManager::startPlayerSetUpTime_Implementation()
 {
     if (gameplayGameMode)
     {
@@ -109,7 +136,10 @@ void URoundManager::startPlayerSetUpTime()
 
             for (APlayerCharacter* eachPlayer : allPlayers)
             {
-                eachPlayer->startSetup();
+                if (eachPlayer)
+                {
+                    eachPlayer->startSetup();
+                }
             }
 
 
@@ -123,7 +153,7 @@ void URoundManager::startPlayerSetUpTime()
     }
 }
 
-void URoundManager::endPlayerSetUpTime()
+void URoundManager::endPlayerSetUpTime_Implementation()
 {
     UMapManager* mapManager = UMapManager::get();
     if (mapManager)
@@ -134,14 +164,17 @@ void URoundManager::endPlayerSetUpTime()
     // let all players know that set up time finish
     for (APlayerCharacter* eachPlayer : allPlayers)
     {
-        eachPlayer->endSetup();
+        if (eachPlayer)
+        {
+            eachPlayer->endSetup();
+        }
     }
 
     // start the turns
     startPlayerPreparePhase();
 }
 
-void URoundManager::startPlayerPreparePhase()
+void URoundManager::startPlayerPreparePhase_Implementation()
 {
     roundCounter++;
     /*if (checkIfGameEnd())
@@ -159,7 +192,10 @@ void URoundManager::startPlayerPreparePhase()
 
             for (APlayerCharacter* eachPlayer : allPlayers)
             {
-                eachPlayer->startTurn();
+                if (eachPlayer)
+                {
+                    eachPlayer->startTurn();
+                }
             }
 
             gameWorld->GetTimerManager().ClearTimer(playerPrepareTimerHandle);
@@ -170,12 +206,16 @@ void URoundManager::startPlayerPreparePhase()
     }
 }
 
-void URoundManager::startPieceMovingPhase()
+void URoundManager::startPieceMovingPhase_Implementation()
 {
     // let all player move their pieces
     for (APlayerCharacter* eachPlayer : allPlayers)
     {
-        eachPlayer->endTurn();
+        if (eachPlayer)
+        {
+            eachPlayer->endTurn();
+
+        }
         // eachPlayer->moveSelectedPiece();
     }
     
@@ -194,12 +234,13 @@ void URoundManager::startPieceMovingPhase()
 }
 
 // should be called after player finish its move
-bool URoundManager::checkIfGameEnd() {
+bool URoundManager::checkIfGameEnd() 
+{
     int alivePlayerCounter = 0;
 
     for (APlayerCharacter* aPlayer : allPlayers)
     {
-        if (aPlayer->checkIsAlive())
+        if (aPlayer && aPlayer->checkIsAlive())
         {
             alivePlayerCounter++;
             winner = aPlayer;
@@ -209,7 +250,7 @@ bool URoundManager::checkIfGameEnd() {
     return alivePlayerCounter <= 1;
 }
 
-void URoundManager::gameEnd()
+void URoundManager::gameEnd_Implementation()
 {
     if (gameplayGameMode && winner)
     {

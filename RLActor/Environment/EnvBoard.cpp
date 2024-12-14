@@ -11,7 +11,7 @@ AEnvBoard::AEnvBoard() {
     
 }
 
-void AEnvBoard::initialized(TArray<APlayerCharacter*> allPlayers)
+void AEnvBoard::initialized()
 {
     totalSquareNum = rowSize * columnSize;
     allSquares.SetNum(totalSquareNum);
@@ -68,9 +68,6 @@ void AEnvBoard::initialized(TArray<APlayerCharacter*> allPlayers)
             }
         }
     }
-
-    initializeBoardColor(allPlayers);
-    resetBoard();
 }
 
 void AEnvBoard::initializeBoardColor(TArray<APlayerCharacter*> allPlayers)

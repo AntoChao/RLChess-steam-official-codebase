@@ -6,66 +6,133 @@
 #include "../RLActor/Player/PlayerRLController.h"
 #include "../RLActor/Factory/FactoryItem.h"
 #include "../RLActor/Factory/FactoryPiece.h"
+#include "../RLActor/Environment/EnvBoard.h"
 
 #include "../RLActor/Player/PlayerCharacter.h"
 
+#include "../RLActor/Player/PlayerRLController.h"
+
+#include "RLGameState.h"
+
 AGameplayGameMode::AGameplayGameMode() {
-	roundManager = NewObject<URoundManager>();
+	// roundManager = NewObject<URoundManager>();
+}
+
+void AGameplayGameMode::PostLogin(APlayerController* NewPlayer)
+{
+    Super::PostLogin(NewPlayer);
+    UE_LOG(LogTemp, Error, TEXT("--------------------------------------"));
+    UE_LOG(LogTemp, Warning, TEXT("Player %s logged in."), *NewPlayer->GetName());
+    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Player %s logged in."));
+
+    APlayerRLController* rlController = Cast<APlayerRLController>(NewPlayer);
+    allPlayerControllers.Add(rlController);
+
+    addAPlayerBody();
+}
+
+void AGameplayGameMode::Logout(AController* Exiting)
+{
+    Super::Logout(Exiting);
+    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Player %s logged out."));
+
 }
 
 void AGameplayGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+    
+    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("GAMEMODE BEGIN PLAY"));
+
 	setupGame(); // create everything
-    startRoundSetUp(); // set players to correct location
-    startRoundGameplay(); // start game
+
+    startIfAllPlayerLoggedIn();
+    
 }
 
 void AGameplayGameMode::setupGame()
 {
     setupSingletonClasses();
-    createPlayers();
     createEnvironment();
 }
+
 void AGameplayGameMode::setupSingletonClasses()
 {
-    playerFactoryInstance = NewObject<UFactoryPlayer>(this, playerFactoryClass);
-    environmentFactoryInstance = NewObject<UFactoryEnvironment>(this, envFactoryClass);
-    itemFactoryInstance = NewObject<UFactoryItem>(this, itemFactoryClass);
-    pieceFactoryInstance = NewObject<UFactoryPiece>(this, pieceFactoryClass);
+    if (!playerFactoryInstance)
+    {
+        playerFactoryInstance = NewObject<UFactoryPlayer>(this, playerFactoryClass);
+        playerFactoryInstance->gameWorld = GetWorld();
+    }
+    if (!environmentFactoryInstance)
+    {
+        environmentFactoryInstance = NewObject<UFactoryEnvironment>(this, envFactoryClass);
+        environmentFactoryInstance->gameWorld = GetWorld();
+    }
+    if (!itemFactoryInstance)
+    {
+        itemFactoryInstance = NewObject<UFactoryItem>(this, itemFactoryClass);
+        itemFactoryInstance->gameWorld = GetWorld();
+    }
+    if (!pieceFactoryInstance)
+    {
+        pieceFactoryInstance = NewObject<UFactoryPiece>(this, pieceFactoryClass);
+        pieceFactoryInstance->gameWorld = GetWorld();
+    }
 }
 
-void AGameplayGameMode::createPlayers()
+APlayerCharacter* AGameplayGameMode::getPlayerBody()
 {
-    if (playerFactoryInstance)
+    if (!playerFactoryInstance)
     {
-        int playerCounter = 0;
+        playerFactoryInstance = NewObject<UFactoryPlayer>(this, playerFactoryClass);
+        playerFactoryInstance->gameWorld = GetWorld();
+    }
 
-        TArray<APlayerCharacter*> players;
+    AActor* createdActor = playerFactoryInstance->createRLActor(TEXT("testing"), temporaryPlayerSpawnLocation, FRotator::ZeroRotator);
+    APlayerCharacter* aCharacter = Cast<APlayerCharacter>(createdActor);
+    
+    UE_LOG(LogTemp, Warning, TEXT("XDDDDDD"));
 
-        for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
-        {
-            APlayerRLController* PC = Cast<APlayerRLController>(Iterator->Get());
-            if (PC)
-            {
-                FString characterName = PC->getCharacterName();
+    return aCharacter;
+}
 
-                AActor* createdActor = playerFactoryInstance->createRLActor(characterName, FVector::ZeroVector, FRotator::ZeroRotator);
-                APlayerCharacter* charact = Cast<APlayerCharacter>(createdActor);
-                if (charact)
-                {
-                    PC->Possess(charact);
-                    players.Add(charact);
-                    playerCounter++;
-                }
-            }
-        }
+void AGameplayGameMode::addNewPlayerCharacter(APlayerController* newPlayer)
+{
+    UE_LOG(LogTemp, Warning, TEXT("CREATING CHARACTER FOR Player %s"), *newPlayer->GetName());
+    
+    FString Message = FString::Printf(TEXT("CREATING CHARACTER FOR Player %s"), *newPlayer->GetName());
+    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
 
-        roundManager = URoundManager::get();
-        if (roundManager)
+    APlayerRLController* rlController = Cast<APlayerRLController>(newPlayer);
+    allPlayerControllers.Add(rlController);
+
+    if (!playerFactoryInstance)
+    {
+        playerFactoryInstance = NewObject<UFactoryPlayer>(this, playerFactoryClass);
+        playerFactoryInstance->gameWorld = GetWorld();
+    }
+
+    AActor* createdActor = playerFactoryInstance->createRLActor(TEXT("testing"), temporaryPlayerSpawnLocation, FRotator::ZeroRotator);
+    APawn* rlPawn = Cast<APawn>(createdActor);
+    if (rlPawn)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("LET Player %s POSSESSES THE RLPAWN"), *newPlayer->GetName());
+        Message = FString::Printf(TEXT("LET Player %s POSSESSES THE RLPAWN"), *newPlayer->GetName());
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
+
+        rlController->Possess(rlPawn);
+        // rlController->setupMappingContextBasedOnGameMode();
+    }
+
+    roundManager = URoundManager::get();
+    if (roundManager)
+    {
+        APlayerCharacter* rlCharact = Cast<APlayerCharacter>(createdActor);
+
+        if (rlCharact)
         {
             roundManager->setGameMode(this);
-            roundManager->setAllPlayers(players);
+            roundManager->addPlayers(rlCharact);
         }
     }
 }
@@ -77,6 +144,26 @@ void AGameplayGameMode::createEnvironment()
     {
         mapManager->setGameMode(this);
         mapManager->createMap();
+    }
+}
+
+void AGameplayGameMode::startIfAllPlayerLoggedIn()
+{
+    if (allPlayerControllers.Num() >= 2) // check if all player log, should check with game instance???
+    {
+        startRoundSetUp(); // set players to correct location
+        startRoundGameplay(); // start game
+    }
+    else
+    {
+        UWorld* gameWorld = GetWorld();
+        if (gameWorld)
+        {
+            gameWorld->GetTimerManager().ClearTimer(waitPlayerLogInTimerHandle);
+            FTimerDelegate waitPlayerLogInTimerDel;
+            waitPlayerLogInTimerDel.BindUFunction(this, FName("startIfAllPlayerLoggedIn"));
+            gameWorld->GetTimerManager().SetTimer(waitPlayerLogInTimerHandle, waitPlayerLogInTimerDel, waitPlayerLogInSegs, false);
+        }
     }
 }
 

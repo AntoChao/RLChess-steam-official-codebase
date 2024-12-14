@@ -39,7 +39,7 @@ TArray<FVector2D> APieceWitch::calculatePossibleMove()
     return PossibleMoves;
 }
 
-void APieceWitch::startMoving(AEnvSquare* squareDestination)
+void APieceWitch::startMoving_Implementation(AEnvSquare* squareDestination)
 {
     if (IsValid(curSquare))
     {

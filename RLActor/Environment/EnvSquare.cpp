@@ -6,6 +6,8 @@
 #include "Components/PrimitiveComponent.h"
 #include "Components/BoxComponent.h"
 
+#include "Net/UnrealNetwork.h"
+
 #include "../Player/PlayerCharacter.h"
 #include "../Piece/Piece.h"
 #include "../../CommonEnum.h"
@@ -13,6 +15,8 @@
 
 AEnvSquare::AEnvSquare()
 {
+	bReplicates = true;
+
 	// Create and set up the static mesh components
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 
@@ -33,6 +37,19 @@ AEnvSquare::AEnvSquare()
 	squareCollision->SetCollisionObjectType(ECC_WorldDynamic);
 	squareCollision->SetCollisionResponseToAllChannels(ECR_Overlap);
 
+}
+
+void AEnvSquare::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	//Replicate current health.
+	DOREPLIFETIME(AEnvSquare, squareLocation);
+	DOREPLIFETIME(AEnvSquare, isOccupied);
+	DOREPLIFETIME(AEnvSquare, occupiedPiece);
+	DOREPLIFETIME(AEnvSquare, isPlayerOnTop);
+	DOREPLIFETIME(AEnvSquare, playerOnTop);
+	DOREPLIFETIME(AEnvSquare, squareColorField);
 }
 
 void AEnvSquare::BeginPlay()
@@ -101,7 +118,7 @@ void AEnvSquare::BeInteracted(APlayerCharacter* Sender)
 	}
 }
 
-void AEnvSquare::beOccupied(APiece* aPiece)
+void AEnvSquare::beOccupied_Implementation(APiece* aPiece)
 {
 	isOccupied = true;
 	occupiedPiece = aPiece;
@@ -142,7 +159,7 @@ void AEnvSquare::setIsPossibleMove(bool status, FColor pieceColor)
 	setColor(pieceColor);
 }
 
-void AEnvSquare::occupiedPieceLeaved()
+void AEnvSquare::occupiedPieceLeaved_Implementation()
 {
 	isOccupied = false;
 	occupiedPiece = nullptr;
@@ -182,13 +199,21 @@ void AEnvSquare::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent,
 	{
 		if (OtherActor->IsA(APlayerCharacter::StaticClass()))
 		{
-			isPlayerOnTop = true;
-			playerOnTop = Cast<APlayerCharacter>(OtherActor);
+			overlapEffect(Cast<APlayerCharacter>(OtherActor));
 		}
 	}
 }
 
-void AEnvSquare::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, 
+void AEnvSquare::overlapEffect_Implementation(APlayerCharacter* aPlayer)
+{
+	if (aPlayer)
+	{
+		isPlayerOnTop = true;
+		playerOnTop = aPlayer;
+	}
+}
+
+void AEnvSquare::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	// Handle overlap end
@@ -196,8 +221,13 @@ void AEnvSquare::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* 
 	{
 		if (OtherActor->IsA(APlayerCharacter::StaticClass()))
 		{
-			isPlayerOnTop = false;
-			playerOnTop = nullptr;
+			overlapEndEffect();
 		}
 	}
+}
+
+void AEnvSquare::overlapEndEffect_Implementation()
+{
+	isPlayerOnTop = false;
+	playerOnTop = nullptr;
 }

@@ -39,7 +39,7 @@ TArray<FVector2D> APieceSamurai::calculatePossibleMove()
     return PossibleMoves;
 }
 
-void APieceSamurai::killEffect()
+void APieceSamurai::killEffect_Implementation()
 {
     AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
     if (gameBoard)

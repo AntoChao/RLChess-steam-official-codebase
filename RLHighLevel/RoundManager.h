@@ -35,34 +35,47 @@ public:
     // Ensure singleton is initialized
     void setAllPlayers(TArray<APlayerCharacter*> players);
 
+    void addPlayers(APlayerCharacter* aPlayer);
+
     TArray<APlayerCharacter*> getAllPlayers();
 
     // called by gamemode to initialize
-    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+    UFUNCTION(Server, Reliable, Category = "RoundManager")
         void startRoundManagerSetUpRound();
 
-    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+    UFUNCTION(Server, Reliable, Category = "RoundManager")
         void startRoundManagerGameplayRound();
 
-    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+
+    UFUNCTION(BlueprintCallable, Category = "GameMode")
+        void setMapColor();
+    UFUNCTION(BlueprintCallable, Category = "GameMode")
+        void setPlayerBench();
+
+    UFUNCTION(Server, Reliable, Category = "RoundManager")
         void setPlayerInitLocation();
 
-    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+    UFUNCTION(Server, Reliable, Category = "RoundManager")
         void spawnShop();
 
-    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+    UFUNCTION(Server, Reliable, Category = "RoundManager")
         void startPlayerSetUpTime();
-    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+    UFUNCTION(Server, Reliable, Category = "RoundManager")
         void endPlayerSetUpTime();
 
-    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+    UFUNCTION(Server, Reliable, Category = "RoundManager")
         void startPlayerPreparePhase();
 
-    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+    UFUNCTION(Server, Reliable, Category = "RoundManager")
         void startPieceMovingPhase();
 
     UFUNCTION(BlueprintCallable, Category = "RoundManager")
         bool getIsPlayerSetUpTime();
+
+    UFUNCTION(BlueprintCallable, Category = "RoundManager")
+        bool checkIfGameEnd();
+    UFUNCTION(Server, Reliable, Category = "RoundManager")
+        void gameEnd();
 
 protected:
     // gamemode, uobject doesnt have worldcontext
@@ -94,20 +107,11 @@ protected:
     // manage player round
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
         int roundCounter = 0;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-        int numReadyPlayers = 0;
 
-    UFUNCTION(BlueprintCallable, Category = "RoundManager")
-        void orderPlayerBySpeed();
-
-    UFUNCTION(BlueprintCallable, Category = "RoundManager")
-        bool checkIfGameEnd();
-    UFUNCTION(BlueprintCallable, Category = "RoundManager")
-        void gameEnd();
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
         APlayerCharacter* winner = nullptr;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+    UPROPERTY(BlueprintReadWrite, Category = "Round Manager")
         FTimerHandle playerPrepareTimerHandle;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
         int playerPrepareTimerSegs = 10;

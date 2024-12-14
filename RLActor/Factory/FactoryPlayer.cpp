@@ -1,14 +1,21 @@
 #include "FactoryPlayer.h"
 #include "../RLActor.h"
+#include "Net/UnrealNetwork.h"
 
-AActor* UFactoryPlayer::createRLActor(const FString& name, FVector aLocation, FRotator aRotation)
+void UFactoryPlayer::spawnRLActor_Implementation(const FString& name, FVector aLocation, FRotator aRotation)
 {
-    if (name == TEXT("testing"))
+    if (gameWorld)
     {
-        // Spawn or create a specialized actor
-        return GetWorld()->SpawnActor<APlayerCharacter>(merchantClass, aLocation, aRotation);
-    }
+        if (name == TEXT("testing"))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("RLFactory Player: create RLActor_Implementataion"));
 
-    // Fall back to base class implementation
-    return Super::createRLActor(name, aLocation, aRotation);
+            // Spawn or create a specialized actor
+            createdActor = gameWorld->SpawnActor<APlayerCharacter>(merchantClass, aLocation, aRotation);
+        }
+    }
+    else
+    {
+        createdActor = nullptr;
+    }
 }

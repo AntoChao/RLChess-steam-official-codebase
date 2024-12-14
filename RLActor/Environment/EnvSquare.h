@@ -20,6 +20,8 @@ class AEnvSquare : public AActor, public IRLActor
 public:
 	AEnvSquare();
 
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	virtual void BeginPlay() override;
 
 public:
@@ -31,7 +33,7 @@ public:
 
 	virtual void BeInteracted(APlayerCharacter* Sender) override;
 
-	UFUNCTION(BlueprintCallable, Category = "Square Stats")
+	UFUNCTION(Server, Reliable, Category = "Square Stats")
 	void beOccupied(APiece* aPiece);
 
 	virtual void BeUnInteracted(APlayerCharacter* Sender) override;
@@ -72,20 +74,20 @@ protected:
 	void setColor(const FColor& NewColor);
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
 	FVector2D squareLocation = FVector2D(0.0f, 0.0f);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
 	bool isOccupied = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
 	APiece* occupiedPiece = nullptr;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
 	bool isPlayerOnTop = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
 	APlayerCharacter* playerOnTop = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
 	FColor squareColorField = FColor::White;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
@@ -107,7 +109,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Square Stats")
 	void setIsPossibleMove(bool status, FColor pieceColor);
 
-	UFUNCTION(BlueprintCallable, Category = "Square Stats")
+	UFUNCTION(Server, Reliable, Category = "Square Stats")
 	void occupiedPieceLeaved();
 
 	UFUNCTION(BlueprintCallable, Category = "Square Stats")
@@ -129,8 +131,14 @@ public:
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, 
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	UFUNCTION(Server, Reliable)
+	void overlapEffect(APlayerCharacter* aPlayer);
+
 	UFUNCTION()
 	void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, 
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION(Server, Reliable)
+	void overlapEndEffect();
 };
 

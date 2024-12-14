@@ -19,6 +19,6 @@ public:
 protected:
     virtual void inBenchInteractedEffect(APlayerCharacter* Sender) override;
 
-    virtual void bePlacedInBenchEffect(AEnvSquare* squareDestination) override;
-
+    virtual void bePlacedInBenchEffect_Implementation(AEnvSquare* squareDestination) override;
+   
 };

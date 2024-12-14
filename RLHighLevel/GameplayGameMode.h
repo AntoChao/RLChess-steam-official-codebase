@@ -16,6 +16,8 @@ class UFactoryEnvironment;
 class UFactoryItem;
 class UFactoryPiece;
 
+class APlayerRLController;
+
 UCLASS(minimalapi)
 class AGameplayGameMode : public ARLChessGameMode
 {
@@ -24,8 +26,19 @@ class AGameplayGameMode : public ARLChessGameMode
 public:
 	AGameplayGameMode();
 
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+
+	virtual void Logout(AController* Exiting) override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+	TArray<AActor*> allSpawnedPlayers;
+
 protected:
+
 	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+	TArray<APlayerRLController*> allPlayerControllers;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
 		URoundManager* roundManager = nullptr;
@@ -33,10 +46,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
 		UMapManager* mapManager = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board")
-		AEnvBoard* gameBoard = nullptr;
-
 	// all factory
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Factory Class")
+		FVector temporaryPlayerSpawnLocation = FVector(0.0f, 0.0f, 300.0f);
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Factory Class")
 		TSubclassOf<UFactoryPlayer> playerFactoryClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Factory Class")
@@ -55,6 +68,9 @@ public:
 		UFactoryItem* itemFactoryInstance = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Factory Class")
 		UFactoryPiece* pieceFactoryInstance = nullptr;
+
+	UFUNCTION(BlueprintCallable, Category = "GameMode")
+		APlayerCharacter* getPlayerBody();
 
 	// all locations
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
@@ -85,9 +101,18 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
 		void setupSingletonClasses();
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
-		void createPlayers();
+		void addNewPlayerCharacter(APlayerController* newPlayer);
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
 		void createEnvironment();
+
+
+	// a timer to allow players log in successfully 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+		FTimerHandle waitPlayerLogInTimerHandle;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+		int waitPlayerLogInSegs = 1; // in segs
+	UFUNCTION(BlueprintCallable, Category = "GameMode")
+		void startIfAllPlayerLoggedIn();
 
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
 		void startRoundSetUp();
