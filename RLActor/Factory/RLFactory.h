@@ -30,7 +30,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "RLFactory")
     virtual AActor* createRLActor(const FString& name, FVector aLocation, FRotator aRotation);
 
-    UFUNCTION(Server, Reliable, BlueprintCallable, Category = "RLFactory")
+    UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "RLFactory")
     void spawnRLActor(const FString& name, FVector aLocation, FRotator aRotation);
 
     virtual void spawnRLActor_Implementation(const FString& name, FVector aLocation, FRotator aRotation);

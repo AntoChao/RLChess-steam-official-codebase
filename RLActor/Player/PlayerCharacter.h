@@ -67,7 +67,7 @@ protected:
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
 	bool setUpTime = false;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
 	bool isAlive = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
@@ -82,17 +82,17 @@ protected:
 	int rangeRank = 1;
 
 	/* shopping*/
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	int totalMoney = 5;
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	int curMoney = 5;
 
 	/* inventory*/
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	int inventorySize = 3;
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	int currentItemCount = 0;
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	TArray<AItem*> inventory;
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
@@ -258,18 +258,18 @@ protected:
 	float baseLookUpRate = 45.0f;
 
 	// move stats
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	bool isAbleToMove = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	float move_XSensitivity = 1.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	float move_YSensitivity = 1.0f;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	bool isRunning = false;
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	bool isAbleToRun = true;
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	float curSpeed = 0.0f;
 
 	// interaction stats
@@ -279,12 +279,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	bool isAbleToInteract = true;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	APiece* selectedPiece = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	int selectedItemIndex = 0;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	TScriptInterface<IRLActor> selectedSquare = nullptr;
 
 public:

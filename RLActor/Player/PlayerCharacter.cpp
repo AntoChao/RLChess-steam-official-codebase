@@ -48,21 +48,9 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	//Replicate current health.
 	DOREPLIFETIME(APlayerCharacter, setUpTime);
-	DOREPLIFETIME(APlayerCharacter, isAlive);
-	DOREPLIFETIME(APlayerCharacter, totalMoney);
-	DOREPLIFETIME(APlayerCharacter, curMoney);
-	DOREPLIFETIME(APlayerCharacter, inventorySize);
-	DOREPLIFETIME(APlayerCharacter, currentItemCount);
-	DOREPLIFETIME(APlayerCharacter, inventory);
 	DOREPLIFETIME(APlayerCharacter, playerBench);
 	DOREPLIFETIME(APlayerCharacter, isPlayerTurn);
-	DOREPLIFETIME(APlayerCharacter, isAbleToMove);
-	DOREPLIFETIME(APlayerCharacter, isRunning);
-	DOREPLIFETIME(APlayerCharacter, isAbleToRun);
-	DOREPLIFETIME(APlayerCharacter, curSpeed);
 	DOREPLIFETIME(APlayerCharacter, isAIPossessed);
-	DOREPLIFETIME(APlayerCharacter, selectedPiece);
-	DOREPLIFETIME(APlayerCharacter, selectedSquare);
 }
 
 void APlayerCharacter::BeginPlay()

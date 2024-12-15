@@ -5,6 +5,7 @@
 
 #include "Net/UnrealNetwork.h"
 #include "../../RLHighLevel/GameplayGameMode.h"
+#include "../../RLHighLevel/RLGameState.h"
 
 #include "PlayerRLState.h"
 #include "InputActionValue.h"
@@ -13,30 +14,16 @@
 
 APlayerRLController::APlayerRLController()
 {
-	
+	bReplicates = true;
+}
+
+void APlayerRLController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 }
 
 void APlayerRLController::BeginPlay() {
 	Super::BeginPlay();
-
-	/*
-	if (IsLocalPlayerController())
-	{
-		// Cast the PlayerState to custom PlayerState class
-		rlPlayerState = GetPlayerState<APlayerRLState>();
-		if (!rlPlayerState)
-		{
-			UE_LOG(LogTemp, Error, TEXT("RLCONTROLLER %s, BeginPlay, PlayerRLState not found!"), *this->GetName());
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("RLCONTROLLER, BeginPlay, PlayerRLState not found!"));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("RLCONTROLLER %s, BeginPlay, PlayerRLState FOUND!"), *this->GetName());
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("RLCONTROLLER, BeginPlay, PlayerRLState FOUND!"));
-		}
-
-		// setupControllerBody();
-	}*/
 }
 
 void APlayerRLController::Tick(float DeltaTime)
@@ -45,56 +32,6 @@ void APlayerRLController::Tick(float DeltaTime)
 	isLocalPlayerValid = GetLocalPlayer() != nullptr;
 }
 
-void APlayerRLController::setupControllerBody_Implementation()
-{
-	if (IsLocalPlayerController())
-	{
-		if (GetLocalRole() == ROLE_Authority)
-		{
-			// Server-specific logic here
-			AGameplayGameMode* myGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
-			if (myGameMode)
-			{
-				// Successfully cast to MyCustomGameMode, now you can access its members
-				rlPlayer = myGameMode->getPlayerBody();
-
-				if (rlPlayer)
-				{
-					Possess(rlPlayer);
-					setupMappingContextBasedOnGameModeMulticast();
-				}
-
-			}
-		}
-		else if (GetLocalRole() == ROLE_AutonomousProxy)
-		{
-			// Client owning the actor
-			// Server-specific logic here
-			AGameplayGameMode* MyGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
-			UE_LOG(LogTemp, Error, TEXT("MIAUMIAUMIAU"));
-			if (MyGameMode)
-			{
-				// Successfully cast to MyCustomGameMode, now you can access its members
-				rlPlayer = MyGameMode->getPlayerBody();
-
-				if (rlPlayer)
-				{
-					Possess(rlPlayer);
-					setupMappingContextBasedOnGameModeMulticast();
-				}
-
-			}
-		}
-		else if (GetLocalRole() == ROLE_SimulatedProxy)
-		{
-			// Other clients
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("MIAUMIAUMIAU"));
-	}
-}
 
 FString APlayerRLController::getPlayerName()
 {
@@ -133,130 +70,85 @@ FString APlayerRLController::getCharacterName()
 	return rlPlayerState->characterName;
 }
 
-void APlayerRLController::OnPossess(APawn* InPawn) {
-	Super::OnPossess(InPawn);
-
+void APlayerRLController::setupControllerBody_Implementation()
+{
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		// Server-specific logic here
-		UE_LOG(LogTemp, Warning, TEXT("Player CONTROLLER %s ON POSSESS"), *this->GetName());
-
-		FString Message = FString::Printf(TEXT("Player CONTROLLER %s ON POSSESS"), *this->GetName());
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
-
-		// Rebind input mappings if the pawn changes
-		APlayerCharacter* aMiddlePassway = Cast<APlayerCharacter>(InPawn);
-
-		rlPlayer = aMiddlePassway;
-
-		if (rlPlayer)
+		if (GetLocalRole() == ROLE_Authority)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Player CONTROLLER %s POSSESSES RLPLAYER SUCCESSFUL"), *this->GetName());
-			Message = FString::Printf(TEXT("Player CONTROLLER %s POSSESSES RLPLAYER SUCCESSFUL"), *this->GetName());
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
-
+			UE_LOG(LogTemp, Error, TEXT("MIAUMIAUMIAUMIAU"));
 		}
-		else
+		else if (GetLocalRole() == ROLE_AutonomousProxy)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Player CONTROLLER %s POSSESSES RLPLAYER FAIL"), *this->GetName());
-			Message = FString::Printf(TEXT("Player CONTROLLER %s POSSESSES RLPLAYER FAIL"), *this->GetName());
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
+			UE_LOG(LogTemp, Error, TEXT("MIAUMIAUMIAUMIAU"));
 		}
+		else if (GetLocalRole() == ROLE_SimulatedProxy)
+		{
+			UE_LOG(LogTemp, Error, TEXT("MIAUMIAUMIAUMIAU"));
+		}
+
+		gameStateCreateBody();
 	}
-	else if (GetLocalRole() == ROLE_AutonomousProxy)
+	else
 	{
-		// Client owning the actor
-		UE_LOG(LogTemp, Warning, TEXT("Player CONTROLLER %s POSSESSES RLPLAYER FAIL"), *this->GetName());
-	
-		// Server-specific logic here
-		UE_LOG(LogTemp, Warning, TEXT("Player CONTROLLER %s ON POSSESS"), *this->GetName());
-
-		FString Message = FString::Printf(TEXT("Player CONTROLLER %s ON POSSESS"), *this->GetName());
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
-
-		// Rebind input mappings if the pawn changes
-		APlayerCharacter* aMiddlePassway = Cast<APlayerCharacter>(InPawn);
-
-		rlPlayer = aMiddlePassway;
-
-		if (rlPlayer)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Player CONTROLLER %s POSSESSES RLPLAYER SUCCESSFUL"), *this->GetName());
-			Message = FString::Printf(TEXT("Player CONTROLLER %s POSSESSES RLPLAYER SUCCESSFUL"), *this->GetName());
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
-
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Player CONTROLLER %s POSSESSES RLPLAYER FAIL"), *this->GetName());
-			Message = FString::Printf(TEXT("Player CONTROLLER %s POSSESSES RLPLAYER FAIL"), *this->GetName());
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
-		}
-	
+		UE_LOG(LogTemp, Error, TEXT("MIAUMIAUMIAU"));
 	}
-	else if (GetLocalRole() == ROLE_SimulatedProxy)
+}
+
+void APlayerRLController::gameStateCreateBody_Implementation()
+{
+	if (UWorld* World = GetWorld())
 	{
-		// Other clients
-		UE_LOG(LogTemp, Warning, TEXT("Player CONTROLLER %s POSSESSES RLPLAYER FAIL"), *this->GetName());
+		ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+		if (GameState)
+		{
+			// Successfully cast to MyCustomGameMode, now you can access its members
+			GameState->createPlayerBody();
+
+			serverPossesses(this);
+
+		}
+	}
+}
+/*SO, BODY + POSSESSION MUST BE DONE IN GAMEMODE WHICH IS INVOKED BY A SERVER RELIABLE FUNCTION*/
+void APlayerRLController::serverPossesses_Implementation(APlayerRLController* currentController)
+{
+	APawn* controlledPawn = currentController->GetPawn();
+
+	if (IsValid(controlledPawn))
+	{
+		controlledPawn->Destroy();
 	}
 
+	if (UWorld* World = GetWorld())
+	{
+		ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+		if (GameState)
+		{
+			// Successfully cast to MyCustomGameMode, now you can access its members
+			rlPlayer = GameState->getPlayerBody();
+
+			currentController->Possess(rlPlayer);
+
+			setupMappingContextBasedOnGameModeMulticast();
+		}
+	}
 	
+}
+
+void APlayerRLController::OnPossess(APawn* InPawn) {
+	Super::OnPossess(InPawn);
+	UE_LOG(LogTemp, Error, TEXT("MIAUMIAUMIAUMIAU"));
 }
 
 void APlayerRLController::UnPossessEffect() {
 	setupMappingContextBasedOnGameModeMulticast();
 }
 
-void APlayerRLController::setupMappingContextBasedOnGameModeMulticast_Implementation() {
-	if (GetLocalRole() == ROLE_Authority)
+void APlayerRLController::setupMappingContextBasedOnGameModeMulticast_Implementation() 
+{
+	if (IsLocalPlayerController())
 	{
-		if (IsLocalPlayerController())
-		{
-			if (GetLocalPlayer() != nullptr)
-			{
-				UEnhancedInputLocalPlayerSubsystem* subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
-
-				UE_LOG(LogTemp, Warning, TEXT("SET UP MAPPING CONTEXT BASE ON GAMEMODE"));
-				FString Message = FString::Printf(TEXT("SET UP MAPPING CONTEXT BASE ON GAMEMODE"));
-				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
-
-				if (subsystem)
-				{
-					URLInstance* curGameInstance = Cast<URLInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
-					EGameMode curGameMode = curGameInstance->getCurGameMode();
-
-					if (curGameMode == EGameMode::EGameplay) {
-						subsystem->AddMappingContext(gameplayMappingContext, 0);
-						bShowMouseCursor = false;
-						SetInputMode(FInputModeGameOnly());
-					}
-					else if (curGameMode == EGameMode::ELobby) {
-						subsystem->AddMappingContext(lobbyMappingContext, 0);
-						bShowMouseCursor = true;
-						SetInputMode(FInputModeUIOnly());
-					}
-					else // JUST FOR DEBUG
-					{
-						subsystem->AddMappingContext(gameplayMappingContext, 0);
-						bShowMouseCursor = false;
-						SetInputMode(FInputModeGameOnly());
-					}
-
-					SetupInputComponent();
-				}
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("SET UP MAPPING CONTEXT BASE ON GAMEMODE FAIL "));
-				FString Message = FString::Printf(TEXT("SET UP MAPPING CONTEXT BASE ON GAMEMODE FAIL"));
-				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
-
-			}
-		}
-	}
-	else if (GetLocalRole() == ROLE_AutonomousProxy)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("ROLE_AutonomousProxy"));
 		if (GetLocalPlayer() != nullptr)
 		{
 			UEnhancedInputLocalPlayerSubsystem* subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
@@ -297,14 +189,11 @@ void APlayerRLController::setupMappingContextBasedOnGameModeMulticast_Implementa
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
 
 		}
-	
 	}
-	else if (GetLocalRole() == ROLE_SimulatedProxy)
+	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("ROLE_SimulatedProxy"));
+		UE_LOG(LogTemp, Warning, TEXT("MIAUMIAUMIAU"));
 	}
-
-	
 }
 
 void APlayerRLController::SetupInputComponent() {
@@ -393,7 +282,18 @@ void APlayerRLController::cursorClickFunc(const FInputActionValue& Value) {
 	}
 }
 
+// gamemode controls
+void APlayerRLController::validateRLPlayer()
+{
+	if (!rlPlayer)
+	{
+		APlayerCharacter* middleCharacter = Cast<APlayerCharacter>(GetPawn());
+		rlPlayer = middleCharacter;
+	}
+}
+
 void APlayerRLController::openMenuFunc(const FInputActionValue& Value) {
+	validateRLPlayer();
 	if (rlPlayer) {
 		if (Value.Get<bool>()) {
 			rlPlayer->openMenu(Value);
@@ -403,6 +303,7 @@ void APlayerRLController::openMenuFunc(const FInputActionValue& Value) {
 
 void APlayerRLController::pauseGameFunc(const FInputActionValue& Value)
 {
+	validateRLPlayer();
 	if (rlPlayer) {
 		if (Value.Get<bool>()) {
 			return;
@@ -412,6 +313,7 @@ void APlayerRLController::pauseGameFunc(const FInputActionValue& Value)
 }
 
 void APlayerRLController::lookFunc(const FInputActionValue& Value) {
+	validateRLPlayer();
 	if (rlPlayer) {
 		FVector2D lookVector = Value.Get<FVector2D>();
 		rlPlayer->look(lookVector);
@@ -419,6 +321,7 @@ void APlayerRLController::lookFunc(const FInputActionValue& Value) {
 }
 
 void APlayerRLController::moveFunc(const FInputActionValue& Value) {
+	validateRLPlayer();
 	if (rlPlayer) {
 		FVector2D moveVector = Value.Get<FVector2D>();
 		rlPlayer->move(moveVector);
@@ -426,6 +329,7 @@ void APlayerRLController::moveFunc(const FInputActionValue& Value) {
 }
 
 void APlayerRLController::runFunc(const FInputActionValue& Value) {
+	validateRLPlayer();
 	if (rlPlayer) {
 		if (Value.Get<bool>())
 		{
@@ -433,7 +337,9 @@ void APlayerRLController::runFunc(const FInputActionValue& Value) {
 		}
 	}
 }
-void APlayerRLController::runEndFunc(const FInputActionValue& Value) {
+void APlayerRLController::runEndFunc(const FInputActionValue& Value) 
+{
+	validateRLPlayer();
 	if (rlPlayer) {
 		rlPlayer->stopRun();
 	}
@@ -441,6 +347,7 @@ void APlayerRLController::runEndFunc(const FInputActionValue& Value) {
 
 void APlayerRLController::jumpFunc(const FInputActionValue& Value)
 {
+	validateRLPlayer();
 	if (rlPlayer) {
 		if (Value.Get<bool>())
 		{
@@ -451,6 +358,7 @@ void APlayerRLController::jumpFunc(const FInputActionValue& Value)
 
 void APlayerRLController::jumpEndFunc(const FInputActionValue& Value)
 {
+	validateRLPlayer();
 	if (rlPlayer) {
 		if (Value.Get<bool>())
 		{
@@ -459,7 +367,9 @@ void APlayerRLController::jumpEndFunc(const FInputActionValue& Value)
 	}
 }
 
-void APlayerRLController::interactFunc(const FInputActionValue& Value) {
+void APlayerRLController::interactFunc(const FInputActionValue& Value) 
+{
+	validateRLPlayer();
 	if (rlPlayer) {
 		if (Value.Get<bool>())
 		{
@@ -526,6 +436,7 @@ void APlayerRLController::selectItemFiveFunc(const FInputActionValue& Value)
 
 bool APlayerRLController::selectItemAvailable(int num)
 {
+	validateRLPlayer();
 	if (rlPlayer)
 	{
 		return num <= rlPlayer->getInventorySize();
@@ -535,6 +446,7 @@ bool APlayerRLController::selectItemAvailable(int num)
 
 void APlayerRLController::selectItem(int itemIndex)
 {
+	validateRLPlayer();
 	if (rlPlayer)
 	{
 		rlPlayer->selectItem(itemIndex);

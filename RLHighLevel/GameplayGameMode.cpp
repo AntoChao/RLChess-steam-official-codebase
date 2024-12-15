@@ -3,13 +3,11 @@
 #include "GameplayGameMode.h"
 #include "../RLActor/Factory/FactoryPlayer.h"
 #include "../RLActor/Factory/FactoryEnvironment.h"
-#include "../RLActor/Player/PlayerRLController.h"
 #include "../RLActor/Factory/FactoryItem.h"
 #include "../RLActor/Factory/FactoryPiece.h"
 #include "../RLActor/Environment/EnvBoard.h"
 
 #include "../RLActor/Player/PlayerCharacter.h"
-
 #include "../RLActor/Player/PlayerRLController.h"
 
 #include "RLGameState.h"
@@ -27,8 +25,6 @@ void AGameplayGameMode::PostLogin(APlayerController* NewPlayer)
 
     APlayerRLController* rlController = Cast<APlayerRLController>(NewPlayer);
     allPlayerControllers.Add(rlController);
-
-    addAPlayerBody();
 }
 
 void AGameplayGameMode::Logout(AController* Exiting)
