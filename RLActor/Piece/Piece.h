@@ -17,6 +17,7 @@
 class UBoxComponent;
 class UCurveFloat;
 class UStaticMeshComponent;
+class ARLGameState;
 
 UCLASS(BlueprintType, Blueprintable)
 class APiece : public AActor, public IRLActor, public IRLProduct
@@ -32,6 +33,22 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionOne(); // piece set piece color
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionTwo(); // piece be place
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionThree(); // piece be placed in shop
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionFour(); // piece be placed in bench
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionFive(); // piece be placed in board
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionSix(); // piece start moving
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionSeven(); // piece end moving
+
 	/* RLActor functions*/
 public:
 	virtual FString GetActorName() override;
@@ -40,9 +57,11 @@ public:
 
 	virtual bool IsAbleToBeInteracted(APlayerCharacter* Sender) override;
 
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece")
 	virtual void BeInteracted(APlayerCharacter* Sender) override;
 
 	virtual void BeUnInteracted(APlayerCharacter* Sender) override;
+
 
 	virtual int GetProductCost() override;
 
@@ -51,16 +70,13 @@ public:
 	virtual UTexture2D* GetProductImage() override;
 
 protected:
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	virtual void inShopInteractedEffect(APlayerCharacter* Sender);
-
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	virtual void inBenchInteractedEffect(APlayerCharacter* Sender);
-
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	virtual void inBenchSpecialEffect();
-
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	virtual void inBoardInteractedEffect(APlayerCharacter* Sender);
 
 	/* Piece material information*/
@@ -88,22 +104,18 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	FString pieceName;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	FString pieceDescription;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	FColor pieceColor;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	int pieceLevel;
 
+
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	EPieceStatus pieceStatus = EPieceStatus::EInShop;
-
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	EPieceDirection pieceDirection = EPieceDirection::ENone;
-
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	AEnvSquare* curSquare = nullptr;
 
@@ -113,25 +125,20 @@ protected:
 	// common calculatepossiblemove move function
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	FVector2D getDirectionVector(EPieceDirection Direction) const;
-
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	EPieceDirection directionVectorToEnum(FVector2D DirectionVector) const;
-
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	TArray<FVector2D> getDiagonalDirections() const;
 
 	// all line by direction regarless obstacle
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	TArray<FVector2D> getLineMove(FVector2D CurrentLocation, EPieceDirection Direction, int Distance);
-
 	// all line by direction including a obstacle or end of board
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	TArray<FVector2D> getLineMoveWithFirstObstacle(FVector2D CurrentLocation, EPieceDirection Direction, int Distance);
-
 	// all line by direction before a obstacle or end of board
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	TArray<FVector2D> getLineMoveWithNoObstacle(FVector2D CurrentLocation, EPieceDirection Direction, int Distance);
-
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	EPieceDirection getOppositeDirection(EPieceDirection Direction);
 
@@ -159,7 +166,7 @@ protected:
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Interaction")
 		void die(APiece* killer);
 
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Interaction")
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Piece Interaction")
 		void dieEffect(APiece* killer);
 		
 	virtual void dieEffect_Implementation(APiece* killer);
@@ -193,7 +200,6 @@ protected:
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Movement")
 	bool isMoving = false;
-
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Pawn Stats")
 	bool bHasMoved = false;
 
@@ -227,7 +233,7 @@ public:
 	UFUNCTION(Server, Reliable, Category = "Piece Movement")
 	void updateRestStatus();
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	void bePlaced(AEnvSquare* squareDestination);
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
@@ -279,20 +285,20 @@ protected:
 	UPROPERTY(Replicated, EditAnywhere, Category = "Piece Movement")
 	EPieceMoveMode moveMode = EPieceMoveMode::EGround;
 
-	UPROPERTY(EditAnywhere, Category = "Piece Movement")
+	UPROPERTY(Replicated, EditAnywhere, Category = "Piece Movement")
 	EPieceDirection lastMoveDirection = EPieceDirection::ENone;
 
 
-	UPROPERTY(VisibleAnywhere, Category = "Piece Movement")
+	UPROPERTY(Replicated, VisibleAnywhere, Category = "Piece Movement")
 	FTimeline movementTimeline; //951c0453780 error: 7FFA4CBE130D		
 	UPROPERTY(EditAnywhere, Category = "Piece Movement")
 	UCurveFloat* movementCurve;  // Set this in the Unreal Editor		
 
-	UPROPERTY(EditAnywhere, Category = "Piece Movement")
+	UPROPERTY(Replicated, EditAnywhere, Category = "Piece Movement")
 	FVector startLocation;
-	UPROPERTY(EditAnywhere, Category = "Piece Movement")
+	UPROPERTY(Replicated, EditAnywhere, Category = "Piece Movement")
 	FVector endLocation;
-	UPROPERTY(EditAnywhere, Category = "Piece Movement")
+	UPROPERTY(Replicated, EditAnywhere, Category = "Piece Movement")
 	AEnvSquare* targetSquare = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Piece Movement")
@@ -339,7 +345,7 @@ protected:
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	void launchEndEffect();
 
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Piece Movement")
 	void beExploted();
 
 public:

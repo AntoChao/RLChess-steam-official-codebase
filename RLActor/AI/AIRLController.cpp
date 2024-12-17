@@ -6,8 +6,7 @@
 #include "../Player/PlayerRLState.h"
 #include "../Piece/Piece.h"
 #include "../Player/PlayerCharacter.h"
-#include "../../RLHighLevel/RoundManager.h"
-#include "../../RLHighLevel/MapManager.h"
+#include "../../RLHighLevel/RLGameState.h"
 
 #include "../Environment/EnvBoard.h"
 #include "../Environment/EnvSquare.h"
@@ -50,7 +49,16 @@ void AAIRLController::setCurrentValueMap()
     valueMap.Empty();
 
     TArray<APiece*> allFriendlyPieces = controlledPlayer->getArmy();
-    AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
+
+    AEnvBoard* gameBoard = nullptr;
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            gameBoard = GameState->getGameBoard();
+        }
+    }
 
     for (APiece* eachPiece : allFriendlyPieces)
     {
@@ -89,7 +97,17 @@ void AAIRLController::makeTheBestMove()
 {
     FVector2D curBestMove = selectBestMove();
     TArray<APiece*> allFriendlyPieces = controlledPlayer->getArmy();
-    AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
+
+    AEnvBoard* gameBoard = nullptr;
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            gameBoard = GameState->getGameBoard();
+        }
+    }
+
     for (APiece* eachPiece : allFriendlyPieces)
     {
         TArray<FVector2D> allPossibleMoves = eachPiece->calculatePossibleMove();

@@ -24,7 +24,10 @@ void AGameplayGameMode::PostLogin(APlayerController* NewPlayer)
     GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Player %s logged in."));
 
     APlayerRLController* rlController = Cast<APlayerRLController>(NewPlayer);
+    rlController->playerIndex = allPlayerControllers.Num();
+
     allPlayerControllers.Add(rlController);
+    
 }
 
 void AGameplayGameMode::Logout(AController* Exiting)
@@ -41,15 +44,11 @@ void AGameplayGameMode::BeginPlay()
     GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("GAMEMODE BEGIN PLAY"));
 
 	setupGame(); // create everything
-
-    startIfAllPlayerLoggedIn();
-    
 }
 
 void AGameplayGameMode::setupGame()
 {
     setupSingletonClasses();
-    createEnvironment();
 }
 
 void AGameplayGameMode::setupSingletonClasses()
@@ -76,112 +75,233 @@ void AGameplayGameMode::setupSingletonClasses()
     }
 }
 
-APlayerCharacter* AGameplayGameMode::getPlayerBody()
+void AGameplayGameMode::startIfAllPlayerLoggedIn(TArray<APlayerCharacter*> allPlayerBody)
 {
-    if (!playerFactoryInstance)
+    allPlayers = allPlayerBody;
+
+    debugFunctionOne();
+
+    if (allPlayers.Num() == numberOfPlayers)
     {
-        playerFactoryInstance = NewObject<UFactoryPlayer>(this, playerFactoryClass);
-        playerFactoryInstance->gameWorld = GetWorld();
+        startSetUpRound();
+        startGameplayRound();
     }
-
-    AActor* createdActor = playerFactoryInstance->createRLActor(TEXT("testing"), temporaryPlayerSpawnLocation, FRotator::ZeroRotator);
-    APlayerCharacter* aCharacter = Cast<APlayerCharacter>(createdActor);
-    
-    UE_LOG(LogTemp, Warning, TEXT("XDDDDDD"));
-
-    return aCharacter;
 }
 
-void AGameplayGameMode::addNewPlayerCharacter(APlayerController* newPlayer)
+void AGameplayGameMode::startSetUpRound()
 {
-    UE_LOG(LogTemp, Warning, TEXT("CREATING CHARACTER FOR Player %s"), *newPlayer->GetName());
-    
-    FString Message = FString::Printf(TEXT("CREATING CHARACTER FOR Player %s"), *newPlayer->GetName());
-    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
+    debugFunctionTwo();
 
-    APlayerRLController* rlController = Cast<APlayerRLController>(newPlayer);
-    allPlayerControllers.Add(rlController);
+    setBoard();
+    setPlayerBench();
+    setPlayerInitLocation();
+    spawnShop();
+}
 
-    if (!playerFactoryInstance)
+void AGameplayGameMode::setBoard()
+{
+    UWorld* serverWorld = GetWorld();
+    if (serverWorld)
     {
-        playerFactoryInstance = NewObject<UFactoryPlayer>(this, playerFactoryClass);
-        playerFactoryInstance->gameWorld = GetWorld();
-    }
-
-    AActor* createdActor = playerFactoryInstance->createRLActor(TEXT("testing"), temporaryPlayerSpawnLocation, FRotator::ZeroRotator);
-    APawn* rlPawn = Cast<APawn>(createdActor);
-    if (rlPawn)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("LET Player %s POSSESSES THE RLPAWN"), *newPlayer->GetName());
-        Message = FString::Printf(TEXT("LET Player %s POSSESSES THE RLPAWN"), *newPlayer->GetName());
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
-
-        rlController->Possess(rlPawn);
-        // rlController->setupMappingContextBasedOnGameMode();
-    }
-
-    roundManager = URoundManager::get();
-    if (roundManager)
-    {
-        APlayerCharacter* rlCharact = Cast<APlayerCharacter>(createdActor);
-
-        if (rlCharact)
+        ARLGameState* serverGameState = Cast<ARLGameState>(serverWorld->GetGameState());
+        if (serverGameState)
         {
-            roundManager->setGameMode(this);
-            roundManager->addPlayers(rlCharact);
+            serverBoard = Cast<AEnvBoard>(environmentFactoryInstance->createRLActor(TEXT("Board"), boardLocation, boardRotation));
+                
+            if (serverBoard)
+            {
+                serverBoard->initialized();
+                serverBoard->initializeBoardColor(allPlayers);
+                serverBoard->resetBoard();
+            }
+
+            // create a shop as it is replicated
+            serverGameState->setBoard();
         }
     }
 }
 
-void AGameplayGameMode::createEnvironment()
+void AGameplayGameMode::setPlayerBench()
 {
-    mapManager = UMapManager::get();
-    if (mapManager)
+    UWorld* serverWorld = GetWorld();
+    if (serverWorld)
     {
-        mapManager->setGameMode(this);
-        mapManager->createMap();
+        ARLGameState* serverGameState = Cast<ARLGameState>(serverWorld->GetGameState());
+        if (serverGameState)
+        {
+            serverGameState->createBench();
+        }
     }
 }
-
-void AGameplayGameMode::startIfAllPlayerLoggedIn()
+void AGameplayGameMode::setPlayerInitLocation()
 {
-    if (allPlayerControllers.Num() >= 2) // check if all player log, should check with game instance???
+    UWorld* serverWorld = GetWorld();
+    if (serverWorld)
     {
-        startRoundSetUp(); // set players to correct location
-        startRoundGameplay(); // start game
-    }
-    else
-    {
-        UWorld* gameWorld = GetWorld();
-        if (gameWorld)
+        ARLGameState* serverGameState = Cast<ARLGameState>(serverWorld->GetGameState());
+        if (serverGameState)
         {
-            gameWorld->GetTimerManager().ClearTimer(waitPlayerLogInTimerHandle);
-            FTimerDelegate waitPlayerLogInTimerDel;
-            waitPlayerLogInTimerDel.BindUFunction(this, FName("startIfAllPlayerLoggedIn"));
-            gameWorld->GetTimerManager().SetTimer(waitPlayerLogInTimerHandle, waitPlayerLogInTimerDel, waitPlayerLogInSegs, false);
+            AEnvBoard* gameBoard = serverGameState->getGameBoard();
+
+            if (gameBoard)
+            {
+                for (int i = 0; i < allPlayers.Num(); i++)
+                {
+                    if (allPlayers[i])
+                    {
+                        FVector spawnLocation = gameBoard->getSpawnStartPositionForPlayer(i) + FVector(0.0f, 0.0f, playerSpawnHeight);
+                        FRotator spawnRotation = gameBoard->getSpawnStartRotationForPlayer(i);
+
+                        allPlayers[i]->SetActorLocation(spawnLocation);
+                        allPlayers[i]->SetActorRotation(spawnRotation);
+                    }
+                }
+            }
         }
     }
 }
 
-void AGameplayGameMode::startRoundSetUp()
+void AGameplayGameMode::spawnShop()
 {
-    roundManager = URoundManager::get();
-    if (roundManager)
+    UWorld* serverWorld = GetWorld();
+    if (serverWorld)
     {
-        roundManager->startRoundManagerSetUpRound();
+        ARLGameState* serverGameState = Cast<ARLGameState>(serverWorld->GetGameState());
+        if (serverGameState)
+        {
+            AActor* shopActor = environmentFactoryInstance->createRLActor(TEXT("Shop"), shopLocation, shopRotation);
+            serverShop = Cast<AEnvShop>(shopActor);
+            // create a shop as it is replicated
+            serverGameState->setShop();
+        }
     }
 }
 
-void AGameplayGameMode::startRoundGameplay()
+
+void AGameplayGameMode::startGameplayRound()
 {
-    roundManager = URoundManager::get();
-    if (roundManager)
+    startPlayerSetUpTime();
+}
+
+// give one minutes to let player do anything they want
+void AGameplayGameMode::startPlayerSetUpTime()
+{
+    UWorld* serverWorld = GetWorld();
+    if (serverWorld)
     {
-        roundManager->startRoundManagerGameplayRound();
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("START SET UP ROUND"));
+
+        for (APlayerCharacter* eachPlayer : allPlayers)
+        {
+            if (eachPlayer)
+            {
+                eachPlayer->startSetup();
+            }
+        }
+
+        serverWorld->GetTimerManager().ClearTimer(playerSetUpTimerHandle);
+
+        FTimerDelegate playerSetUpTimerDel;
+        playerSetUpTimerDel.BindUFunction(this, FName("endPlayerSetUpTime"));
+        serverWorld->GetTimerManager().SetTimer(playerSetUpTimerHandle, playerSetUpTimerDel, playerSetUpTimerSegs, false);
     }
 }
 
-void AGameplayGameMode::endGameplayGameMode(APlayerCharacter* winner)
+void AGameplayGameMode::endPlayerSetUpTime()
+{
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* serverGameState = Cast<ARLGameState>(World->GetGameState());
+        if (serverGameState)
+        {
+            serverGameState->closeShop();
+        }
+    }
+
+    // let all players know that set up time finish
+    for (APlayerCharacter* eachPlayer : allPlayers)
+    {
+        if (eachPlayer)
+        {
+            eachPlayer->endSetup();
+        }
+    }
+
+    // start the turns
+    startPlayerPreparePhase();
+}
+
+void AGameplayGameMode::startPlayerPreparePhase()
+{
+    if (checkIfGameEnd())
+    {
+        endGameplayGameMode();
+    }
+
+    roundCounter++;
+    UWorld* serverWorld = GetWorld();
+    if (serverWorld)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("START Chose piece movement round"));
+
+        for (APlayerCharacter* eachPlayer : allPlayers)
+        {
+            if (eachPlayer)
+            {
+                eachPlayer->startTurn();
+            }
+        }
+
+        serverWorld->GetTimerManager().ClearTimer(playerPrepareTimerHandle);
+        FTimerDelegate playerPrepareTimerDel;
+        playerPrepareTimerDel.BindUFunction(this, FName("startPieceMovingPhase"));
+        serverWorld->GetTimerManager().SetTimer(playerPrepareTimerHandle, playerPrepareTimerDel, playerPrepareTimerSegs, false);
+    }
+}
+
+void AGameplayGameMode::startPieceMovingPhase()
+{
+    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PIECES START MOVING"));
+
+    // let all player move their pieces
+    for (APlayerCharacter* eachPlayer : allPlayers)
+    {
+        if (eachPlayer)
+        {
+            eachPlayer->endTurn();
+            eachPlayer->moveSelectedPiece();
+
+        }
+    }
+
+    UWorld* serverWorld = GetWorld();
+    if (serverWorld)
+    {
+        serverWorld->GetTimerManager().ClearTimer(piecesMovedTimerHandle);
+        FTimerDelegate piecesMovedTimerDel;
+        piecesMovedTimerDel.BindUFunction(this, FName("startPlayerPreparePhase"));
+        serverWorld->GetTimerManager().SetTimer(piecesMovedTimerHandle, piecesMovedTimerDel, piecesMovedTimerSegs, false);
+    }
+}
+
+// should be called after player finish its move
+bool AGameplayGameMode::checkIfGameEnd()
+{
+    int alivePlayerCounter = 0;
+
+    for (APlayerCharacter* aPlayer : allPlayers)
+    {
+        if (aPlayer && aPlayer->checkIsAlive())
+        {
+            alivePlayerCounter++;
+            winner = aPlayer;
+        }
+    }
+
+    return alivePlayerCounter <= 1;
+}
+
+void AGameplayGameMode::endGameplayGameMode()
 {
     return;
 }

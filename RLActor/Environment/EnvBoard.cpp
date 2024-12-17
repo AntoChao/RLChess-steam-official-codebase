@@ -11,16 +11,18 @@ AEnvBoard::AEnvBoard() {
     
 }
 
-void AEnvBoard::initialized()
+void AEnvBoard::initialized_Implementation()
 {
     totalSquareNum = rowSize * columnSize;
     allSquares.SetNum(totalSquareNum);
 
     // Use integer calculations for centerLocation
     centerLocation = FVector2D(rowSize / 2.0f, columnSize / 2.0f);
-
-    AGameplayGameMode* gameMode = Cast<AGameplayGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+    
+    AGameplayGameMode* gameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
     UFactoryEnvironment* squareFactory = gameMode->environmentFactoryInstance;
+
+    debugFunctionOne();
 
     if (squareFactory)
     {
@@ -70,8 +72,10 @@ void AEnvBoard::initialized()
     }
 }
 
-void AEnvBoard::initializeBoardColor(TArray<APlayerCharacter*> allPlayers)
+void AEnvBoard::initializeBoardColor_Implementation(const TArray<APlayerCharacter*>& allPlayers)
 {
+    debugFunctionTwo();
+
     // Iterate over the board and assign colorField based on player sections
     for (int Y = 0; Y < columnSize; ++Y)
     {
@@ -295,6 +299,7 @@ void AEnvBoard::setPossibleMoves(TArray<FVector2D> allPossibles, FColor pieceCol
 
 void AEnvBoard::resetBoard()
 {
+    debugFunctionThree();
     for (AEnvSquare* aSquare : allSquares)
     {
         if (IsValid(aSquare))

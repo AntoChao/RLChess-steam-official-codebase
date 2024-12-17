@@ -44,7 +44,30 @@ class APlayerCharacter : public ACharacter, public IRLActor
 public:
 	APlayerCharacter();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionOne(); // player character start setup
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionTwo(); // player character end setup
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionThree(); // player benching a piece
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionFour(); // player check is able to buy product
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionFive(); // player pay product
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionSix(); // player receive product
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionSeven(); // player start turn
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionEight(); // player end turn
+
+
+
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunction();
 
 protected:
 	virtual void BeginPlay() override;
@@ -95,11 +118,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	TArray<AItem*> inventory;
 
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	TArray<AEnvSquare*> playerBench;
 
 	/* army*/
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	TArray<APiece*> army;
 
 public:
@@ -127,19 +150,19 @@ public:
 	int getInventorySize();
 
 	/* bench functions*/
-	UFUNCTION(BlueprintCallable, Category = "Character Stats")
-	void setPlayerBench(TArray<AEnvSquare*> allSquares);
+	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Character Stats")
+	void setPlayerBench(const TArray<AEnvSquare*>& allSquares);
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
 	bool isAbleToBenchPiece();
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Character Stats")
+	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Character Stats")
 	void benchAPiece(APiece* newPiece);
 
 	/*shop functions*/
 	UFUNCTION(BlueprintCallable, Category = "Shopoing Stats")
 	bool isEnableToBuyProduct(APiece* aProduct);
-	UFUNCTION(BlueprintCallable, Category = "Shopoing Stats")
+	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Shopoing Stats")
 	void payProduct(APiece* aProduct);
-	UFUNCTION(Server, Reliable, Category = "Shopoing Stats")
+	UFUNCTION(Client, Reliable, Category = "Shopoing Stats")
 	void receiveProduct(APiece* aProduct);
 
 	/* army functions*/
@@ -213,9 +236,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Run Controller")
 	void updateSpeed();
-	UFUNCTION(BlueprintCallable, Category = "Run Controller")
+	UFUNCTION(Server, Unreliable, BlueprintCallable, Category = "Run Controller")
 	void run();
-	UFUNCTION(BlueprintCallable, Category = "Run Controller")
+	UFUNCTION(Server, Unreliable, BlueprintCallable, Category = "Run Controller")
 	void stopRun();
 
 	UFUNCTION(BlueprintCallable, Category = "jump Controller")
@@ -307,7 +330,7 @@ public:
 
 /* AI relatived*/
 protected:
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "AI Controller")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Controller")
 	bool isAIPossessed = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Controller")

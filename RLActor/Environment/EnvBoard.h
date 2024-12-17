@@ -8,6 +8,8 @@
 #include "EnvSquare.h"
 #include "EnvBoard.generated.h"
 
+class UFactoryEnvironment;
+
 UCLASS(BlueprintType, Blueprintable)
 class AEnvBoard : public AActor, public IRLActor
 {
@@ -16,12 +18,30 @@ class AEnvBoard : public AActor, public IRLActor
 public:
 	AEnvBoard();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionOne(); // board initialize
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionTwo(); // board initialize all color
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionThree(); // board being reset
+
 public:
-	UFUNCTION(BlueprintCallable, Category = "Board")
+	FString GetActorName() override;
+
+	FString GetDescription() override;
+
+	bool IsAbleToBeInteracted(APlayerCharacter* Sender) override;
+
+	void BeInteracted(APlayerCharacter* Sender) override;
+
+	void BeUnInteracted(APlayerCharacter* Sender) override;
+
+public:
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Board")
 	void initialized();
 
-	UFUNCTION(BlueprintCallable, Category = "Board")
-	void initializeBoardColor(TArray<APlayerCharacter*> allPlayers);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Board")
+	void initializeBoardColor(const TArray<APlayerCharacter*>& allPlayers);
 
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	FVector getSpawnStartPositionForPlayer(int playerIndex);
@@ -63,17 +83,6 @@ protected:
 	FVector2D getLocationFromIndex(int aIndex);
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	int getIndexFromLocation(FVector2D aLocation);
-
-public:
-	FString GetActorName() override;
-
-	FString GetDescription() override;
-
-	bool IsAbleToBeInteracted(APlayerCharacter* Sender) override;
-
-	void BeInteracted(APlayerCharacter* Sender) override;
-
-	void BeUnInteracted(APlayerCharacter* Sender) override;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Board Stats")

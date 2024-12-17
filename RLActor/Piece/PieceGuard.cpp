@@ -1,6 +1,7 @@
 #include "PieceGuard.h"
 
 #include "../../RLHighLevel/GameplayGameMode.h"
+#include "../../RLHighLevel/RLGameState.h"
 
 #include "../Environment/EnvBoard.h"
 
@@ -19,7 +20,16 @@ TArray<FVector2D> APieceGuard::calculatePossibleMove()
         return PossibleMoves;
     }
 
-    AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
+    AEnvBoard* gameBoard = nullptr;
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            gameBoard = GameState->getGameBoard();
+        }
+    }
+
     if (gameBoard)
     {
         FVector2D CurrentLocation = curSquare->getSquareLocation();
