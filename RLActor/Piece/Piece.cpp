@@ -10,6 +10,7 @@
 #include "Net/UnrealNetwork.h"
 
 #include "../../RLHighLevel/GameplayGameMode.h"
+#include "../../RLHighLevel/RLGameState.h"
 
 #include "../Environment/EnvShop.h"
 #include "../Player/PlayerCharacter.h"
@@ -50,10 +51,21 @@ void APiece::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePr
     //Replicate current health.
     DOREPLIFETIME(APiece, pieceStatus);
     DOREPLIFETIME(APiece, pieceDirection);
+    DOREPLIFETIME(APiece, pieceColor);
+
     DOREPLIFETIME(APiece, movePoint);
     DOREPLIFETIME(APiece, requireResting);
     DOREPLIFETIME(APiece, curRestingCount);
+    
     DOREPLIFETIME(APiece, bHasMoved);
+    DOREPLIFETIME(APiece, moveMode);
+
+    DOREPLIFETIME(APiece, lastMoveDirection);
+    DOREPLIFETIME(APiece, movementTimeline);
+    DOREPLIFETIME(APiece, startLocation);
+    DOREPLIFETIME(APiece, endLocation);
+    DOREPLIFETIME(APiece, targetSquare);
+
     DOREPLIFETIME(APiece, isKilledAnyActorThisTurn);
     DOREPLIFETIME(APiece, curSquare);
     DOREPLIFETIME(APiece, isDied);
@@ -61,7 +73,6 @@ void APiece::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePr
     DOREPLIFETIME(APiece, isMoving);
 
     DOREPLIFETIME(APiece, isKillEffectActive);
-    DOREPLIFETIME(APiece, moveMode);
     DOREPLIFETIME(APiece, isLaunched);
 }
 
@@ -109,7 +120,7 @@ bool APiece::IsAbleToBeInteracted(APlayerCharacter* Sender)
 	
 }
 
-void APiece::BeInteracted(APlayerCharacter* Sender)
+void APiece::BeInteracted_Implementation(APlayerCharacter* Sender)
 {
     switch (pieceStatus)
     {
@@ -133,51 +144,70 @@ void APiece::BeInteracted(APlayerCharacter* Sender)
     }
 }
 
-void APiece::inShopInteractedEffect(APlayerCharacter* Sender)
+void APiece::inShopInteractedEffect_Implementation(APlayerCharacter* Sender)
 {
-    UMapManager* mapManager = UMapManager::get();
-    AEnvShop* gameShop = mapManager->getShop();
-    if (gameShop)
+    if (UWorld* World = GetWorld())
     {
-        /*
-        TScriptInterface<IRLProduct> pieceAsProduct;
-        pieceAsProduct.SetObject(this);
-        pieceAsProduct.SetInterface(Cast<IRLProduct>(this));*/
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            AEnvShop* gameShop = GameState->getShop();
 
-        gameShop->sellProduct(Sender, this);
-        
-        setPieceStatus(EPieceStatus::EInBench);
+            if (gameShop)
+            {
+                /*
+                TScriptInterface<IRLProduct> pieceAsProduct;
+                pieceAsProduct.SetObject(this);
+                pieceAsProduct.SetInterface(Cast<IRLProduct>(this));*/
+
+                gameShop->sellProduct(Sender, this);
+
+                setPieceStatus(EPieceStatus::EInBench);
+            }
+        }
     }
 }
 
-void APiece::inBenchInteractedEffect(APlayerCharacter* Sender)
+void APiece::inBenchInteractedEffect_Implementation(APlayerCharacter* Sender)
 {
-    UMapManager* mapManager = UMapManager::get();
-    AEnvBoard* gameBoard = mapManager->getGameBoard();
-    if (gameBoard)
+    if (UWorld* World = GetWorld())
     {
-        gameBoard->setSpecificColor(pieceColor);
-    }
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            AEnvBoard* gameBoard = GameState->getGameBoard();
 
-    inBenchSpecialEffect();
+            if (gameBoard)
+            {
+                gameBoard->setSpecificColor(pieceColor);
+            }
+
+            inBenchSpecialEffect();
+        }
+    }
 }
 
-void APiece::inBenchSpecialEffect()
+void APiece::inBenchSpecialEffect_Implementation()
 {
     return;
 }
 
 
-void APiece::inBoardInteractedEffect(APlayerCharacter* Sender)
+void APiece::inBoardInteractedEffect_Implementation(APlayerCharacter* Sender)
 {
-    UMapManager* mapManager = UMapManager::get();
-    AEnvBoard* gameBoard = mapManager->getGameBoard();
-
-    TArray<FVector2D> allPossibles = calculatePossibleMove();
-
-    if (gameBoard)
+    if (UWorld* World = GetWorld())
     {
-        gameBoard->setPossibleMoves(allPossibles, pieceColor);
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            AEnvBoard* gameBoard = GameState->getGameBoard();
+        
+            if (gameBoard)
+            {
+                TArray<FVector2D> allPossibles = calculatePossibleMove();
+                gameBoard->setPossibleMoves(allPossibles, pieceColor);
+            }
+        }
     }
 }
 
@@ -211,13 +241,21 @@ void APiece::initializeMaterials()
     colorToMaterial.Add(FColor::Green, greenMaterial);
     colorToMaterial.Add(FColor::Yellow, yellowMaterial);
     colorToMaterial.Add(FColor::Purple, purpleMaterial);
-
 }
 
 /* piece information*/
 void APiece::initializeDirection_Implementation(AEnvSquare* squareDestination)
 {
-    AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
+    AEnvBoard* gameBoard = nullptr;
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            gameBoard = GameState->getGameBoard();
+        }
+    }
+
     pieceDirection = gameBoard->calculateInitDirection(squareDestination->getSquareLocation());
 }
 
@@ -309,7 +347,16 @@ TArray<FVector2D> APiece::getLineMove(FVector2D CurrentLocation, EPieceDirection
         return LineMoves; // Return empty array if direction is invalid
     }
 
-    AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
+    AEnvBoard* gameBoard = nullptr;
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            gameBoard = GameState->getGameBoard();
+        }
+    }
+
     if (!gameBoard)
     {
         return LineMoves; // Return empty array if board is not found
@@ -338,7 +385,15 @@ TArray<FVector2D> APiece::getLineMoveWithFirstObstacle(FVector2D CurrentLocation
     // Use the base function to get potential moves without considering collisions
     TArray<FVector2D> PotentialMoves = getLineMove(CurrentLocation, Direction, Distance);
 
-    AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
+    AEnvBoard* gameBoard = nullptr;
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            gameBoard = GameState->getGameBoard();
+        }
+    }
     if (!gameBoard)
     {
         return LineMoves; // Return empty array if board is not found
@@ -369,7 +424,16 @@ TArray<FVector2D> APiece::getLineMoveWithNoObstacle(FVector2D CurrentLocation, E
     // Use the base function to get potential moves without considering collisions
     TArray<FVector2D> PotentialMoves = getLineMove(CurrentLocation, Direction, Distance);
 
-    AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
+    AEnvBoard* gameBoard = nullptr;
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            gameBoard = GameState->getGameBoard();
+        }
+    }
+
     if (!gameBoard)
     {
         return LineMoves; // Return empty array if board is not found
@@ -434,8 +498,6 @@ void APiece::dieEffect_Implementation(APiece* killer)
 
         // Calculate the direction vector from the killer to this piece
         FVector Direction = (MyLocation - KillerLocation).GetSafeNormal();
-
-        
 
         // Apply the impulse to the piece's body
         pieceStaticBody->AddImpulse(Direction * collideImpulseStrength, NAME_None, true);
@@ -538,6 +600,8 @@ void APiece::setPieceColor_Implementation(FColor aColor)
 {
     pieceColor = aColor;
 
+    debugFunctionOne();
+
     if (colorToMaterial.Contains(aColor))
     {
         UMaterialInterface* SelectedMaterial = colorToMaterial[aColor];
@@ -583,8 +647,10 @@ void APiece::updateRestStatus_Implementation()
 }
 
 /* setActor location in a time constraint*/
-void APiece::bePlaced(AEnvSquare* squareDestination)
+void APiece::bePlaced_Implementation(AEnvSquare* squareDestination)
 {
+    debugFunctionTwo();
+
     GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PIECE BE PLACED"));
 
     if (pieceStatus == EPieceStatus::EInShop)
@@ -600,7 +666,15 @@ void APiece::bePlaced(AEnvSquare* squareDestination)
         bePlacedInBoardEffect(squareDestination);
     }
 
-    AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
+    AEnvBoard* gameBoard = nullptr;
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            gameBoard = GameState->getGameBoard();
+        }
+    }
     if (gameBoard)
     {
         gameBoard->resetBoard();
@@ -609,6 +683,7 @@ void APiece::bePlaced(AEnvSquare* squareDestination)
 
 void APiece::bePlacedInShopEffect_Implementation(AEnvSquare* squareDestination)
 {
+    debugFunctionThree();
     // setPieceStatus(EPieceStatus::EInBench);
 
     if (IsValid(curSquare))
@@ -626,6 +701,7 @@ void APiece::bePlacedInShopEffect_Implementation(AEnvSquare* squareDestination)
 
 void APiece::bePlacedInBenchEffect_Implementation(AEnvSquare* squareDestination)
 {
+    debugFunctionFour();
     // enable swap position
     if (squareDestination->getIsOccupied())
     {
@@ -672,6 +748,7 @@ void APiece::swapLocation_Implementation(AEnvSquare* squareDestination)
 // all pieces are inboard when setup time is finished
 void APiece::bePlacedInBoardEffect_Implementation(AEnvSquare* squareDestination)
 {
+    debugFunctionFive();
     if (!bHasMoved)
     {
         firstInBoardMovedEffect(squareDestination);
@@ -699,6 +776,7 @@ void APiece::bePlacedSpecialSquareEffect_Implementation(AEnvSquare* squareDestin
 
 void APiece::startMoving_Implementation(AEnvSquare* squareDestination)
 {
+    debugFunctionSix();
     if (IsValid(curSquare))
     {
         curSquare->occupiedPieceLeaved();
@@ -764,6 +842,7 @@ EPieceDirection APiece::calculateMovingDirection(AEnvSquare* squareDestination)
 
 void APiece::endMoving_Implementation()
 {
+    debugFunctionSeven();
     SetActorLocation(endLocation);
     isMoving = false;
 
@@ -882,7 +961,6 @@ void APiece::initiateKnightJump_Implementation(AEnvSquare* SquareDestination)
     FOnTimelineEvent FinishFunction;
     FinishFunction.BindUFunction(this, FName("endMoving"));
     movementTimeline.SetTimelineFinishedFunc(FinishFunction);
-
     movementTimeline.SetLooping(false);
     movementTimeline.PlayFromStart();
 }
@@ -931,7 +1009,15 @@ void APiece::launchEndEffect_Implementation()
 
 void APiece::beExploted_Implementation()
 {
-    AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
+    AEnvBoard* gameBoard = nullptr;
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            gameBoard = GameState->getGameBoard();
+        }
+    }
     if (gameBoard)
     {
         FVector2D CurrentLocation = curSquare->getSquareLocation();

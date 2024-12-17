@@ -6,6 +6,8 @@
 
 #include "../Factory/FactoryPiece.h"
 #include "../../RLHighLevel/GameplayGameMode.h"
+#include "../../RLHighLevel/RLGameState.h"
+
 #include "../Piece/Piece.h"
 #include "../Item/Item.h"
 #include "EnvSquare.h"
@@ -61,33 +63,40 @@ void AEnvShop::BeUnInteracted(APlayerCharacter* Sender)
 
 void AEnvShop::createRandomShop_Implementation()
 {
+	debugFunctionOne();
+
 	AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 	
 	int numUnitsToSpawn = piecesProductTotalNum; // Number of units you want to spawn
 
 	TArray<AEnvSquare*> allShopSquares;
-	UMapManager* mapManager = UMapManager::get();
-	if (mapManager)
+
+	AEnvBoard* gameBoard = nullptr;
+	if (UWorld* World = GetWorld())
 	{
-		AEnvBoard* gameBoard = mapManager->getGameBoard();
-
-		if (gameBoard)
+		ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+		if (GameState)
 		{
-			int shopRowSize = gameBoard->getRowSize();
-			int shopColumnSize = gameBoard->getColumnSize();
+			gameBoard = GameState->getGameBoard();
+		}
+	}
 
-			for (int i = 2; i < shopRowSize - 2; i++)
+	if (gameBoard)
+	{
+		int shopRowSize = gameBoard->getRowSize();
+		int shopColumnSize = gameBoard->getColumnSize();
+
+		for (int i = 2; i < shopRowSize - 2; i++)
+		{
+			for (int j = 2; j < shopColumnSize - 2; j++)
 			{
-				for (int j = 2; j < shopColumnSize - 2; j++)
+				if (i % 3 != 0 && j % 3 != 0)
 				{
-					if (i % 3 != 0 && j % 3 != 0)
-					{
-						AEnvSquare* curSquare = gameBoard->getSquareAtLocation(FVector2D(i, j));
+					AEnvSquare* curSquare = gameBoard->getSquareAtLocation(FVector2D(i, j));
 
-						if (curSquare->getSquareColorField() == FColor::White)
-						{
-							allShopSquares.Add(curSquare);
-						}
+					if (curSquare->getSquareColorField() == FColor::White)
+					{
+						allShopSquares.Add(curSquare);
 					}
 				}
 			}
@@ -107,7 +116,7 @@ void AEnvShop::createRandomShop_Implementation()
 				FVector boardCenter = FVector(0.0f, 0.0f, productPieceLocation.Z);
 				FRotator productPieceRotation = (boardCenter - productPieceLocation).Rotation();
 
-				DrawDebugLine(GetWorld(), productPieceLocation, boardCenter, FColor::Green, false, 5, 0, 5);
+				// DrawDebugLine(GetWorld(), productPieceLocation, boardCenter, FColor::Green, false, 5, 0, 5);
 
 				APiece* generatedPiece = Cast<APiece>(pieceFactory->createRLActorByCode(counter, productPieceLocation, productPieceRotation));
 				IRLProduct* productInterface = Cast<IRLProduct>(generatedPiece);
@@ -134,6 +143,8 @@ void AEnvShop::createRandomShop_Implementation()
 
 void AEnvShop::sellProduct_Implementation(APlayerCharacter* player, APiece* specificProduct)
 {
+	debugFunctionTwo();
+
 	if (player && specificProduct)
 	{
 		if (player->isEnableToBuyProduct(specificProduct))
@@ -149,6 +160,8 @@ void AEnvShop::sellProduct_Implementation(APlayerCharacter* player, APiece* spec
 
 void AEnvShop::refillProduct_Implementation(APiece* specificProduct)
 {
+	debugFunctionThree();
+
 	APiece* pieceToDuplicate = specificProduct;
 	if (pieceToDuplicate)
 	{
@@ -195,6 +208,8 @@ void AEnvShop::refreshShop_Implementation(APlayerCharacter* player)
 
 void AEnvShop::closeShop_Implementation()
 {
+	debugFunctionFour();
+
 	for (TScriptInterface<IRLProduct>& Product : productsInShop)
 	{
 		if (Product)

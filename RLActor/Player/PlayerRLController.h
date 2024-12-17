@@ -22,6 +22,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Player State")
 	class APlayerRLState* rlPlayerState;
 
+	// debug value
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	int playerIndex = 0;
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunction();
+
 public:
 	APlayerRLController();
 
@@ -57,7 +64,6 @@ public:
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
 	void serverPossesses(APlayerRLController* currentController);
 
-	// setupmappingcontext -> 
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Control")
 	void setupMappingContextBasedOnGameModeMulticast();
 

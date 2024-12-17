@@ -1,6 +1,7 @@
 #include "PieceWitch.h"
 
 #include "../../RLHighLevel/GameplayGameMode.h"
+#include "../../RLHighLevel/RLGameState.h"
 
 #include "../Environment/EnvBoard.h"
 
@@ -17,7 +18,16 @@ TArray<FVector2D> APieceWitch::calculatePossibleMove()
         return PossibleMoves;
     }
 
-    AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
+    AEnvBoard* gameBoard = nullptr;
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            gameBoard = GameState->getGameBoard();
+        }
+    }
+
     if (gameBoard)
     {
         FVector2D CurrentLocation = curSquare->getSquareLocation();
@@ -56,7 +66,16 @@ void APieceWitch::startMoving_Implementation(AEnvSquare* squareDestination)
 
     FVector2D endVector = curLocation + (directionVector * randomInt);
 
-    AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
+    AEnvBoard* gameBoard = nullptr;
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            gameBoard = GameState->getGameBoard();
+        }
+    }
+
     if (gameBoard)
     {
         squareDestination = gameBoard->getSquareAtLocation(endVector); // Return empty array if board is not found

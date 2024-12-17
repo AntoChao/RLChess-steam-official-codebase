@@ -17,6 +17,15 @@ class AEnvShop : public AActor, public IRLActor
 public:
 	AEnvShop();
 	
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionOne(); // shop create random shop
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionTwo(); // board sell product
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionThree(); // board refill product
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionFour(); // board close shop
+
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual void BeginPlay() override;
@@ -31,6 +40,9 @@ public:
 
 	virtual void BeUnInteracted(APlayerCharacter* Sender) override;
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunction();
+
 protected:
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Square Stats")
 	void createRandomShop();
@@ -41,7 +53,7 @@ protected:
 	TArray<TScriptInterface<IRLProduct>> productsInShop;
 
 public:
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Shop Stats")
+	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Shop Stats")
 	void sellProduct(APlayerCharacter* player, APiece* specificProduct);
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Shop Stats")
@@ -51,7 +63,7 @@ public:
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Shop Stats")
 	void refreshShop(APlayerCharacter* player);
 
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Shop Stats")
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Shop Stats")
 	void closeShop();
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Shop Stats")

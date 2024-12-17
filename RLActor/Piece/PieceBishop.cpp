@@ -1,6 +1,7 @@
 #include "PieceBishop.h"
 
 #include "../../RLHighLevel/GameplayGameMode.h"
+#include "../../RLHighLevel/RLGameState.h"
 
 #include "../Environment/EnvBoard.h"
 
@@ -17,7 +18,15 @@ TArray<FVector2D> APieceBishop::calculatePossibleMove()
         return PossibleMoves;
     }
 
-    AEnvBoard* GameBoard = UMapManager::get()->getGameBoard();
+    AEnvBoard* GameBoard = nullptr;
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            GameBoard = GameState->getGameBoard();
+        }
+    }
     if (GameBoard)
     {
         FVector2D CurrentLocation = curSquare->getSquareLocation();

@@ -4,6 +4,8 @@
 
 #include "Net/UnrealNetwork.h"
 
+#include "GameplayGameMode.h"
+
 #include "../RLActor/Factory/FactoryPlayer.h"
 #include "../RLActor/Factory/FactoryEnvironment.h"
 #include "../RLActor/Factory/FactoryItem.h"
@@ -12,8 +14,13 @@
 #include "../RLActor/Player/PlayerCharacter.h"
 #include "../RLActor/Player/PlayerRLController.h"
 
+#include "../RLActor/Environment/EnvBoard.h"
+#include "../RLActor/Environment/EnvShop.h"
+
+
 ARLGameState::ARLGameState()
 {
+    bReplicates = true;
 }
 
 void ARLGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -22,73 +29,102 @@ void ARLGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 	DOREPLIFETIME(ARLGameState, allPlayers);
 
-    DOREPLIFETIME(ARLGameState, playerFactoryInstance);
-    DOREPLIFETIME(ARLGameState, environmentFactoryInstance);
-    DOREPLIFETIME(ARLGameState, itemFactoryInstance);
-    DOREPLIFETIME(ARLGameState, pieceFactoryInstance);
+    // DOREPLIFETIME(ARLGameState, board);
+    DOREPLIFETIME(ARLGameState, board);
+    DOREPLIFETIME(ARLGameState, shop);
+
 }
 
+/*
+Important Points
+BeginPlay and Replication Timing: If you call createBoard() from BeginPlay() on the server, make sure that the clients are connected and ready to receive replicated data. Sometimes, network initialization may not be fully completed when BeginPlay() is executed, which could lead to issues if the timing is off.
+Client Awareness: After the board is initialized on the server and replicated, clients will automatically receive the updated value. Ensure that the client logic listens for or checks the replicated value to update their game state or UI accordingly.
+*/
 void ARLGameState::BeginPlay()
 {
 	Super::BeginPlay();
-
-    curPlayerIndex = 0;
-
-    if (GetLocalRole() == ROLE_Authority)
-    {
-        setUpGameState();
-    }
-}
-
-void ARLGameState::setUpGameState_Implementation()
-{
-    setupSingletonClasses();
-}
-
-void ARLGameState::setupSingletonClasses_Implementation()
-{
-    if (!playerFactoryInstance)
-    {
-        playerFactoryInstance = NewObject<UFactoryPlayer>(this, playerFactoryClass);
-        playerFactoryInstance->gameWorld = GetWorld();
-    }
-    if (!environmentFactoryInstance)
-    {
-        environmentFactoryInstance = NewObject<UFactoryEnvironment>(this, envFactoryClass);
-        environmentFactoryInstance->gameWorld = GetWorld();
-    }
-    if (!itemFactoryInstance)
-    {
-        itemFactoryInstance = NewObject<UFactoryItem>(this, itemFactoryClass);
-        itemFactoryInstance->gameWorld = GetWorld();
-    }
-    if (!pieceFactoryInstance)
-    {
-        pieceFactoryInstance = NewObject<UFactoryPiece>(this, pieceFactoryClass);
-        pieceFactoryInstance->gameWorld = GetWorld();
-    }
 }
 
 void ARLGameState::createPlayerBody_Implementation()
 {
-    if (!playerFactoryInstance)
+    AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
+    
+    if (curGameMode)
     {
-        playerFactoryInstance = NewObject<UFactoryPlayer>(this, playerFactoryClass);
-        playerFactoryInstance->gameWorld = GetWorld();
-    }
+        UFactoryPlayer* playerFac = curGameMode->playerFactoryInstance;
 
-    AActor* createdActor = playerFactoryInstance->createRLActor(TEXT("testing"), temporaryPlayerSpawnLocation, FRotator::ZeroRotator);
-    APlayerCharacter* curPlayerBody = Cast<APlayerCharacter>(createdActor);
+        if (playerFac)
+        {
+            AActor* createdActor = playerFac->createRLActor(TEXT("testing"), temporaryPlayerSpawnLocation, FRotator::ZeroRotator);
+            APlayerCharacter* curPlayerBody = Cast<APlayerCharacter>(createdActor);
 
-    if (curPlayerBody)
-    {
-        allPlayers.Add(curPlayerBody);
+            if (curPlayerBody)
+            {
+                allPlayers.Add(curPlayerBody);
+            }
+        }
     }
 }
 
-APlayerCharacter* ARLGameState::getPlayerBody()
+APlayerCharacter* ARLGameState::getPlayerBody(int controllerIndex)
 {
-    APlayerCharacter* returnPlayerBody = allPlayers[curPlayerIndex];
-    curPlayerIndex++;
+    worldIndex = controllerIndex;
+    APlayerCharacter* returnPlayerBody = allPlayers[controllerIndex];
+    playersReady();
     return returnPlayerBody;
+}
+
+
+void ARLGameState::playersReady_Implementation()
+{
+    AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
+
+    if (curGameMode)
+    {
+        curGameMode->startIfAllPlayerLoggedIn(allPlayers);
+    }
+}
+
+void ARLGameState::setBoard_Implementation()
+{
+    AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
+
+    if (curGameMode)
+    {
+        board = curGameMode->serverBoard;
+    }
+    debugFunctionOne();
+}
+
+void ARLGameState::createBench_Implementation()
+{
+    for (APlayerCharacter* eachPlayer : allPlayers)
+    {
+        if (eachPlayer && board)
+        {
+            eachPlayer->setPlayerBench(board->getAllSquaresOfSpecificColor(eachPlayer->getPlayerColor()));
+        }
+    }
+}
+
+
+void ARLGameState::setShop_Implementation()
+{
+    AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
+    // const AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+
+    if (curGameMode)
+    {
+        shop = curGameMode->serverShop;
+    }
+    debugFunctionThree();
+}
+
+void ARLGameState::closeShop_Implementation()
+{
+    if (shop)
+    {
+        shop->closeShop();
+        debugFunctionFour();
+    }
 }

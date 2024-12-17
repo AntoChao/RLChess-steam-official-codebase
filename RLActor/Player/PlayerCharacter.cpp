@@ -13,7 +13,7 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "../../RLHighLevel/GameplayGameMode.h"
-#include "../../RLHighLevel/RoundManager.h"
+#include "../../RLHighLevel/RLGameState.h"
 
 #include "../AI/AIRLController.h"
 
@@ -48,9 +48,7 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	//Replicate current health.
 	DOREPLIFETIME(APlayerCharacter, setUpTime);
-	DOREPLIFETIME(APlayerCharacter, playerBench);
 	DOREPLIFETIME(APlayerCharacter, isPlayerTurn);
-	DOREPLIFETIME(APlayerCharacter, isAIPossessed);
 }
 
 void APlayerCharacter::BeginPlay()
@@ -64,6 +62,7 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::startSetup()
 {
 	setUpTime = true;
+	debugFunctionOne();
 }
 void APlayerCharacter::endSetup()
 {
@@ -74,6 +73,7 @@ void APlayerCharacter::endSetup()
 	}
 
 	setUpTime = false;
+	debugFunctionTwo();
 }
 
 bool APlayerCharacter::checkIsAlive()
@@ -117,7 +117,7 @@ int APlayerCharacter::getInventorySize()
 }
 
 /* bench function*/
-void APlayerCharacter::setPlayerBench(TArray<AEnvSquare*> allSquares)
+void APlayerCharacter::setPlayerBench_Implementation(const TArray<AEnvSquare*>& allSquares)
 {
 	playerBench = allSquares;
 }
@@ -134,6 +134,8 @@ bool APlayerCharacter::isAbleToBenchPiece()
 }
 void APlayerCharacter::benchAPiece_Implementation(APiece* newPiece)
 {
+	debugFunctionThree();
+
 	army.Add(newPiece);
 	for (AEnvSquare* aBenchSquare : playerBench)
 	{
@@ -148,6 +150,8 @@ void APlayerCharacter::benchAPiece_Implementation(APiece* newPiece)
 /* shop functions*/
 bool APlayerCharacter::isEnableToBuyProduct(APiece* aProduct)
 {
+	debugFunctionFour();
+
 	if (aProduct)
 	{
 		int productCost = aProduct->GetProductCost();
@@ -158,8 +162,10 @@ bool APlayerCharacter::isEnableToBuyProduct(APiece* aProduct)
 	return false;
 }
 	// no server because others dont care the money 
-void APlayerCharacter::payProduct(APiece* aProduct)
+void APlayerCharacter::payProduct_Implementation(APiece* aProduct)
 {
+	debugFunctionFive();
+
 	// IRLProduct* specificProduct = aProduct.GetInterface();
 	int productCost = aProduct->GetProductCost();
 
@@ -167,6 +173,7 @@ void APlayerCharacter::payProduct(APiece* aProduct)
 }
 void APlayerCharacter::receiveProduct_Implementation(APiece* aProduct)
 {
+	debugFunctionSix();
 	if (aProduct)
 	{
 		aProduct->setPieceColor(getPlayerColor());
@@ -278,6 +285,8 @@ void APlayerCharacter::detectReaction()
 // turn control
 void APlayerCharacter::startTurn()
 {
+	debugFunctionSeven();
+
 	UE_LOG(LogTemp, Warning, TEXT("LOGG: PLAYER STARTING TURN"));
 	isPlayerTurn = true;
 	selectedSquare = nullptr;
@@ -291,6 +300,8 @@ void APlayerCharacter::startTurn()
 
 void APlayerCharacter::endTurn()
 {
+	debugFunctionEight();
+
 	isPlayerTurn = false;
 	moveSelectedPiece();
 	unselectPiece();
@@ -308,12 +319,11 @@ FString APlayerCharacter::getPlayerName()
 
 FColor APlayerCharacter::getPlayerColor()
 {
-	return FColor::Green;
 	if (APlayerRLController* PC = Cast<APlayerRLController>(GetController()))
 	{
 		return PC->getPlayerColor();
 	}
-	return FColor::Black;
+	return FColor::Green;
 }
 
 FString APlayerCharacter::GetActorName()
@@ -378,7 +388,7 @@ void APlayerCharacter::updateSpeed()
 {
 	GetCharacterMovement()->MaxWalkSpeed = curSpeed;
 }
-void APlayerCharacter::run() 
+void APlayerCharacter::run_Implementation()
 {
 	if (isAbleToRun) {
 		isRunning = true;
@@ -387,7 +397,7 @@ void APlayerCharacter::run()
 	}
 }
 
-void APlayerCharacter::stopRun() 
+void APlayerCharacter::stopRun_Implementation()
 {
 	isRunning = false;
 	curSpeed = walkSpeed;
@@ -510,7 +520,16 @@ void APlayerCharacter::unselectPiece_Implementation()
 {
 	selectedPiece = nullptr;
 
-	AEnvBoard* gameBoard = UMapManager::get()->getGameBoard();
+	AEnvBoard* gameBoard = nullptr;
+	if (UWorld* World = GetWorld())
+	{
+		ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+		if (GameState)
+		{
+			gameBoard = GameState->getGameBoard();
+		}
+	}
+
 	if (gameBoard)
 	{
 		gameBoard->resetBoard();
@@ -553,7 +572,15 @@ void APlayerCharacter::setIsPossessedByAI(bool status, AAIRLController* aAIContr
 // call at beginning of setup
 void APlayerCharacter::initializeArmy()
 {
-	AEnvShop* gameShop = UMapManager::get()->getShop();
+	AEnvShop* gameShop = nullptr;
+	if (UWorld* World = GetWorld())
+	{
+		ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+		if (GameState)
+		{
+			gameShop = GameState->getShop();
+		}
+	}
 
 	gameShop->fullFill(this);
 }

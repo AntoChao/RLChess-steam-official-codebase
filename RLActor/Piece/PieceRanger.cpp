@@ -1,6 +1,7 @@
 #include "PieceRanger.h"
 
 #include "../../RLHighLevel/GameplayGameMode.h"
+#include "../../RLHighLevel/RLGameState.h"
 
 #include "../Environment/EnvBoard.h"
 
@@ -19,7 +20,16 @@ TArray<FVector2D> APieceRanger::calculatePossibleMove()
         return PossibleMoves;
     }
 
-    AEnvBoard* GameBoard = UMapManager::get()->getGameBoard();
+    AEnvBoard* GameBoard = nullptr;
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            GameBoard = GameState->getGameBoard();
+        }
+    }
+
     if (GameBoard)
     {
         FVector2D CurrentLocation = curSquare->getSquareLocation();
@@ -48,8 +58,15 @@ void APieceRanger::killEffect_Implementation()
     FVector2D backVector = getDirectionVector(backDirection);
     FVector2D backLocation = curSquare->getSquareLocation() + backVector;
 
-    UMapManager* mapManager = UMapManager::get();
-    AEnvBoard* gameBoard = mapManager->getGameBoard();
+    AEnvBoard* gameBoard = nullptr;
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+        if (GameState)
+        {
+            gameBoard = GameState->getGameBoard();
+        }
+    }
 
     if (gameBoard)
     {

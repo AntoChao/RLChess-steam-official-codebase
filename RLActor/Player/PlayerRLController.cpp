@@ -51,13 +51,13 @@ FString APlayerRLController::getPlayerName()
 }
 FColor APlayerRLController::getPlayerColor()
 {
-	if (rlPlayerState)
+	if (playerIndex == 0)
 	{
-		return rlPlayerState->playerColor;
+		return FColor::Green;
 	}
 	else
 	{
-		return FColor::Green;
+		return FColor::Red;
 	}
 }
 
@@ -106,7 +106,6 @@ void APlayerRLController::gameStateCreateBody_Implementation()
 			GameState->createPlayerBody();
 
 			serverPossesses(this);
-
 		}
 	}
 }
@@ -126,11 +125,12 @@ void APlayerRLController::serverPossesses_Implementation(APlayerRLController* cu
 		if (GameState)
 		{
 			// Successfully cast to MyCustomGameMode, now you can access its members
-			rlPlayer = GameState->getPlayerBody();
+			rlPlayer = GameState->getPlayerBody(playerIndex);
 
 			currentController->Possess(rlPlayer);
 
 			setupMappingContextBasedOnGameModeMulticast();
+
 		}
 	}
 	
