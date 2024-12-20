@@ -29,7 +29,6 @@ void ARLGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 	DOREPLIFETIME(ARLGameState, allPlayers);
 
-    // DOREPLIFETIME(ARLGameState, board);
     DOREPLIFETIME(ARLGameState, board);
     DOREPLIFETIME(ARLGameState, shop);
 
@@ -70,7 +69,7 @@ APlayerCharacter* ARLGameState::getPlayerBody(int controllerIndex)
 {
     worldIndex = controllerIndex;
     APlayerCharacter* returnPlayerBody = allPlayers[controllerIndex];
-    playersReady();
+    // playersReady();
     return returnPlayerBody;
 }
 
@@ -85,39 +84,54 @@ void ARLGameState::playersReady_Implementation()
     }
 }
 
-void ARLGameState::setBoard_Implementation()
+void ARLGameState::createBoard_Implementation()
 {
-    AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
-
-    if (curGameMode)
+    if (GetLocalRole() == ROLE_Authority)
     {
-        board = curGameMode->serverBoard;
+        AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
+        if (curGameMode)
+        {
+            UFactoryEnvironment* boardFactory = curGameMode->environmentFactoryInstance;
+
+            if (boardFactory)
+            {
+                AActor* createdActor = boardFactory->createRLActor(TEXT("Board"), boardLocation, boardRotation);
+                board = Cast<AEnvBoard>(createdActor);
+
+                if (board)
+                {
+                    board->initialized();
+                    board->initializeBoardColor();
+                    debugFunctionOne();
+                }
+            }
+        }
+
     }
-    debugFunctionOne();
 }
 
-void ARLGameState::createBench_Implementation()
+void ARLGameState::createShop_Implementation()
 {
-    for (APlayerCharacter* eachPlayer : allPlayers)
+    if (GetLocalRole() == ROLE_Authority)
     {
-        if (eachPlayer && board)
+        AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
+        if (curGameMode)
         {
-            eachPlayer->setPlayerBench(board->getAllSquaresOfSpecificColor(eachPlayer->getPlayerColor()));
+            UFactoryEnvironment* shopFactory = curGameMode->environmentFactoryInstance;
+
+            if (shopFactory)
+            {
+                AActor* createdActor = shopFactory->createRLActor(TEXT("Shop"), boardLocation, boardRotation);
+                shop = Cast<AEnvShop>(createdActor);
+
+                if (shop)
+                {
+                    shop->createRandomShop();
+                    debugFunctionThree();
+                }
+            }
         }
     }
-}
-
-
-void ARLGameState::setShop_Implementation()
-{
-    AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
-    // const AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-
-    if (curGameMode)
-    {
-        shop = curGameMode->serverShop;
-    }
-    debugFunctionThree();
 }
 
 void ARLGameState::closeShop_Implementation()
@@ -127,4 +141,15 @@ void ARLGameState::closeShop_Implementation()
         shop->closeShop();
         debugFunctionFour();
     }
+}
+
+TArray<APlayerCharacter*> ARLGameState::getAllPlayers() const
+{
+    /*
+    TArray<const APlayerCharacter*> safeCopy;
+    for (const auto* player : allPlayers) {
+        safeCopy.Add(player);
+    }
+    return safeCopy;*/
+    return allPlayers;
 }

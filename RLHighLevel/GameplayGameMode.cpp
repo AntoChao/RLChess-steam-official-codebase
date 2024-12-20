@@ -24,10 +24,9 @@ void AGameplayGameMode::PostLogin(APlayerController* NewPlayer)
     GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Player %s logged in."));
 
     APlayerRLController* rlController = Cast<APlayerRLController>(NewPlayer);
-    rlController->playerIndex = allPlayerControllers.Num();
+    rlController->setPlayerIndex(allPlayerControllers.Num());
 
     allPlayerControllers.Add(rlController);
-    
 }
 
 void AGameplayGameMode::Logout(AController* Exiting)
@@ -93,9 +92,10 @@ void AGameplayGameMode::startSetUpRound()
     debugFunctionTwo();
 
     setBoard();
+    spawnShop();
+
     setPlayerBench();
     setPlayerInitLocation();
-    spawnShop();
 }
 
 void AGameplayGameMode::setBoard()
@@ -106,22 +106,11 @@ void AGameplayGameMode::setBoard()
         ARLGameState* serverGameState = Cast<ARLGameState>(serverWorld->GetGameState());
         if (serverGameState)
         {
-            serverBoard = Cast<AEnvBoard>(environmentFactoryInstance->createRLActor(TEXT("Board"), boardLocation, boardRotation));
-                
-            if (serverBoard)
-            {
-                serverBoard->initialized();
-                serverBoard->initializeBoardColor(allPlayers);
-                serverBoard->resetBoard();
-            }
-
-            // create a shop as it is replicated
-            serverGameState->setBoard();
+            serverGameState->createBoard();
         }
     }
 }
-
-void AGameplayGameMode::setPlayerBench()
+void AGameplayGameMode::spawnShop()
 {
     UWorld* serverWorld = GetWorld();
     if (serverWorld)
@@ -129,7 +118,19 @@ void AGameplayGameMode::setPlayerBench()
         ARLGameState* serverGameState = Cast<ARLGameState>(serverWorld->GetGameState());
         if (serverGameState)
         {
-            serverGameState->createBench();
+            serverGameState->createShop();
+        }
+    }
+}
+
+void AGameplayGameMode::setPlayerBench()
+{
+    for (APlayerCharacter* eachPlayer : allPlayers)
+    {
+        if (eachPlayer)
+        {
+            eachPlayer->setUpBench();
+            // eachPlayer->setPlayerBench(board->getAllSquaresOfSpecificColor(eachPlayer->getPlayerColor()));
         }
     }
 }
@@ -160,23 +161,6 @@ void AGameplayGameMode::setPlayerInitLocation()
         }
     }
 }
-
-void AGameplayGameMode::spawnShop()
-{
-    UWorld* serverWorld = GetWorld();
-    if (serverWorld)
-    {
-        ARLGameState* serverGameState = Cast<ARLGameState>(serverWorld->GetGameState());
-        if (serverGameState)
-        {
-            AActor* shopActor = environmentFactoryInstance->createRLActor(TEXT("Shop"), shopLocation, shopRotation);
-            serverShop = Cast<AEnvShop>(shopActor);
-            // create a shop as it is replicated
-            serverGameState->setShop();
-        }
-    }
-}
-
 
 void AGameplayGameMode::startGameplayRound()
 {
@@ -215,6 +199,12 @@ void AGameplayGameMode::endPlayerSetUpTime()
         if (serverGameState)
         {
             serverGameState->closeShop();
+
+            AEnvBoard* serberBoard = serverGameState->getGameBoard();
+            if (serberBoard)
+            {
+                serberBoard->resetBoard();
+            }
         }
     }
 

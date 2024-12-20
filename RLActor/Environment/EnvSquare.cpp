@@ -81,7 +81,7 @@ void AEnvSquare::initializeMaterials()
 	colorToMaterial.Add(FColor::Transparent, transparentMaterial);
 }
 
-void AEnvSquare::setColor(const FColor& newColor)
+void AEnvSquare::setColor_Implementation(const FColor& newColor)
 {
 	if (colorToMaterial.Contains(newColor))
 	{
@@ -106,15 +106,16 @@ bool AEnvSquare::IsAbleToBeInteracted(APlayerCharacter* Sender)
 	return isPossibleMove;
 }
 
-void AEnvSquare::BeInteracted(APlayerCharacter* Sender)
+void AEnvSquare::BeInteracted_Implementation(APlayerCharacter* Sender)
 {
 	APiece* playerSelectedPiece = Sender->getSelectedPiece();
 	if (playerSelectedPiece)
 	{
+		debugFunctionOne();
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PLACING PLAYER SELECTED PIECE"));
 		//beOccupied(playerSelectedPiece);
+		// works if piece is owned by player character client
 		playerSelectedPiece->bePlaced(this);
-		
 	}
 }
 
@@ -136,10 +137,9 @@ void AEnvSquare::setSquareLocation(FVector2D aLocation)
 	squareLocation = aLocation;
 }
 
-void AEnvSquare::setSquareColorField(FColor aColor)
+void AEnvSquare::setSquareColorField_Implementation(FColor aColor)
 {
 	squareColorField = aColor;
-	// setColor(aColor);
 }
 
 FVector2D AEnvSquare::getSquareLocation()
@@ -152,10 +152,9 @@ FColor AEnvSquare::getSquareColorField()
 	return squareColorField;
 }
 
-void AEnvSquare::setIsPossibleMove(bool status, FColor pieceColor)
+void AEnvSquare::setIsPossibleMove_Implementation(bool status, FColor pieceColor)
 {
 	isPossibleMove = status;
-
 	setColor(pieceColor);
 }
 

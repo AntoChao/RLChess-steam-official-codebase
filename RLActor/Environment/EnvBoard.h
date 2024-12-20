@@ -17,6 +17,8 @@ class AEnvBoard : public AActor, public IRLActor
 
 public:
 	AEnvBoard();
+	
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
 	void debugFunctionOne(); // board initialize
@@ -25,6 +27,11 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
 	void debugFunctionThree(); // board being reset
 
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionFour(); 
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionFive(); 
 public:
 	FString GetActorName() override;
 
@@ -41,7 +48,7 @@ public:
 	void initialized();
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Board")
-	void initializeBoardColor(const TArray<APlayerCharacter*>& allPlayers);
+	void initializeBoardColor();
 
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	FVector getSpawnStartPositionForPlayer(int playerIndex);
@@ -68,7 +75,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board Stats")
 	FVector boardCenter = FVector(0.0f, 0.0f, 0.0f);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Board Stats")
 	TArray<AEnvSquare*> allSquares;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board Stats")
 	float squareLength = 300.0f;
@@ -93,7 +100,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Board Stats")
 	int getSquareLength();
 	
-	UFUNCTION(BlueprintCallable, Category = "Board")
+	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Board")
 	void setSpecificColor(FColor aColor);
 
 	UFUNCTION(BlueprintCallable, Category = "Board")
@@ -102,7 +109,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	void setPossibleMoves(TArray<FVector2D> allPossibles, FColor pieceColor);
 
-	UFUNCTION(BlueprintCallable, Category = "Board")
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Board")
 	void resetBoard();
 
 	UFUNCTION(BlueprintCallable, Category = "Board")

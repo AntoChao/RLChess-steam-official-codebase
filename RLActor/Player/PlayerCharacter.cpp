@@ -49,6 +49,14 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	//Replicate current health.
 	DOREPLIFETIME(APlayerCharacter, setUpTime);
 	DOREPLIFETIME(APlayerCharacter, isPlayerTurn);
+	DOREPLIFETIME(APlayerCharacter, playerBench);
+	DOREPLIFETIME(APlayerCharacter, army);
+
+	DOREPLIFETIME(APlayerCharacter, selectedPiece);
+	DOREPLIFETIME(APlayerCharacter, selectedSquare);
+
+	DOREPLIFETIME(APlayerCharacter, curMoney);
+
 }
 
 void APlayerCharacter::BeginPlay()
@@ -59,12 +67,12 @@ void APlayerCharacter::BeginPlay()
 	curMoney = totalMoney;
 }
 
-void APlayerCharacter::startSetup()
+void APlayerCharacter::startSetup_Implementation()
 {
 	setUpTime = true;
 	debugFunctionOne();
 }
-void APlayerCharacter::endSetup()
+void APlayerCharacter::endSetup_Implementation()
 {
 	// all pieces in bench should be in board right now
 	for (APiece* eachPiece : army)
@@ -73,7 +81,6 @@ void APlayerCharacter::endSetup()
 	}
 
 	setUpTime = false;
-	debugFunctionTwo();
 }
 
 bool APlayerCharacter::checkIsAlive()
@@ -117,9 +124,26 @@ int APlayerCharacter::getInventorySize()
 }
 
 /* bench function*/
-void APlayerCharacter::setPlayerBench_Implementation(const TArray<AEnvSquare*>& allSquares)
+void APlayerCharacter::setUpBench_Implementation()
 {
-	playerBench = allSquares;
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		UWorld* serverWorld = GetWorld();
+		if (serverWorld)
+		{
+			ARLGameState* serverGameState = Cast<ARLGameState>(serverWorld->GetGameState());
+			if (serverGameState)
+			{
+				AEnvBoard* serverBoard = serverGameState->getGameBoard();
+
+				if (serverBoard)
+				{
+
+					playerBench = serverBoard->getAllSquaresOfSpecificColor(getPlayerColor());
+				}
+			}
+		}
+	}
 }
 bool APlayerCharacter::isAbleToBenchPiece()
 {
@@ -150,8 +174,6 @@ void APlayerCharacter::benchAPiece_Implementation(APiece* newPiece)
 /* shop functions*/
 bool APlayerCharacter::isEnableToBuyProduct(APiece* aProduct)
 {
-	debugFunctionFour();
-
 	if (aProduct)
 	{
 		int productCost = aProduct->GetProductCost();
@@ -164,8 +186,6 @@ bool APlayerCharacter::isEnableToBuyProduct(APiece* aProduct)
 	// no server because others dont care the money 
 void APlayerCharacter::payProduct_Implementation(APiece* aProduct)
 {
-	debugFunctionFive();
-
 	// IRLProduct* specificProduct = aProduct.GetInterface();
 	int productCost = aProduct->GetProductCost();
 
@@ -173,7 +193,6 @@ void APlayerCharacter::payProduct_Implementation(APiece* aProduct)
 }
 void APlayerCharacter::receiveProduct_Implementation(APiece* aProduct)
 {
-	debugFunctionSix();
 	if (aProduct)
 	{
 		aProduct->setPieceColor(getPlayerColor());
@@ -194,13 +213,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	detect();
-
-	/*
-	// need a real time update of board status on the piece selection
-	if ((isPlayerTurn) && IsValid(selectedPiece))
-	{
-		selectedPiece->BeInteracted(this);
-	}*/
 }
 
 void APlayerCharacter::detect()
@@ -323,7 +335,7 @@ FColor APlayerCharacter::getPlayerColor()
 	{
 		return PC->getPlayerColor();
 	}
-	return FColor::Green;
+	return FColor::Purple;
 }
 
 FString APlayerCharacter::GetActorName()
@@ -418,7 +430,7 @@ void APlayerCharacter::selectItem_Implementation(int itemIndex)
 	selectedItemIndex = itemIndex;
 }
 
-void APlayerCharacter::interact_Implementation()
+void APlayerCharacter::interact()
 {
 	if (isAbleToInteract)
 	{
@@ -479,31 +491,66 @@ void APlayerCharacter::pickUpItem_Implementation()
 		}
 	}
 }
-void APlayerCharacter::selectPiece_Implementation()
+/*
+another way to do it is use netmulticast and each piece check if the owner is the caller
+if yes, then do x in client.
+*/
+void APlayerCharacter::selectPiece()
 {
 	unselectPiece();
 	if (APiece* detectedPiece = Cast<APiece>(detectedActor.GetObject()))
 	{
-		selectedPiece = detectedPiece;
-		detectedPiece->BeInteracted(this);
+		// detectedPiece->BeInteracted(this);
+		setSelectedPiece(detectedPiece);
+
+		switch (detectedPiece->getPieceStatus())
+		{
+		case EPieceStatus::EInShop:
+		{
+			serverSelectInShopPiece();
+			break;
+		}
+		case EPieceStatus::EInBench:
+		{
+			detectedPiece->inBenchInteractedEffect(this);
+			break;
+		}
+		case EPieceStatus::EInBoard:
+		{
+			detectedPiece->inBoardInteractedEffect(this);
+			break;
+		}
+		default:
+			break;
+		}
 	}
 }
 
-void APlayerCharacter::selectPlacePieceLocation_Implementation()
+void APlayerCharacter::serverSelectInShopPiece_Implementation()
 {
-	// piece enter be place into new square
-	selectedSquare = detectedActor;
-	if (setUpTime)
+	selectedPiece->inShopInteractedEffect(this);
+}
+void APlayerCharacter::selectPlacePieceLocation()
+{
+	if (AEnvSquare* detectedSquare = Cast<AEnvSquare>(detectedActor.GetObject()))
 	{
-		moveSelectedPiece();
+		setSelectedSquare(detectedSquare);
+		if (setUpTime)
+		{
+			debugFunctionOne();
+			moveSelectedPiece();
+		}
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Selecting place piece location"));
+	
+		serverResetBoard();
 	}
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Selecting place piece location"));
 }
 
 void APlayerCharacter::moveSelectedPiece_Implementation()
 {
 	if (selectedSquare)
 	{
+		debugFunctionTwo();
 		// piece enter be place into new square
  		selectedSquare->BeInteracted(this);
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Placing Piece"));
@@ -519,7 +566,10 @@ bool APlayerCharacter::isAbleToPickUpItem()
 void APlayerCharacter::unselectPiece_Implementation()
 {
 	selectedPiece = nullptr;
+}
 
+void APlayerCharacter::serverResetBoard_Implementation()
+{
 	AEnvBoard* gameBoard = nullptr;
 	if (UWorld* World = GetWorld())
 	{
@@ -527,12 +577,12 @@ void APlayerCharacter::unselectPiece_Implementation()
 		if (GameState)
 		{
 			gameBoard = GameState->getGameBoard();
-		}
-	}
 
-	if (gameBoard)
-	{
-		gameBoard->resetBoard();
+			if (gameBoard)
+			{
+				gameBoard->resetBoard();
+			}
+		}
 	}
 }
 
@@ -540,20 +590,24 @@ APiece* APlayerCharacter::getSelectedPiece()
 {
 	return selectedPiece;
 }
-void APlayerCharacter::setSelectedPiece(APiece* aPiece)
+void APlayerCharacter::setSelectedPiece_Implementation(APiece* aPiece)
 {
 	selectedPiece = aPiece;
 }
 
-void APlayerCharacter::setSelectedSquare(AEnvSquare* aSquare)
+void APlayerCharacter::setSelectedSquare_Implementation(AEnvSquare* aSquare)
 {
+	debugFunctionThree();
+	selectedSquare = aSquare;
+	/*
 	IRLActor* squareInterface = Cast<IRLActor>(aSquare);
 	if (squareInterface)
 	{
 		TScriptInterface<IRLActor> scriptInterface;
 		scriptInterface.SetObject(aSquare);
 		scriptInterface.SetInterface(squareInterface);
-	}
+		selectedSquare = scriptInterface;
+	}*/
 }
 
 /* item Effect*/

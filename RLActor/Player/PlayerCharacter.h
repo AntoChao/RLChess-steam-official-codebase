@@ -45,11 +45,11 @@ public:
 	APlayerCharacter();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionOne(); // player character start setup
+	void debugFunctionOne(); // selectPlacePieceLocation()
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionTwo(); // player character end setup
+	void debugFunctionTwo(); // moveSelectedPiece()
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionThree(); // player benching a piece
+	void debugFunctionThree(); // setSelectedSquare_Implementation
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
 	void debugFunctionFour(); // player check is able to buy product
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
@@ -107,7 +107,7 @@ protected:
 	/* shopping*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	int totalMoney = 5;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	int curMoney = 5;
 
 	/* inventory*/
@@ -118,11 +118,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	TArray<AItem*> inventory;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	// the bench is replicated between each instance of the same player character in different world
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	TArray<AEnvSquare*> playerBench;
 
 	/* army*/
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
 	TArray<APiece*> army;
 
 public:
@@ -131,9 +132,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Player Stats")
 	FColor getPlayerColor();
 
-	UFUNCTION(BlueprintCallable, Category = "Character Stats")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Character Stats")
 	void startSetup();
-	UFUNCTION(BlueprintCallable, Category = "Character Stats")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Character Stats")
 	void endSetup();
 
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
@@ -150,19 +151,19 @@ public:
 	int getInventorySize();
 
 	/* bench functions*/
-	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Character Stats")
-	void setPlayerBench(const TArray<AEnvSquare*>& allSquares);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Character Stats")
+	void setUpBench();
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
 	bool isAbleToBenchPiece();
-	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Character Stats")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Character Stats")
 	void benchAPiece(APiece* newPiece);
 
 	/*shop functions*/
 	UFUNCTION(BlueprintCallable, Category = "Shopoing Stats")
 	bool isEnableToBuyProduct(APiece* aProduct);
-	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Shopoing Stats")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Shopoing Stats")
 	void payProduct(APiece* aProduct);
-	UFUNCTION(Client, Reliable, Category = "Shopoing Stats")
+	UFUNCTION(Server, Reliable, Category = "Shopoing Stats")
 	void receiveProduct(APiece* aProduct);
 
 	/* army functions*/
@@ -250,16 +251,20 @@ public:
 	void selectItem(int itemIndex);
 
 	/* controller interaction functions*/
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
+	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	void interact();
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void useItem();
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void pickUpItem();
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
+	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	void selectPiece();
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
+	void serverSelectInShopPiece();
+
+
+	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	void selectPlacePieceLocation();
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void moveSelectedPiece();
@@ -270,6 +275,8 @@ public:
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void unselectPiece();
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
+	void serverResetBoard();
 
 protected:
 	// look stats
@@ -302,21 +309,21 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	bool isAbleToInteract = true;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	APiece* selectedPiece = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	int selectedItemIndex = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
-	TScriptInterface<IRLActor> selectedSquare = nullptr;
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
+	AEnvSquare* selectedSquare = nullptr;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	APiece* getSelectedPiece();
-	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void setSelectedPiece(APiece* aPiece);
 
-	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void setSelectedSquare(AEnvSquare* aSquare);
 
 	/* item Effect*/

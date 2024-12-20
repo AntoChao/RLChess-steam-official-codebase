@@ -24,6 +24,11 @@ public:
 
 	virtual void BeginPlay() override;
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionOne(); //square BeInteracted
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionTwo();
+
 public:
 	virtual FString GetActorName() override;
 
@@ -31,6 +36,7 @@ public:
 
 	virtual bool IsAbleToBeInteracted(APlayerCharacter* Sender) override;
 
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	virtual void BeInteracted(APlayerCharacter* Sender) override;
 
 	UFUNCTION(Server, Reliable, Category = "Square Stats")
@@ -70,7 +76,7 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Square Materials")
 	void initializeMaterials();
 
-	UFUNCTION(BlueprintCallable, Category = "Square Materials")
+	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Square Materials")
 	void setColor(const FColor& NewColor);
 
 protected:
@@ -97,7 +103,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Square Stats")
 	void setSquareLocation(FVector2D aLocation);
 
-	UFUNCTION(BlueprintCallable, Category = "Square Stats")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Square Stats")
 	void setSquareColorField(FColor aColor);
 
 	UFUNCTION(BlueprintCallable, Category = "Square Stats")
@@ -106,7 +112,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Square Stats")
 	FColor getSquareColorField();
 
-	UFUNCTION(BlueprintCallable, Category = "Square Stats")
+	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Square Stats")
 	void setIsPossibleMove(bool status, FColor pieceColor);
 
 	UFUNCTION(Server, Reliable, Category = "Square Stats")
