@@ -10,6 +10,8 @@
 
 #include "../Player/PlayerCharacter.h"
 #include "../Piece/Piece.h"
+#include "../Piece/PiecePreviewMesh.h"
+#include "../Piece/PieceConfirmedMesh.h"
 #include "../../CommonEnum.h"
 
 
@@ -157,6 +159,44 @@ void AEnvSquare::setIsPossibleMove_Implementation(bool status, FColor pieceColor
 	isPossibleMove = status;
 	setColor(pieceColor);
 }
+void AEnvSquare::setPreviewMesh_Implementation(APiece* onePiece)
+{
+	if (onePiece)
+	{
+		if (!isOccupied)
+		{
+			occupiedPreviewMesh = onePiece->getSpawnedPreviewMesh(getPlacementLocation());
+		}
+	}
+	else
+	{
+		if (occupiedPreviewMesh)
+		{
+			occupiedPreviewMesh->Destroy();
+			occupiedPreviewMesh = nullptr;
+		}
+	}
+}
+
+void AEnvSquare::setConfirmedMesh_Implementation(APiece* onePiece)
+{
+	if (onePiece)
+	{
+		if (!isOccupied)
+		{
+			occupiedConfirmedMesh = onePiece->getSpawnedConfirmedMesh(getPlacementLocation());
+		}
+	}
+	else
+	{
+		if (occupiedConfirmedMesh)
+		{
+			occupiedConfirmedMesh->Destroy();
+			occupiedConfirmedMesh = nullptr;
+		}
+	}
+}
+
 
 void AEnvSquare::occupiedPieceLeaved_Implementation()
 {

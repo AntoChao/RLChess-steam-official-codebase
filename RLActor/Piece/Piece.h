@@ -7,7 +7,6 @@
 
 #include "TimerManager.h"
 #include "Components/TimelineComponent.h"
-#include "GeometryCollection/GeometryCollectionComponent.h"
 
 #include "../RLActor.h"
 #include "../RLProduct.h"
@@ -16,8 +15,12 @@
 
 class UBoxComponent;
 class UCurveFloat;
-class UStaticMeshComponent;
 class ARLGameState;
+
+class UStaticMeshComponent;
+class APiecePreviewMesh;
+class APieceFractureMesh;
+class APieceConfirmedMesh;
 
 UCLASS(BlueprintType, Blueprintable)
 class APiece : public AActor, public IRLActor, public IRLProduct
@@ -102,6 +105,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Piece Stats")
 	void initializeMaterials();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	UMaterialInterface* selectedMaterial;
+
 	/* Piece information*/
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
@@ -146,13 +152,22 @@ protected:
 
 /* piece collision*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Piece Collision")
-	UStaticMeshComponent* pieceStaticBody;
+	UStaticMeshComponent* pieceStaticBodyMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
 	UBoxComponent* pieceCollision;
 	
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void collisionBPImplementation(); // piece set piece color
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
+	TSubclassOf<APiecePreviewMesh> piecePreviewMeshClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
+	TSubclassOf<APieceConfirmedMesh> pieceConfirmedMeshClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
+	TSubclassOf<APieceFractureMesh> pieceFractureMeshClass;
+
+	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "debugFunction")
+	void spawnFractureMesh(FVector aDirection); // piece set piece color
 
 	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Piece Collision")
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -176,6 +191,10 @@ protected:
 		
 	virtual void dieEffect_Implementation(APiece* killer);
 
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
+		bool isCollided = false;
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
+		FVector collisionLocation;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
 		float collideImpulseStrength = 1000.0f; // Adjust this value based on desired effect
 
@@ -185,6 +204,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	bool getIsMoving();
+
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
+	void setIsCollidedBy(APiece* collidedPiece);
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Interaction")
 	void kill(APiece* pieceToKill);
@@ -362,6 +384,12 @@ public:
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	void beLaunchedTo(AEnvSquare* SquareDestination);
 
+	/* additional decoration*/
+	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	APiecePreviewMesh* getSpawnedPreviewMesh(FVector locationToSpawn);
+	
+	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	APieceConfirmedMesh* getSpawnedConfirmedMesh(FVector locationToSpawn);
 
 };
 

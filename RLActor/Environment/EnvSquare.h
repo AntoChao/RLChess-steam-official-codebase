@@ -8,9 +8,13 @@
 #include "Materials/MaterialInterface.h"
 #include "EnvSquare.generated.h"
 
+class APiece;
+class APiecePreviewMesh;
+class APieceConfirmedMesh;
 class UStaticMeshComponent;
 class UPrimitiveComponent;
 class UBoxComponent;
+
 
 UCLASS(BlueprintType, Blueprintable)
 class AEnvSquare : public AActor, public IRLActor
@@ -87,7 +91,11 @@ protected:
 	bool isOccupied = false;
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
 	APiece* occupiedPiece = nullptr;
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
+	APiecePreviewMesh* occupiedPreviewMesh = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
+	APieceConfirmedMesh* occupiedConfirmedMesh = nullptr;
+
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
 	bool isPlayerOnTop = false;
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Square Stats")
@@ -114,6 +122,11 @@ public:
 
 	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Square Stats")
 	void setIsPossibleMove(bool status, FColor pieceColor);
+	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Square Stats")
+	void setPreviewMesh(APiece* onePiece);
+	// it should be call from netmulticast of board, but only after the prepare phrase
+	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Square Stats")
+	void setConfirmedMesh(APiece* onePiece);
 
 	UFUNCTION(Server, Reliable, Category = "Square Stats")
 	void occupiedPieceLeaved();

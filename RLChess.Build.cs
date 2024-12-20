@@ -8,7 +8,10 @@ public class RLChess : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "EnhancedInput", "UMG", "Slate", "SlateCore", "AIModule", "GameplayTasks", "NavigationSystem", "Niagara", "MediaAssets", "OnlineSubsystemUtils" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", 
+			"InputCore", "HeadMountedDisplay", "EnhancedInput", "UMG", "Slate", 
+			"SlateCore", "AIModule", "GameplayTasks", "NavigationSystem", "Niagara", 
+			"MediaAssets", "OnlineSubsystemUtils", "GeometryCollectionEngine", "Chaos" });
 
         PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 

@@ -77,6 +77,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	bool isLocalPlayerValid;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	bool isPlayerAlive = true;
+
 	// possessed player
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	class APlayerCharacter* rlPlayer;

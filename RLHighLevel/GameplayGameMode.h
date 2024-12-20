@@ -147,6 +147,9 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
     int piecesMovedTimerSegs = 5;
 
+    // player died 
+    
+
     // game end
     UFUNCTION(BlueprintCallable, Category = "GameMode")
     bool checkIfGameEnd();
