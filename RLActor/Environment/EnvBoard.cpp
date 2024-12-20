@@ -9,6 +9,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "../Player/PlayerCharacter.h"
 
+#include "../Piece/Piece.h"
+
 #include "Net/UnrealNetwork.h"
 
 AEnvBoard::AEnvBoard() 
@@ -289,7 +291,7 @@ void AEnvBoard::setSpecificColor_Implementation(FColor aColor)
 {
     for (AEnvSquare* aSquare : allSquares)
     {
-        if (aSquare->getSquareColorField() == aColor)
+        if (aSquare && aSquare->getSquareColorField() == aColor)
         {
             debugFunctionFour();
             aSquare->setIsPossibleMove(true, aColor);
@@ -301,22 +303,28 @@ void AEnvBoard::setAllUnoccupiedColor(FColor aColor)
 {
     for (AEnvSquare* aSquare : allSquares)
     {
-        if (aSquare->getSquareColorField() == aColor && !aSquare->getIsOccupied())
+        if (aSquare && aSquare->getSquareColorField() == aColor && !aSquare->getIsOccupied())
         {
             aSquare->setIsPossibleMove(true, aColor);
         }
     }
 }
 
-void AEnvBoard::setPossibleMoves(TArray<FVector2D> allPossibles, FColor pieceColor)
+void AEnvBoard::setPossibleMoves(APiece* onePiece)
 {
+    TArray<FVector2D> allPossibles = onePiece->calculatePossibleMove();
+    FColor pieceColor = onePiece->getPieceColor();
     for (FVector2D eachLocation : allPossibles)
     {
         if (isValidLocation(eachLocation))
         {
             debugFunctionFive();
             int index = getIndexFromLocation(eachLocation);
-            allSquares[index]->setIsPossibleMove(true, pieceColor);
+            if (allSquares[index])
+            {
+                allSquares[index]->setIsPossibleMove(true, pieceColor);
+                allSquares[index]->setPreviewMesh(onePiece);
+            }
         }
     }
 }
@@ -329,6 +337,18 @@ void AEnvBoard::resetBoard_Implementation()
         if (IsValid(aSquare))
         {
             aSquare->setIsPossibleMove(false, FColor::Transparent);
+            aSquare->setPreviewMesh(nullptr);
+        }
+    }
+}
+void AEnvBoard::resetConfirmedMeshBoard_Implementation()
+{
+    debugFunctionFour();
+    for (AEnvSquare* aSquare : allSquares)
+    {
+        if (IsValid(aSquare))
+        {
+            aSquare->setConfirmedMesh(nullptr);
         }
     }
 }

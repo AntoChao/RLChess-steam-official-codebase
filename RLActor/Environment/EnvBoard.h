@@ -107,10 +107,12 @@ public:
 	void setAllUnoccupiedColor(FColor aColor);
 
 	UFUNCTION(BlueprintCallable, Category = "Board")
-	void setPossibleMoves(TArray<FVector2D> allPossibles, FColor pieceColor);
+	void setPossibleMoves(APiece* onePiece);
 
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Board")
 	void resetBoard();
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Board")
+	void resetConfirmedMeshBoard();
 
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	bool isSquareOccupied(FVector2D aLocation);

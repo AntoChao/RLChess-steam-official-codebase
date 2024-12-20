@@ -251,7 +251,20 @@ void AGameplayGameMode::startPlayerPreparePhase()
 
 void AGameplayGameMode::startPieceMovingPhase()
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PIECES START MOVING"));
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* serverGameState = Cast<ARLGameState>(World->GetGameState());
+        if (serverGameState)
+        {
+            serverGameState->closeShop();
+
+            AEnvBoard* serberBoard = serverGameState->getGameBoard();
+            if (serberBoard)
+            {
+                serberBoard->resetConfirmedMeshBoard();
+            }
+        }
+    }
 
     // let all player move their pieces
     for (APlayerCharacter* eachPlayer : allPlayers)

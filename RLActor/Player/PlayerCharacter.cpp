@@ -29,6 +29,9 @@ APlayerCharacter::APlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	NetUpdateFrequency = 150.0f; // 100 updates per second
+	MinNetUpdateFrequency = 50.0f;
+
 	// Enable network replication
 	bReplicates = true;
 
@@ -306,7 +309,15 @@ void APlayerCharacter::startTurn()
 
 	for (APiece* eachPiece : army)
 	{
-		eachPiece->updateStatusByTurn();
+		if (eachPiece)
+		{
+			eachPiece->updateStatusByTurn();
+		}
+		else
+		{
+			// got eliminated
+			army.Remove(eachPiece);
+		}
 	}
 }
 
@@ -528,7 +539,10 @@ void APlayerCharacter::selectPiece()
 
 void APlayerCharacter::serverSelectInShopPiece_Implementation()
 {
-	selectedPiece->inShopInteractedEffect(this);
+	if (selectedPiece)
+	{
+		selectedPiece->inShopInteractedEffect(this);
+	}
 }
 void APlayerCharacter::selectPlacePieceLocation()
 {
@@ -598,16 +612,11 @@ void APlayerCharacter::setSelectedPiece_Implementation(APiece* aPiece)
 void APlayerCharacter::setSelectedSquare_Implementation(AEnvSquare* aSquare)
 {
 	debugFunctionThree();
-	selectedSquare = aSquare;
-	/*
-	IRLActor* squareInterface = Cast<IRLActor>(aSquare);
-	if (squareInterface)
+	if (aSquare && selectedPiece)
 	{
-		TScriptInterface<IRLActor> scriptInterface;
-		scriptInterface.SetObject(aSquare);
-		scriptInterface.SetInterface(squareInterface);
-		selectedSquare = scriptInterface;
-	}*/
+		selectedSquare = aSquare;
+		aSquare->setConfirmedMesh(selectedPiece);
+	}
 }
 
 /* item Effect*/

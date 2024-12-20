@@ -27,7 +27,10 @@ void APlayerRLController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 void APlayerRLController::BeginPlay() {
 	Super::BeginPlay();
 
-	// setupControllerBody();
+	if (IsLocalPlayerController())
+	{
+		setupControllerBody();
+	}
 }
 
 void APlayerRLController::Tick(float DeltaTime)
@@ -81,6 +84,10 @@ void APlayerRLController::setupControllerBody_Implementation()
 	if (GetLocalRole() == ROLE_Authority)
 	{
 		gameStateCreateBody();
+		if (isPlayerAlive)
+		{
+			
+		}
 	}
 }
 

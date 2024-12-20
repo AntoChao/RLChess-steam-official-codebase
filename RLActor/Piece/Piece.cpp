@@ -12,8 +12,13 @@
 #include "../../RLHighLevel/GameplayGameMode.h"
 #include "../../RLHighLevel/RLGameState.h"
 
-#include "../Environment/EnvShop.h"
+#include "PiecePreviewMesh.h"
+#include "PieceConfirmedMesh.h"
+#include "PieceFractureMesh.h"
+
 #include "../Player/PlayerCharacter.h"
+
+#include "../Environment/EnvShop.h"
 #include "../Environment/EnvSquare.h"
 #include "../Environment/EnvBoard.h"
 
@@ -27,11 +32,11 @@ APiece::APiece()
     SetRootComponent(Root);
 
     // Create the StaticMeshComponent and attach it to the root
-    pieceStaticBody = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Destructable Body"));
+    pieceStaticBodyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PieceBodyMesh"));
 
-    pieceStaticBody->SetupAttachment(RootComponent);
-    pieceStaticBody->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-    pieceStaticBody->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+    pieceStaticBodyMesh->SetupAttachment(RootComponent);
+    pieceStaticBodyMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    pieceStaticBodyMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 
 
     // Create the BoxComponent and attach it to the root
@@ -74,6 +79,9 @@ void APiece::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePr
 
     DOREPLIFETIME(APiece, isKillEffectActive);
     DOREPLIFETIME(APiece, isLaunched);
+
+    DOREPLIFETIME(APiece, isCollided);
+    DOREPLIFETIME(APiece, collisionLocation);
 }
 
 void APiece::BeginPlay()
@@ -87,8 +95,6 @@ void APiece::BeginPlay()
     }
 
     initializeMaterials();
-    // setPieceColor(FColor::Silver);
-    
 }
 
 void APiece::Tick(float DeltaTime)
@@ -208,8 +214,9 @@ void APiece::inBoardInteractedEffect_Implementation(APlayerCharacter* Sender)
         
             if (gameBoard)
             {
-                TArray<FVector2D> allPossibles = calculatePossibleMove();
-                gameBoard->setPossibleMoves(allPossibles, pieceColor);
+                // TArray<FVector2D> allPossibles = calculatePossibleMove();
+                // gameBoard->setPossibleMoves(allPossibles, pieceColor);
+                gameBoard->setPossibleMoves(this);
             }
         }
     }
@@ -493,25 +500,45 @@ void APiece::die_Implementation(APiece* killer)
 
 void APiece::dieEffect_Implementation(APiece* killer)
 {
-    DrawDebugPoint(GetWorld(), GetActorLocation(), 300.0f, FColor::Red, false, 5.0f);
+    // DrawDebugPoint(GetWorld(), GetActorLocation(), 300.0f, FColor::Red, false, 5.0f);
 
+    FVector Direction = FVector::ZeroVector;
+    FVector MyLocation = GetActorLocation();
     if (killer)
     {
         FVector KillerLocation = killer->GetActorLocation();
-        FVector MyLocation = GetActorLocation();
-
-        // Calculate the direction vector from the killer to this piece
-        FVector Direction = (MyLocation - KillerLocation).GetSafeNormal();
-
-        // Apply the impulse to the piece's body
-        pieceStaticBody->AddImpulse(Direction * collideImpulseStrength, NAME_None, true);
+        Direction = (MyLocation - KillerLocation).GetSafeNormal();
+    }
+    else
+    {
+        Direction = (MyLocation - collisionLocation).GetSafeNormal();
     }
 
+    spawnFractureMesh(Direction);
     // Additional logic to handle the piece's death, such as removing it from the game board
 
     if (isLaunched)
     {
         beExploted();
+    }
+
+    Destroy();
+}
+
+void APiece::spawnFractureMesh(FVector aDirection)
+{
+    if (pieceFractureMeshClass)
+    {
+        UWorld* serverWorld = GetWorld();
+        if (serverWorld)
+        {
+            APieceFractureMesh* fractureMesh = serverWorld->SpawnActor<APieceFractureMesh>(pieceFractureMeshClass, GetActorLocation(), GetActorRotation());
+            if (fractureMesh)
+            {
+                fractureMesh->setMaterial(selectedMaterial);
+                fractureMesh->applyForce(aDirection * collideImpulseStrength);
+            }
+        }
     }
 }
 
@@ -536,14 +563,10 @@ void APiece::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Ot
         {
             if (OtherActor->IsA(APiece::StaticClass()))
             {
-
-                DrawDebugLine(GetWorld(), GetActorLocation(), OtherActor->GetActorLocation() + FVector(0.0f, 0.0f, 500.0f), FColor::Blue, false, 1, 0, 1);
-
                 if (OtherActor != this)
                 {
                     APiece* collidedPiece = Cast<APiece>(OtherActor);
                     collidedWithOtherPiece(collidedPiece);
-                    collisionBPImplementation();
                 }
             }
             else if (OtherActor->IsA(APlayerCharacter::StaticClass()))
@@ -558,37 +581,57 @@ void APiece::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 
 void APiece::collidedWithOtherPiece_Implementation(APiece* collidedPiece)
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("piece be collided with other piece"));
-    
-    if (collidedPiece)
+    if (!isCollided)
     {
-        if (collidedPiece->getIsMoving())
+        if (collidedPiece)
         {
-            if (collisionPriority > collidedPiece->getPiecePriority())
+            collidedPiece->setIsCollidedBy(this); // disable the other piece collision calculation
+            setIsCollidedBy(collidedPiece);
+            if (collidedPiece->getIsMoving())
             {
-                kill(collidedPiece);
-            }
-            else if (collisionPriority > collidedPiece->getPiecePriority())
-            {
-                collidedPiece->kill(this);
+                if (collisionPriority > collidedPiece->getPiecePriority())
+                {
+                    kill(collidedPiece);
+                }
+                else if (collisionPriority < collidedPiece->getPiecePriority())
+                {
+                    collidedPiece->kill(this);
+                }
+                else
+                {
+                    kill(collidedPiece);
+                    die(collidedPiece);
+                }
             }
             else
             {
                 kill(collidedPiece);
-                die(collidedPiece);
             }
         }
-        else
-        {
-            kill(collidedPiece);
-        }
+    }
+}
+
+void APiece::setIsCollidedBy_Implementation(APiece* collidedPiece)
+{
+    if (collidedPiece)
+    {
+        isCollided = true;
+        collisionLocation = collidedPiece->GetActorLocation();
+    }
+    else
+    {
+        isCollided = true;
+        collisionLocation = GetActorLocation();
     }
 }
 
 void APiece::kill_Implementation(APiece* pieceToKill)
 {
-    pieceToKill->die(this);
-    isKilledAnyActorThisTurn = true;
+    if (pieceToKill)
+    {
+        pieceToKill->die(this);
+        isKilledAnyActorThisTurn = true;
+    }
 }
 
 /* piece moving*/
@@ -613,18 +656,18 @@ void APiece::setPieceColor_Implementation(FColor aColor)
 
     if (colorToMaterial.Contains(aColor))
     {
-        UMaterialInterface* SelectedMaterial = colorToMaterial[aColor];
+        selectedMaterial = colorToMaterial[aColor];
 
-        if (SelectedMaterial && pieceStaticBody)
+        if (selectedMaterial && pieceStaticBodyMesh)
         {
-            int32 MaterialCount = pieceStaticBody->GetNumMaterials(); // Get the number of materials on the mesh
+            int32 MaterialCount = pieceStaticBodyMesh->GetNumMaterials(); // Get the number of materials on the mesh
             for (int32 Index = 0; Index < MaterialCount; ++Index)
             {
-                pieceStaticBody->SetMaterial(Index, SelectedMaterial); // Set the material for each index
+                pieceStaticBodyMesh->SetMaterial(Index, selectedMaterial); // Set the material for each index
             }
         }
 
-        pieceStaticBody->SetVisibility(true); // Ensure the piece is visible after setting the materials
+        pieceStaticBodyMesh->SetVisibility(true); // Ensure the piece is visible after setting the materials
     }
 }
 
@@ -1067,4 +1110,36 @@ void APiece::beExploted_Implementation()
             }
         }
     }
+}
+
+
+/* additional decoration*/
+APiecePreviewMesh* APiece::getSpawnedPreviewMesh(FVector locationToSpawn)
+{
+    if (piecePreviewMeshClass)
+    {
+        UWorld* serverWorld = GetWorld();
+        if (serverWorld)
+        {
+            APiecePreviewMesh* previewMesh = serverWorld->SpawnActor<APiecePreviewMesh>(piecePreviewMeshClass, locationToSpawn, GetActorRotation());
+            
+            return previewMesh;
+        }
+    }
+    return nullptr;
+}
+
+APieceConfirmedMesh* APiece::getSpawnedConfirmedMesh(FVector locationToSpawn)
+{
+    if (pieceConfirmedMeshClass)
+    {
+        UWorld* serverWorld = GetWorld();
+        if (serverWorld)
+        {
+            APieceConfirmedMesh* confirmedMesh = serverWorld->SpawnActor<APieceConfirmedMesh>(pieceConfirmedMeshClass, locationToSpawn, GetActorRotation());
+
+            return confirmedMesh;
+        }
+    }
+    return nullptr;
 }
