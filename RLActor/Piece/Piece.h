@@ -48,7 +48,10 @@ public:
 	void debugFunctionSix(); // piece start moving
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
 	void debugFunctionSeven(); // piece end moving
-
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionEight();
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void debugFunctionNine(); 
 	/* RLActor functions*/
 public:
 	virtual FString GetActorName() override;
@@ -57,7 +60,7 @@ public:
 
 	virtual bool IsAbleToBeInteracted(APlayerCharacter* Sender) override;
 
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece")
+	UFUNCTION(BlueprintCallable, Category = "Piece")
 	virtual void BeInteracted(APlayerCharacter* Sender) override;
 
 	virtual void BeUnInteracted(APlayerCharacter* Sender) override;
@@ -69,14 +72,13 @@ public:
 
 	virtual UTexture2D* GetProductImage() override;
 
-protected:
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	virtual void inShopInteractedEffect(APlayerCharacter* Sender);
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Piece Movement")
 	virtual void inBenchInteractedEffect(APlayerCharacter* Sender);
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	virtual void inBenchSpecialEffect();
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Piece Movement")
 	virtual void inBoardInteractedEffect(APlayerCharacter* Sender);
 
 	/* Piece material information*/
@@ -148,6 +150,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
 	UBoxComponent* pieceCollision;
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
+	void collisionBPImplementation(); // piece set piece color
 
 	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Piece Collision")
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -218,8 +223,10 @@ public:
 	EPieceStatus getPieceStatus();
 	UFUNCTION(Server, Reliable, Category = "Piece Movement")
 	void setPieceStatus(EPieceStatus newStatus);
-
 	UFUNCTION(Server, Reliable, Category = "Piece Movement")
+	void setPieceStatusInBoard();
+
+	UFUNCTION(NetMulticast, Reliable, Category = "Piece Movement")
 	void setPieceColor(FColor aColor);
 	
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
@@ -235,6 +242,9 @@ public:
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	void bePlaced(AEnvSquare* squareDestination);
+
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Piece Movement")
+	void setLocationMulti(FVector aLocation);
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
 	virtual void bePlacedInShopEffect(AEnvSquare* squareDestination);

@@ -120,8 +120,15 @@ bool APiece::IsAbleToBeInteracted(APlayerCharacter* Sender)
 	
 }
 
-void APiece::BeInteracted_Implementation(APlayerCharacter* Sender)
+/*
+no sure about this implementation, because it is done by: setrver->server->client
+
+another approach: player character detect the status of piece,
+                  directly call shop/bench/board interaction
+*/
+void APiece::BeInteracted(APlayerCharacter* Sender)
 {
+    debugFunctionEight();
     switch (pieceStatus)
     {
         case EPieceStatus::EInShop:
@@ -144,6 +151,7 @@ void APiece::BeInteracted_Implementation(APlayerCharacter* Sender)
     }
 }
 
+// if the rest interaction is client, maybe delagate this logic into a server func
 void APiece::inShopInteractedEffect_Implementation(APlayerCharacter* Sender)
 {
     if (UWorld* World = GetWorld())
@@ -155,11 +163,6 @@ void APiece::inShopInteractedEffect_Implementation(APlayerCharacter* Sender)
 
             if (gameShop)
             {
-                /*
-                TScriptInterface<IRLProduct> pieceAsProduct;
-                pieceAsProduct.SetObject(this);
-                pieceAsProduct.SetInterface(Cast<IRLProduct>(this));*/
-
                 gameShop->sellProduct(Sender, this);
 
                 setPieceStatus(EPieceStatus::EInBench);
@@ -179,6 +182,7 @@ void APiece::inBenchInteractedEffect_Implementation(APlayerCharacter* Sender)
 
             if (gameBoard)
             {
+                debugFunctionNine();
                 gameBoard->setSpecificColor(pieceColor);
             }
 
@@ -539,6 +543,7 @@ void APiece::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Ot
                 {
                     APiece* collidedPiece = Cast<APiece>(OtherActor);
                     collidedWithOtherPiece(collidedPiece);
+                    collisionBPImplementation();
                 }
             }
             else if (OtherActor->IsA(APlayerCharacter::StaticClass()))
@@ -594,6 +599,10 @@ EPieceStatus APiece::getPieceStatus()
 void APiece::setPieceStatus_Implementation(EPieceStatus newStatus)
 {
     pieceStatus = newStatus;
+}
+void APiece::setPieceStatusInBoard_Implementation()
+{
+    pieceStatus = EPieceStatus::EInBoard;
 }
 
 void APiece::setPieceColor_Implementation(FColor aColor)
@@ -666,19 +675,25 @@ void APiece::bePlaced_Implementation(AEnvSquare* squareDestination)
         bePlacedInBoardEffect(squareDestination);
     }
 
-    AEnvBoard* gameBoard = nullptr;
     if (UWorld* World = GetWorld())
     {
         ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
         if (GameState)
         {
-            gameBoard = GameState->getGameBoard();
+            AEnvBoard* gameBoard = GameState->getGameBoard();
+        
+
+            if (gameBoard)
+            {
+                gameBoard->resetBoard();
+            }
         }
     }
-    if (gameBoard)
-    {
-        gameBoard->resetBoard();
-    }
+}
+
+void APiece::setLocationMulti_Implementation(FVector aLocation)
+{
+    SetActorLocation(aLocation);
 }
 
 void APiece::bePlacedInShopEffect_Implementation(AEnvSquare* squareDestination)
@@ -696,7 +711,7 @@ void APiece::bePlacedInShopEffect_Implementation(AEnvSquare* squareDestination)
     initializeDirection(curSquare); // initialize the direction
 
     curSquare->beOccupied(this);
-    SetActorLocation(curSquare->getPlacementLocation());
+    setLocationMulti(curSquare->getPlacementLocation());
 }
 
 void APiece::bePlacedInBenchEffect_Implementation(AEnvSquare* squareDestination)
@@ -717,7 +732,7 @@ void APiece::bePlacedInBenchEffect_Implementation(AEnvSquare* squareDestination)
         // teleport to squareLocation
         curSquare = squareDestination;
         curSquare->beOccupied(this);
-        SetActorLocation(curSquare->getPlacementLocation());
+        setLocationMulti(curSquare->getPlacementLocation());
     }
 }
 
@@ -732,7 +747,7 @@ void APiece::swapLocation_Implementation(AEnvSquare* squareDestination)
             {
                 curSquare->occupiedPieceLeaved();
             } // avoid collision
-            SetActorLocation(curSquare->getPlacementLocation() - FVector(0.0f, 0.0f, -1000.0f));
+            setLocationMulti(curSquare->getPlacementLocation() - FVector(0.0f, 0.0f, -1000.0f));
         
             // let the piece occupy this position
             pieceToSwap->bePlaced(curSquare);
@@ -740,7 +755,7 @@ void APiece::swapLocation_Implementation(AEnvSquare* squareDestination)
             // teleport to squareLocation
             curSquare = squareDestination;
             curSquare->beOccupied(this);
-            SetActorLocation(curSquare->getPlacementLocation());
+            setLocationMulti(curSquare->getPlacementLocation());
         }
     }
 }
@@ -843,7 +858,7 @@ EPieceDirection APiece::calculateMovingDirection(AEnvSquare* squareDestination)
 void APiece::endMoving_Implementation()
 {
     debugFunctionSeven();
-    SetActorLocation(endLocation);
+    setLocationMulti(endLocation);
     isMoving = false;
 
     curSquare = targetSquare;
@@ -925,7 +940,7 @@ void APiece::handleGroundMovementProgress_Implementation(float value)
 {
     // Linearly interpolate position based on the timeline's progress			
     FVector newLocation = FMath::Lerp(startLocation, endLocation, value);
-    SetActorLocation(newLocation);
+    setLocationMulti(newLocation);
 }
 
 void APiece::initiateParabolicJump_Implementation(AEnvSquare* SquareDestination)
@@ -949,7 +964,7 @@ void APiece::handleParabolicJumpProgress_Implementation(float value)
     FVector NewLocation = FMath::Lerp(startLocation, endLocation, value);
     float Parabola = -4 * jumpApexHeight * value * (value - 1);  // Parabolic formula			
     NewLocation.Z += Parabola;
-    SetActorLocation(NewLocation);
+    setLocationMulti(NewLocation);
 }
 
 void APiece::initiateKnightJump_Implementation(AEnvSquare* SquareDestination)
@@ -976,7 +991,7 @@ void APiece::handleKnightJumpProgress_Implementation(float value)
     // Add the original starting Z position to the vertical movement
     FVector FinalPosition = HorizontalMovement + FVector(0, 0, startLocation.Z + VerticalMovement);
 
-    SetActorLocation(FinalPosition);
+    setLocationMulti(FinalPosition);
 }
 
 void APiece::initializeTeleportation_Implementation(AEnvSquare* SquareDestination)

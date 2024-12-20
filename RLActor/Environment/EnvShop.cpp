@@ -16,6 +16,8 @@
 
 AEnvShop::AEnvShop()
 {
+	bReplicates = true;
+
 	// Create and set up the static mesh components
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 }
@@ -31,9 +33,6 @@ void AEnvShop::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 void AEnvShop::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// Shop pieces
-	createRandomShop();
 }
 
 FString AEnvShop::GetActorName()
@@ -78,25 +77,25 @@ void AEnvShop::createRandomShop_Implementation()
 		if (GameState)
 		{
 			gameBoard = GameState->getGameBoard();
-		}
-	}
 
-	if (gameBoard)
-	{
-		int shopRowSize = gameBoard->getRowSize();
-		int shopColumnSize = gameBoard->getColumnSize();
-
-		for (int i = 2; i < shopRowSize - 2; i++)
-		{
-			for (int j = 2; j < shopColumnSize - 2; j++)
+			if (gameBoard)
 			{
-				if (i % 3 != 0 && j % 3 != 0)
-				{
-					AEnvSquare* curSquare = gameBoard->getSquareAtLocation(FVector2D(i, j));
+				int shopRowSize = gameBoard->getRowSize();
+				int shopColumnSize = gameBoard->getColumnSize();
 
-					if (curSquare->getSquareColorField() == FColor::White)
+				for (int i = 2; i < shopRowSize - 2; i++)
+				{
+					for (int j = 2; j < shopColumnSize - 2; j++)
 					{
-						allShopSquares.Add(curSquare);
+						if (i % 3 != 0 && j % 3 != 0)
+						{
+							AEnvSquare* curSquare = gameBoard->getSquareAtLocation(FVector2D(i, j));
+
+							if (curSquare->getSquareColorField() == FColor::White)
+							{
+								allShopSquares.Add(curSquare);
+							}
+						}
 					}
 				}
 			}

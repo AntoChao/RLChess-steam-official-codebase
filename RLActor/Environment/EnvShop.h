@@ -43,17 +43,17 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
 	void debugFunction();
 
-protected:
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Square Stats")
 	void createRandomShop();
-	
+
+protected:	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop Stats")
 	int piecesProductTotalNum = 25;
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Shop Stats")
 	TArray<TScriptInterface<IRLProduct>> productsInShop;
 
 public:
-	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Shop Stats")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Shop Stats")
 	void sellProduct(APlayerCharacter* player, APiece* specificProduct);
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Shop Stats")
@@ -63,7 +63,7 @@ public:
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Shop Stats")
 	void refreshShop(APlayerCharacter* player);
 
-	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Shop Stats")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Shop Stats")
 	void closeShop();
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Shop Stats")

@@ -3,12 +3,24 @@
 #include "EnvBoard.h"
 #include "../Factory/FactoryEnvironment.h"
 #include "../../RLHighLevel/GameplayGameMode.h"
+#include "../../RLHighLevel/RLGameState.h"
+
 #include "EnvSquare.h"
 #include "Kismet/GameplayStatics.h"
 #include "../Player/PlayerCharacter.h"
 
-AEnvBoard::AEnvBoard() {
-    
+#include "Net/UnrealNetwork.h"
+
+AEnvBoard::AEnvBoard() 
+{
+    bReplicates = true;
+}
+
+void AEnvBoard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(AEnvBoard, allSquares);
 }
 
 void AEnvBoard::initialized_Implementation()
@@ -72,40 +84,50 @@ void AEnvBoard::initialized_Implementation()
     }
 }
 
-void AEnvBoard::initializeBoardColor_Implementation(const TArray<APlayerCharacter*>& allPlayers)
+void AEnvBoard::initializeBoardColor_Implementation()
 {
-    debugFunctionTwo();
-
-    // Iterate over the board and assign colorField based on player sections
-    for (int Y = 0; Y < columnSize; ++Y)
+    UWorld* serverWorld = GetWorld();
+    if (serverWorld)
     {
-        for (int X = 0; X < rowSize; ++X)
+        ARLGameState* serverGameState = Cast<ARLGameState>(serverWorld->GetGameState());
+        if (serverGameState)
         {
-            int Index = getIndexFromLocation(FVector2D(Y, X));
-            if (!allSquares.IsValidIndex(Index)) continue;  // Safety check
+            TArray<APlayerCharacter*> allPlayers = serverGameState->getAllPlayers();
 
-            AEnvSquare* curSquare = allSquares[Index];
-            if (!curSquare) continue;  // Check for null pointers
+            debugFunctionTwo();
 
-            // Player 0: top centre rows
-            if (Y < 2 && X > 2 && X < rowSize - 3 && allPlayers.IsValidIndex(0))
+            // Iterate over the board and assign colorField based on player sections
+            for (int Y = 0; Y < columnSize; ++Y)
             {
-                curSquare->setSquareColorField(allPlayers[0]->getPlayerColor());
-            }
-            // Player 1: bottom centre rows
-            else if (Y >= columnSize - 2 && X > 2 && X < rowSize - 3 && allPlayers.IsValidIndex(1))
-            {
-                curSquare->setSquareColorField(allPlayers[1]->getPlayerColor());
-            }
-            // Player 2: left centre columns
-            else if (X < 2 && Y > 2 && Y < columnSize - 3 && allPlayers.IsValidIndex(2))
-            {
-                curSquare->setSquareColorField(allPlayers[2]->getPlayerColor());
-            }
-            // Player 3: right centre columns
-            else if (X >= rowSize - 2 && Y > 2 && Y < columnSize - 3 && allPlayers.IsValidIndex(3))
-            {
-                curSquare->setSquareColorField(allPlayers[3]->getPlayerColor());
+                for (int X = 0; X < rowSize; ++X)
+                {
+                    int Index = getIndexFromLocation(FVector2D(Y, X));
+                    if (!allSquares.IsValidIndex(Index)) continue;  // Safety check
+
+                    AEnvSquare* curSquare = allSquares[Index];
+                    if (!curSquare) continue;  // Check for null pointers
+
+                    // Player 0: top centre rows
+                    if (Y < 2 && X > 2 && X < rowSize - 3 && allPlayers.IsValidIndex(0))
+                    {
+                        allSquares[Index]->setSquareColorField(allPlayers[0]->getPlayerColor());
+                    }
+                    // Player 1: bottom centre rows
+                    else if (Y >= columnSize - 2 && X > 2 && X < rowSize - 3 && allPlayers.IsValidIndex(1))
+                    {
+                        allSquares[Index]->setSquareColorField(allPlayers[1]->getPlayerColor());
+                    }
+                    // Player 2: left centre columns
+                    else if (X < 2 && Y > 2 && Y < columnSize - 3 && allPlayers.IsValidIndex(2))
+                    {
+                        allSquares[Index]->setSquareColorField(allPlayers[2]->getPlayerColor());
+                    }
+                    // Player 3: right centre columns
+                    else if (X >= rowSize - 2 && Y > 2 && Y < columnSize - 3 && allPlayers.IsValidIndex(3))
+                    {
+                        allSquares[Index]->setSquareColorField(allPlayers[3]->getPlayerColor());
+                    }
+                }
             }
         }
     }
@@ -263,12 +285,13 @@ int AEnvBoard::getSquareLength()
     return squareLength;
 }
 
-void AEnvBoard::setSpecificColor(FColor aColor)
+void AEnvBoard::setSpecificColor_Implementation(FColor aColor)
 {
     for (AEnvSquare* aSquare : allSquares)
     {
         if (aSquare->getSquareColorField() == aColor)
         {
+            debugFunctionFour();
             aSquare->setIsPossibleMove(true, aColor);
         }
     }
@@ -291,13 +314,14 @@ void AEnvBoard::setPossibleMoves(TArray<FVector2D> allPossibles, FColor pieceCol
     {
         if (isValidLocation(eachLocation))
         {
+            debugFunctionFive();
             int index = getIndexFromLocation(eachLocation);
             allSquares[index]->setIsPossibleMove(true, pieceColor);
         }
     }
 }
 
-void AEnvBoard::resetBoard()
+void AEnvBoard::resetBoard_Implementation()
 {
     debugFunctionThree();
     for (AEnvSquare* aSquare : allSquares)

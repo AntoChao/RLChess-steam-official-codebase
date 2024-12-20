@@ -23,9 +23,11 @@ public:
 	class APlayerRLState* rlPlayerState;
 
 	// debug value
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Components")
 	int playerIndex = 0;
-	
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
+	void setPlayerIndex(int curPlayerIndex);
+
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
 	void debugFunction();
 

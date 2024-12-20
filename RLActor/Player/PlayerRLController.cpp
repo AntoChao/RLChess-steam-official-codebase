@@ -20,10 +20,14 @@ APlayerRLController::APlayerRLController()
 void APlayerRLController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APlayerRLController, playerIndex);
 }
 
 void APlayerRLController::BeginPlay() {
 	Super::BeginPlay();
+
+	// setupControllerBody();
 }
 
 void APlayerRLController::Tick(float DeltaTime)
@@ -32,20 +36,22 @@ void APlayerRLController::Tick(float DeltaTime)
 	isLocalPlayerValid = GetLocalPlayer() != nullptr;
 }
 
+void APlayerRLController::setPlayerIndex_Implementation(int curPlayerIndex)
+{
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		playerIndex = curPlayerIndex;
+	}
+}
 
 FString APlayerRLController::getPlayerName()
 {
 	if (rlPlayerState)
 	{
-		UE_LOG(LogTemp, Error, TEXT("RLCONTROLLER %s, getPlayerName, PlayerRLState EXIST!"), *this->GetName());
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("RLCONTROLLER, getPlayerName, PlayerRLState EXIST!"));
-
 		return rlPlayerState->playerName;
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("RLCONTROLLER %s, getPlayerName, PlayerRLState NOT EXIST"), *this->GetName());
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("RLCONTROLLER, getPlayerName, PlayerRLState NOT EXIST"));
 		return TEXT("no rl state");
 	}
 }
@@ -74,24 +80,7 @@ void APlayerRLController::setupControllerBody_Implementation()
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		if (GetLocalRole() == ROLE_Authority)
-		{
-			UE_LOG(LogTemp, Error, TEXT("MIAUMIAUMIAUMIAU"));
-		}
-		else if (GetLocalRole() == ROLE_AutonomousProxy)
-		{
-			UE_LOG(LogTemp, Error, TEXT("MIAUMIAUMIAUMIAU"));
-		}
-		else if (GetLocalRole() == ROLE_SimulatedProxy)
-		{
-			UE_LOG(LogTemp, Error, TEXT("MIAUMIAUMIAUMIAU"));
-		}
-
 		gameStateCreateBody();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("MIAUMIAUMIAU"));
 	}
 }
 
@@ -106,6 +95,7 @@ void APlayerRLController::gameStateCreateBody_Implementation()
 			GameState->createPlayerBody();
 
 			serverPossesses(this);
+			
 		}
 	}
 }
@@ -131,14 +121,15 @@ void APlayerRLController::serverPossesses_Implementation(APlayerRLController* cu
 
 			setupMappingContextBasedOnGameModeMulticast();
 
+			debugFunction(); // possess finished
+			GameState->playersReady();
 		}
 	}
 	
 }
 
 void APlayerRLController::OnPossess(APawn* InPawn) {
-	Super::OnPossess(InPawn);
-	UE_LOG(LogTemp, Error, TEXT("MIAUMIAUMIAUMIAU"));
+	Super::OnPossess(InPawn);;
 }
 
 void APlayerRLController::UnPossessEffect() {
@@ -152,10 +143,6 @@ void APlayerRLController::setupMappingContextBasedOnGameModeMulticast_Implementa
 		if (GetLocalPlayer() != nullptr)
 		{
 			UEnhancedInputLocalPlayerSubsystem* subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
-
-			UE_LOG(LogTemp, Warning, TEXT("SET UP MAPPING CONTEXT BASE ON GAMEMODE"));
-			FString Message = FString::Printf(TEXT("SET UP MAPPING CONTEXT BASE ON GAMEMODE"));
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
 
 			if (subsystem)
 			{
@@ -182,17 +169,6 @@ void APlayerRLController::setupMappingContextBasedOnGameModeMulticast_Implementa
 				SetupInputComponent();
 			}
 		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("SET UP MAPPING CONTEXT BASE ON GAMEMODE FAIL "));
-			FString Message = FString::Printf(TEXT("SET UP MAPPING CONTEXT BASE ON GAMEMODE FAIL"));
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, Message);
-
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("MIAUMIAUMIAU"));
 	}
 }
 

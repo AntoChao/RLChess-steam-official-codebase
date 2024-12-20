@@ -72,17 +72,29 @@ protected:
     UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Shop")
     AEnvShop* shop = nullptr;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board Stats")
+    FVector boardLocation = FVector::ZeroVector;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board Stats")
+    FRotator boardRotation = FRotator::ZeroRotator;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop Stats")
+    FVector shopLocation = FVector::ZeroVector;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop Stats")
+    FRotator shopRotation = FRotator::ZeroRotator;
+
 public:
+    // netmulticast works, but it arise the error where client board can not access gamemode server
     UFUNCTION(Server, Reliable, BlueprintCallable, Category = "MapManager")
-    void setBoard();
+    void createBoard();
 
-    UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "MapManager")
-    void setShop();
-    UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "MapManager")
-    void closeShop(); //server not working
+    UFUNCTION(Server, Reliable, BlueprintCallable, Category = "MapManager")
+    void createShop();
 
-    UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "MapManager")
-    void createBench();
+    UFUNCTION(Server, Reliable, BlueprintCallable, Category = "MapManager")
+    void closeShop();
+
+    UFUNCTION()
+    TArray<APlayerCharacter*> getAllPlayers() const;
 
     AEnvBoard* getGameBoard() const { return board; }
 

@@ -104,12 +104,12 @@ protected:
 
     UFUNCTION(BlueprintCallable, Category = "GameMode")
     void setBoard();
+    UFUNCTION(Category = "GameMode")
+    void spawnShop();
     UFUNCTION(BlueprintCallable, Category = "GameMode")
     void setPlayerBench();
     UFUNCTION(Category = "GameMode")
     void setPlayerInitLocation();
-    UFUNCTION(Category = "GameMode")
-    void spawnShop();
 
     UFUNCTION(Category = "GameMode")
     void startPlayerSetUpTime();
