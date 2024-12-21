@@ -20,6 +20,8 @@
 #include "../RLActor.h"
 #include "../Item/Item.h"
 #include "../Piece/Piece.h"
+#include "../Piece/PiecePreviewMesh.h"
+
 #include "../Environment/EnvBoard.h"
 #include "../Environment/EnvSquare.h"
 #include "../Environment/EnvShop.h"
@@ -258,40 +260,7 @@ void APlayerCharacter::detectReaction()
 				// Update inspected actor
 				detectedActor = scriptInterface;
 
-				if (DetectedInterface->IsAbleToBeInteracted(this))
-				{
-					// Interaction logic
-					if (IsValid(inventory[selectedItemIndex]) &&
-						inventory[selectedItemIndex]->isAbleToBeUsed(this, scriptInterface))
-					{
-						// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("DETECTION: USE ITEM"));
-						curInteractionMode = EInteraction::EUseItem;
-					}
-					else if (hitActor->IsA(AItem::StaticClass()) && isAbleToPickUpItem())
-					{
-						// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("DETECTION: PICK UP ITEM"));
-						curInteractionMode = EInteraction::EPickUpItem;
-					}
-					else if ((setUpTime || isPlayerTurn) && hitActor->IsA(APiece::StaticClass()))
-					{
-						// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("DETECTION: SELECT PIECE"));
-						curInteractionMode = EInteraction::ESelectPiece;
-					}
-					else if ((setUpTime || isPlayerTurn) && IsValid(selectedPiece) && hitActor->IsA(AEnvSquare::StaticClass()))
-					{
-						// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("DETECTION: PLACE PIECE"));
-						curInteractionMode = EInteraction::EPlacePiece;
-					}
-					else
-					{
-						// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("DETECTION: PLACE PIECE"));
-						curInteractionMode = EInteraction::ENone;
-					}
-				}
-				else
-				{	
-					curInteractionMode = EInteraction::ENone;
-				}
+				// should only show the information
             }
 		}
 	}
@@ -307,16 +276,21 @@ void APlayerCharacter::startTurn()
 	selectedSquare = nullptr;
 	unselectPiece();
 
-	for (APiece* eachPiece : army)
+	for (int i = 0; i < army.Num(); i++)
 	{
-		if (eachPiece)
+		if (army[i])
 		{
-			eachPiece->updateStatusByTurn();
-		}
-		else
-		{
-			// got eliminated
-			army.Remove(eachPiece);
+			APiece* eachPiece = army[i];
+
+			if (eachPiece)
+			{
+				eachPiece->updateStatusByTurn();
+			}
+			else
+			{
+				// got eliminated
+				army.Remove(eachPiece);
+			}
 		}
 	}
 }
@@ -443,37 +417,80 @@ void APlayerCharacter::selectItem_Implementation(int itemIndex)
 
 void APlayerCharacter::interact()
 {
-	if (isAbleToInteract)
+	if (detectHit.bBlockingHit)
 	{
-		switch (curInteractionMode)
+		AActor* hitActor = detectHit.GetActor();
+		UClass* detectedActorClass = hitActor->GetClass(); // Fixed `Actor` to `rlActor`
+
+		if (hitActor && detectedActorClass->ImplementsInterface(URLActor::StaticClass()))
 		{
-		case EInteraction::EUseItem:
-		{
-			useItem();
-			break;
-		}
-		case EInteraction::EPickUpItem:
-		{
-			pickUpItem();
-			break;
-		}
-		case EInteraction::ESelectPiece:
-		{
-			selectPiece();
-			break;
-		}
-		case EInteraction::EPlacePiece:
-		{
-			selectPlacePieceLocation();
-			break;
-		}
-		case EInteraction::ENone:
-		{
-			unselectPiece();
-			break;
-		}
-		default:
-			break;
+			IRLActor* DetectedInterface = Cast<IRLActor>(hitActor);
+			if (DetectedInterface)
+			{
+				TScriptInterface<IRLActor> scriptInterface;
+				scriptInterface.SetObject(hitActor); // Set the UObject part
+				scriptInterface.SetInterface(DetectedInterface); // Set the interface pointer
+
+				detectedActor = scriptInterface;
+
+				if (DetectedInterface->IsAbleToBeInteracted(this))
+				{
+					// Interaction logic
+					if (IsValid(inventory[selectedItemIndex]) &&
+						inventory[selectedItemIndex]->isAbleToBeUsed(this, scriptInterface))
+					{
+						useItem();
+					}
+					else if (hitActor->IsA(AItem::StaticClass()) && isAbleToPickUpItem())
+					{
+						pickUpItem();
+					}
+					else if ((setUpTime || isPlayerTurn) && hitActor->IsA(APiece::StaticClass()))
+					{
+						APiece* detectedPiece = Cast<APiece>(hitActor);
+						if (detectedPiece->getPieceStatus() == EPieceStatus::EInShop || detectedPiece->getPieceColor() == getPlayerColor())
+						{
+							selectPiece(detectedPiece);
+						}
+						else
+						{
+							if (IsValid(selectedPiece))
+							{
+								attackPiece(detectedPiece);
+							}
+							else
+							{
+								unselectPiece();
+							}
+						}
+					}
+					else if ((setUpTime || isPlayerTurn) && IsValid(selectedPiece))
+					{
+						if (hitActor->IsA(AEnvSquare::StaticClass()))
+						{
+							AEnvSquare* squareToPlace = Cast<AEnvSquare>(hitActor);
+							selectPlacePieceLocationBySquare(squareToPlace);
+						}
+						else if (hitActor->IsA(APiecePreviewMesh::StaticClass()))
+						{
+							APiecePreviewMesh* previewMeshDetected = Cast<APiecePreviewMesh>(hitActor);
+							selectPlacePieceLocationByPreviewMesh(previewMeshDetected);
+						}
+						else
+						{
+							unselectPiece();
+						}
+					}
+					else
+					{
+						unselectPiece();
+					}
+				}
+				else
+				{
+					unselectPiece();
+				}
+			}
 		}
 	}
 }
@@ -506,10 +523,10 @@ void APlayerCharacter::pickUpItem_Implementation()
 another way to do it is use netmulticast and each piece check if the owner is the caller
 if yes, then do x in client.
 */
-void APlayerCharacter::selectPiece()
+void APlayerCharacter::selectPiece(APiece* detectedPiece)
 {
 	unselectPiece();
-	if (APiece* detectedPiece = Cast<APiece>(detectedActor.GetObject()))
+	if (detectedPiece)
 	{
 		// detectedPiece->BeInteracted(this);
 		setSelectedPiece(detectedPiece);
@@ -544,9 +561,24 @@ void APlayerCharacter::serverSelectInShopPiece_Implementation()
 		selectedPiece->inShopInteractedEffect(this);
 	}
 }
-void APlayerCharacter::selectPlacePieceLocation()
+
+void APlayerCharacter::attackPiece(APiece* pieceToAttack)
 {
-	if (AEnvSquare* detectedSquare = Cast<AEnvSquare>(detectedActor.GetObject()))
+	if (pieceToAttack)
+	{
+		setSelectedSquare(pieceToAttack->getOccupiedSquare());
+		if (setUpTime)
+		{
+			debugFunctionOne();
+			moveSelectedPiece();
+		}
+		serverResetBoard();
+	}
+}
+
+void APlayerCharacter::selectPlacePieceLocationBySquare(AEnvSquare* detectedSquare)
+{
+	if (detectedSquare)
 	{
 		setSelectedSquare(detectedSquare);
 		if (setUpTime)
@@ -554,8 +586,21 @@ void APlayerCharacter::selectPlacePieceLocation()
 			debugFunctionOne();
 			moveSelectedPiece();
 		}
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Selecting place piece location"));
-	
+		serverResetBoard();
+	}
+}
+
+void APlayerCharacter::selectPlacePieceLocationByPreviewMesh(APiecePreviewMesh* detectedMesh)
+{
+	if (detectedMesh)
+	{
+		AEnvSquare* detectedSquare = detectedMesh->getPreviewSquare();
+		setSelectedSquare(detectedSquare);
+		if (setUpTime)
+		{
+			debugFunctionOne();
+			moveSelectedPiece();
+		}
 		serverResetBoard();
 	}
 }
@@ -612,10 +657,23 @@ void APlayerCharacter::setSelectedPiece_Implementation(APiece* aPiece)
 void APlayerCharacter::setSelectedSquare_Implementation(AEnvSquare* aSquare)
 {
 	debugFunctionThree();
-	if (aSquare && selectedPiece)
+	// resetting previous selected square
+	if (selectedSquare)
 	{
-		selectedSquare = aSquare;
-		aSquare->setConfirmedMesh(selectedPiece);
+		selectedSquare->setConfirmedMesh(nullptr);
+	}
+
+	if (setUpTime || isPlayerTurn)
+	{
+		if (aSquare && selectedPiece)
+		{
+			selectedSquare = aSquare;
+			
+			if (isPlayerTurn)
+			{
+				aSquare->setConfirmedMesh(selectedPiece);
+			}
+		}
 	}
 }
 

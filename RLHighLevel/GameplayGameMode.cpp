@@ -251,29 +251,36 @@ void AGameplayGameMode::startPlayerPreparePhase()
 
 void AGameplayGameMode::startPieceMovingPhase()
 {
-    if (UWorld* World = GetWorld())
-    {
-        ARLGameState* serverGameState = Cast<ARLGameState>(World->GetGameState());
-        if (serverGameState)
-        {
-            serverGameState->closeShop();
-
-            AEnvBoard* serberBoard = serverGameState->getGameBoard();
-            if (serberBoard)
-            {
-                serberBoard->resetConfirmedMeshBoard();
-            }
-        }
-    }
-
-    // let all player move their pieces
+    // unable player selecting piece
     for (APlayerCharacter* eachPlayer : allPlayers)
     {
         if (eachPlayer)
         {
             eachPlayer->endTurn();
-            eachPlayer->moveSelectedPiece();
+        }
+    }
 
+    // reset all visuals
+    if (UWorld* World = GetWorld())
+    {
+        ARLGameState* serverGameState = Cast<ARLGameState>(World->GetGameState());
+        if (serverGameState)
+        {
+            AEnvBoard* serberBoard = serverGameState->getGameBoard();
+            if (serberBoard)
+            {
+                serberBoard->resetConfirmedMeshBoard();
+                serberBoard->resetBoard();
+            }
+        }
+    }
+
+    // piece moving
+    for (APlayerCharacter* eachPlayer : allPlayers)
+    {
+        if (eachPlayer)
+        {
+            eachPlayer->moveSelectedPiece();
         }
     }
 

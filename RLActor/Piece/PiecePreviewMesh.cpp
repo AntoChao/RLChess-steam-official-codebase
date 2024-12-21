@@ -18,3 +18,37 @@ APiecePreviewMesh::APiecePreviewMesh()
     previewStaticBody->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     previewStaticBody->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 }
+
+FString APiecePreviewMesh::GetActorName()
+{
+    return previewPieceName;
+}
+
+FString APiecePreviewMesh::GetDescription()
+{
+    return previewPieceDescription;
+}
+
+bool APiecePreviewMesh::IsAbleToBeInteracted(APlayerCharacter* Sender)
+{
+    return true;
+}
+
+void APiecePreviewMesh::BeInteracted(APlayerCharacter* Sender)
+{
+    return;
+}
+void APiecePreviewMesh::BeUnInteracted(APlayerCharacter* Sender)
+{
+    return;
+}
+
+void APiecePreviewMesh::setPreviewSquare(AEnvSquare* theSquare)
+{
+    previewSquare = theSquare;
+}
+
+AEnvSquare* APiecePreviewMesh::getPreviewSquare()
+{
+    return previewSquare;
+}

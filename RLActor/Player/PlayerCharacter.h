@@ -25,6 +25,7 @@ class AAIRLController;
 class APiece;
 class AItem;
 class AEnvShop;
+class APiecePreviewMesh;
 
 /* Debug Tool
 GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Control stop use weapon secondary"));
@@ -259,13 +260,18 @@ public:
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void pickUpItem();
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
-	void selectPiece();
+	void selectPiece(APiece* detectedPiece);
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void serverSelectInShopPiece();
 
+	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	void attackPiece(APiece* pieceToAttack);
 
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
-	void selectPlacePieceLocation();
+	void selectPlacePieceLocationBySquare(AEnvSquare* detectedSquare);
+	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	void selectPlacePieceLocationByPreviewMesh(APiecePreviewMesh* detectedMesh);
+
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void moveSelectedPiece();
 

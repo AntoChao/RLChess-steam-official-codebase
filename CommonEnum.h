@@ -15,10 +15,11 @@ enum class EGameMode: uint8 {
 
 UENUM(BlueprintType, Blueprintable)
 enum class EInteraction : uint8 {
-	EUseItem,
-	EPickUpItem,
-	ESelectPiece,
-	EPlacePiece,
+	EUseItem, // use item
+	EPickUpItem, // pick item
+	ESelectPiece, // detect own piece
+	EAttackPiece, // detect non own piece
+	EPlacePiece, // detect possible square or preview piece
 	ENone
 };
 

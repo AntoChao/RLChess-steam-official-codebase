@@ -121,7 +121,14 @@ bool APiece::IsAbleToBeInteracted(APlayerCharacter* Sender)
     }
     else
     {
-        return Sender->getPlayerColor() == pieceColor && !isMoving && !isResting;
+        if (Sender->getPlayerColor() == pieceColor)
+        {
+            return !isMoving && !isResting;
+        }
+        else
+        {
+            return !isMoving;
+        }
     }
 	
 }
@@ -525,7 +532,7 @@ void APiece::dieEffect_Implementation(APiece* killer)
     Destroy();
 }
 
-void APiece::spawnFractureMesh(FVector aDirection)
+void APiece::spawnFractureMesh_Implementation(FVector aDirection)
 {
     if (pieceFractureMeshClass)
     {
@@ -540,6 +547,11 @@ void APiece::spawnFractureMesh(FVector aDirection)
             }
         }
     }
+}
+
+AEnvSquare* APiece::getOccupiedSquare()
+{
+    return curSquare;
 }
 
 int APiece::getPiecePriority()
