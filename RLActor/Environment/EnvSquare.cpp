@@ -166,6 +166,10 @@ void AEnvSquare::setPreviewMesh_Implementation(APiece* onePiece)
 		if (!isOccupied)
 		{
 			occupiedPreviewMesh = onePiece->getSpawnedPreviewMesh(getPlacementLocation());
+			if (occupiedPreviewMesh)
+			{
+				occupiedPreviewMesh->setPreviewSquare(this);
+			}
 		}
 	}
 	else

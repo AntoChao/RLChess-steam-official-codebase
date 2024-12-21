@@ -1,5 +1,6 @@
 #include "PieceFractureMesh.h"
 
+#include "Net/UnrealNetwork.h"
 
 APieceFractureMesh::APieceFractureMesh()
 {
@@ -18,7 +19,15 @@ APieceFractureMesh::APieceFractureMesh()
     SetLifeSpan(lifeSpanSegs);
 }
 
-void APieceFractureMesh::setMaterial(UMaterialInterface* selectedMaterial)
+void APieceFractureMesh::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    //Replicate current health.
+    DOREPLIFETIME(APieceFractureMesh, pieceFractureBodyMesh);
+}
+
+void APieceFractureMesh::setMaterial_Implementation(UMaterialInterface* selectedMaterial)
 {
     if (selectedMaterial && pieceFractureBodyMesh)
     {
@@ -32,7 +41,7 @@ void APieceFractureMesh::setMaterial(UMaterialInterface* selectedMaterial)
     pieceFractureBodyMesh->SetVisibility(true);
 }
 
-void APieceFractureMesh::applyForce(const FVector& Force)
+void APieceFractureMesh::applyForce_Implementation(const FVector& Force)
 {
     if (pieceFractureBodyMesh)
     {

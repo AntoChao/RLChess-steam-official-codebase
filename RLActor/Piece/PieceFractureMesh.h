@@ -13,17 +13,20 @@ class APieceFractureMesh : public AActor
 public:
     APieceFractureMesh();
 
+    void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Piece Fracture")
+    UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Piece Fracture")
     UGeometryCollectionComponent* pieceFractureBodyMesh;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Fracture")
     int lifeSpanSegs = 10;
+
 public:
     // Function to apply force to the geometry collection
-    UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Piece Fracture")
+    UFUNCTION(Server, Reliable, BlueprintCallable, BlueprintCallable, Category = "Piece Fracture")
     void setMaterial(UMaterialInterface* selectedMaterial);
 
-    UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Piece Fracture")
+    UFUNCTION(Server, Reliable, BlueprintCallable, BlueprintCallable, Category = "Piece Fracture")
     void applyForce(const FVector& Force);
 };

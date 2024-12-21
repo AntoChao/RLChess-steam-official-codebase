@@ -166,7 +166,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
 	TSubclassOf<APieceFractureMesh> pieceFractureMeshClass;
 
-	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "debugFunction")
+	UFUNCTION(Client, Reliable, BlueprintCallable, BlueprintCallable, Category = "debugFunction")
 	void spawnFractureMesh(FVector aDirection); // piece set piece color
 
 	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Piece Collision")
@@ -199,6 +199,9 @@ protected:
 		float collideImpulseStrength = 1000.0f; // Adjust this value based on desired effect
 
 public:
+	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	AEnvSquare* getOccupiedSquare();
+
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	int getPiecePriority();
 
