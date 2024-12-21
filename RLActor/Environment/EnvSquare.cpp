@@ -83,7 +83,7 @@ void AEnvSquare::initializeMaterials()
 	colorToMaterial.Add(FColor::Transparent, transparentMaterial);
 }
 
-void AEnvSquare::setColor_Implementation(const FColor& newColor)
+void AEnvSquare::setColor(const FColor& newColor)
 {
 	if (colorToMaterial.Contains(newColor))
 	{
@@ -115,9 +115,10 @@ void AEnvSquare::BeInteracted_Implementation(APlayerCharacter* Sender)
 	{
 		debugFunctionOne();
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PLACING PLAYER SELECTED PIECE"));
-		//beOccupied(playerSelectedPiece);
-		// works if piece is owned by player character client
+
 		playerSelectedPiece->bePlaced(this);
+		
+		cancelConfirmedMeshMulticast();
 	}
 }
 
@@ -154,16 +155,16 @@ FColor AEnvSquare::getSquareColorField()
 	return squareColorField;
 }
 
-void AEnvSquare::setIsPossibleMove_Implementation(bool status, FColor pieceColor)
+void AEnvSquare::setIsPossibleMove(bool status, FColor pieceColor) // non rpc
 {
 	isPossibleMove = status;
 	setColor(pieceColor);
 }
-void AEnvSquare::setPreviewMesh_Implementation(APiece* onePiece)
+void AEnvSquare::setPreviewMesh(APiece* onePiece) // non rpc
 {
 	if (onePiece)
 	{
-		if (!isOccupied)
+		if (!isOccupied && !occupiedConfirmedMesh)
 		{
 			occupiedPreviewMesh = onePiece->getSpawnedPreviewMesh(getPlacementLocation());
 			if (occupiedPreviewMesh)
@@ -182,7 +183,7 @@ void AEnvSquare::setPreviewMesh_Implementation(APiece* onePiece)
 	}
 }
 
-void AEnvSquare::setConfirmedMesh_Implementation(APiece* onePiece)
+void AEnvSquare::setConfirmedMesh(APiece* onePiece) // non rpc
 {
 	if (onePiece)
 	{
@@ -201,6 +202,14 @@ void AEnvSquare::setConfirmedMesh_Implementation(APiece* onePiece)
 	}
 }
 
+void AEnvSquare::cancelConfirmedMeshMulticast_Implementation()
+{
+	if (occupiedConfirmedMesh)
+	{
+		occupiedConfirmedMesh->Destroy();
+		occupiedConfirmedMesh = nullptr;
+	}
+}
 
 void AEnvSquare::occupiedPieceLeaved_Implementation()
 {

@@ -80,7 +80,7 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Square Materials")
 	void initializeMaterials();
 
-	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Square Materials")
+	UFUNCTION(BlueprintCallable, Category = "Square Materials")
 	void setColor(const FColor& NewColor);
 
 protected:
@@ -120,13 +120,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Square Stats")
 	FColor getSquareColorField();
 
-	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Square Stats")
+	UFUNCTION(BlueprintCallable, Category = "Square Stats")
 	void setIsPossibleMove(bool status, FColor pieceColor);
-	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Square Stats")
+	UFUNCTION(BlueprintCallable, Category = "Square Stats")
 	void setPreviewMesh(APiece* onePiece);
 	// it should be call from netmulticast of board, but only after the prepare phrase
-	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Square Stats")
+	UFUNCTION(BlueprintCallable, Category = "Square Stats")
 	void setConfirmedMesh(APiece* onePiece);
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Square Stats")
+	void cancelConfirmedMeshMulticast();
 
 	UFUNCTION(Server, Reliable, Category = "Square Stats")
 	void occupiedPieceLeaved();

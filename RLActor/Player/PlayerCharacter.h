@@ -281,8 +281,23 @@ public:
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void unselectPiece();
+	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Interact Control")
+	void clientResetBoard();
+
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	APiece* getSelectedPiece();
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
-	void serverResetBoard();
+	void setSelectedPiece(APiece* aPiece);
+
+	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	void setSelectedSquare(AEnvSquare* aSquare);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
+	void setSelectedSquareValue(AEnvSquare* aSquare);
+	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	void setSelectedSquareEffect(AEnvSquare* aSquare);
+
 
 protected:
 	// look stats
@@ -322,15 +337,6 @@ protected:
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	AEnvSquare* selectedSquare = nullptr;
-
-public:
-	UFUNCTION(BlueprintCallable, Category = "Interact Control")
-	APiece* getSelectedPiece();
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
-	void setSelectedPiece(APiece* aPiece);
-
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
-	void setSelectedSquare(AEnvSquare* aSquare);
 
 	/* item Effect*/
 protected:

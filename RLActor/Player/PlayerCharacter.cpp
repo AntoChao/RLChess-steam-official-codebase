@@ -275,6 +275,7 @@ void APlayerCharacter::startTurn()
 	isPlayerTurn = true;
 	selectedSquare = nullptr;
 	unselectPiece();
+	clientResetBoard();
 
 	for (int i = 0; i < army.Num(); i++)
 	{
@@ -302,6 +303,7 @@ void APlayerCharacter::endTurn()
 	isPlayerTurn = false;
 	moveSelectedPiece();
 	unselectPiece();
+	clientResetBoard();
 }
 
 // RL actor functions
@@ -461,6 +463,7 @@ void APlayerCharacter::interact()
 							else
 							{
 								unselectPiece();
+								clientResetBoard();
 							}
 						}
 					}
@@ -519,33 +522,38 @@ void APlayerCharacter::pickUpItem_Implementation()
 		}
 	}
 }
+
 /*
-another way to do it is use netmulticast and each piece check if the owner is the caller
-if yes, then do x in client.
+selectpiece -> 
+queue: unselectpiece -> clientResetBoard -> setselected piece -> inshop/inbench/inboard
+	   piece = null  -> reset board -> piece = selected -> effect
+
 */
-void APlayerCharacter::selectPiece(APiece* detectedPiece)
+
+void APlayerCharacter::selectPiece(APiece* detectedPiece) // non rpc
 {
-	unselectPiece();
+	unselectPiece(); // server
+	clientResetBoard();
 	if (detectedPiece)
 	{
 		// detectedPiece->BeInteracted(this);
-		setSelectedPiece(detectedPiece);
+		setSelectedPiece(detectedPiece); // server
 
 		switch (detectedPiece->getPieceStatus())
 		{
 		case EPieceStatus::EInShop:
 		{
-			serverSelectInShopPiece();
+			serverSelectInShopPiece(); //server
 			break;
 		}
 		case EPieceStatus::EInBench:
 		{
-			detectedPiece->inBenchInteractedEffect(this);
+			detectedPiece->inBenchInteractedEffect(this); // client rpc
 			break;
 		}
 		case EPieceStatus::EInBoard:
 		{
-			detectedPiece->inBoardInteractedEffect(this);
+			detectedPiece->inBoardInteractedEffect(this); // client rpc
 			break;
 		}
 		default:
@@ -567,12 +575,8 @@ void APlayerCharacter::attackPiece(APiece* pieceToAttack)
 	if (pieceToAttack)
 	{
 		setSelectedSquare(pieceToAttack->getOccupiedSquare());
-		if (setUpTime)
-		{
-			debugFunctionOne();
-			moveSelectedPiece();
-		}
-		serverResetBoard();
+
+		clientResetBoard();
 	}
 }
 
@@ -586,7 +590,7 @@ void APlayerCharacter::selectPlacePieceLocationBySquare(AEnvSquare* detectedSqua
 			debugFunctionOne();
 			moveSelectedPiece();
 		}
-		serverResetBoard();
+		clientResetBoard();
 	}
 }
 
@@ -601,7 +605,7 @@ void APlayerCharacter::selectPlacePieceLocationByPreviewMesh(APiecePreviewMesh* 
 			debugFunctionOne();
 			moveSelectedPiece();
 		}
-		serverResetBoard();
+		clientResetBoard();
 	}
 }
 
@@ -615,6 +619,7 @@ void APlayerCharacter::moveSelectedPiece_Implementation()
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Placing Piece"));
 	}
 	unselectPiece();
+	clientResetBoard();
 }
 
 bool APlayerCharacter::isAbleToPickUpItem()
@@ -622,12 +627,12 @@ bool APlayerCharacter::isAbleToPickUpItem()
 	return currentItemCount >= 0 && currentItemCount <= inventorySize;
 }
 
-void APlayerCharacter::unselectPiece_Implementation()
+void APlayerCharacter::unselectPiece_Implementation() // Client
 {
 	selectedPiece = nullptr;
 }
 
-void APlayerCharacter::serverResetBoard_Implementation()
+void APlayerCharacter::clientResetBoard_Implementation()
 {
 	AEnvBoard* gameBoard = nullptr;
 	if (UWorld* World = GetWorld())
@@ -639,7 +644,7 @@ void APlayerCharacter::serverResetBoard_Implementation()
 
 			if (gameBoard)
 			{
-				gameBoard->resetBoard();
+				gameBoard->resetBoard(); // non rpc
 			}
 		}
 	}
@@ -649,29 +654,42 @@ APiece* APlayerCharacter::getSelectedPiece()
 {
 	return selectedPiece;
 }
-void APlayerCharacter::setSelectedPiece_Implementation(APiece* aPiece)
+void APlayerCharacter::setSelectedPiece_Implementation(APiece* aPiece) // client
 {
 	selectedPiece = aPiece;
 }
 
-void APlayerCharacter::setSelectedSquare_Implementation(AEnvSquare* aSquare)
+void APlayerCharacter::setSelectedSquare(AEnvSquare* aSquare) // non rpc
 {
+	setSelectedSquareValue(aSquare);
+	setSelectedSquareEffect(aSquare);
 	debugFunctionThree();
-	// resetting previous selected square
+}
+
+void APlayerCharacter::setSelectedSquareValue_Implementation(AEnvSquare* aSquare) // server
+{
+	if (setUpTime || isPlayerTurn)
+	{
+		if (aSquare && selectedPiece)
+		{
+			selectedSquare = aSquare;
+		}
+	}
+}
+void APlayerCharacter::setSelectedSquareEffect(AEnvSquare* aSquare) // non rpc
+{
 	if (selectedSquare)
 	{
-		selectedSquare->setConfirmedMesh(nullptr);
+		selectedSquare->setConfirmedMesh(nullptr); // client
 	}
 
 	if (setUpTime || isPlayerTurn)
 	{
 		if (aSquare && selectedPiece)
 		{
-			selectedSquare = aSquare;
-			
 			if (isPlayerTurn)
 			{
-				aSquare->setConfirmedMesh(selectedPiece);
+				aSquare->setConfirmedMesh(selectedPiece); // client
 			}
 		}
 	}

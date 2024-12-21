@@ -184,7 +184,7 @@ void APiece::inShopInteractedEffect_Implementation(APlayerCharacter* Sender)
     }
 }
 
-void APiece::inBenchInteractedEffect_Implementation(APlayerCharacter* Sender)
+void APiece::inBenchInteractedEffect_Implementation(APlayerCharacter* Sender) // client
 {
     if (UWorld* World = GetWorld())
     {
@@ -196,7 +196,7 @@ void APiece::inBenchInteractedEffect_Implementation(APlayerCharacter* Sender)
             if (gameBoard)
             {
                 debugFunctionNine();
-                gameBoard->setSpecificColor(pieceColor);
+                gameBoard->setSpecificColor(pieceColor); // client
             }
 
             inBenchSpecialEffect();
@@ -210,7 +210,7 @@ void APiece::inBenchSpecialEffect_Implementation()
 }
 
 
-void APiece::inBoardInteractedEffect_Implementation(APlayerCharacter* Sender)
+void APiece::inBoardInteractedEffect_Implementation(APlayerCharacter* Sender) //client
 {
     if (UWorld* World = GetWorld())
     {
@@ -221,9 +221,7 @@ void APiece::inBoardInteractedEffect_Implementation(APlayerCharacter* Sender)
         
             if (gameBoard)
             {
-                // TArray<FVector2D> allPossibles = calculatePossibleMove();
-                // gameBoard->setPossibleMoves(allPossibles, pieceColor);
-                gameBoard->setPossibleMoves(this);
+                gameBoard->setPossibleMoves(this); // non rpc
             }
         }
     }
@@ -500,12 +498,12 @@ EPieceDirection APiece::getOppositeDirection(EPieceDirection Direction)
     return EPieceDirection::ENone;
 }
 
-void APiece::die_Implementation(APiece* killer)
+void APiece::die_Implementation(APiece* killer) // server
 {
     dieEffect(killer);
 }
 
-void APiece::dieEffect_Implementation(APiece* killer)
+void APiece::dieEffect_Implementation(APiece* killer) // netmulticast
 {
     // DrawDebugPoint(GetWorld(), GetActorLocation(), 300.0f, FColor::Red, false, 5.0f);
 
@@ -521,8 +519,7 @@ void APiece::dieEffect_Implementation(APiece* killer)
         Direction = (MyLocation - collisionLocation).GetSafeNormal();
     }
 
-    spawnFractureMesh(Direction);
-    // Additional logic to handle the piece's death, such as removing it from the game board
+    spawnFractureMesh(Direction); // client
 
     if (isLaunched)
     {
@@ -532,7 +529,7 @@ void APiece::dieEffect_Implementation(APiece* killer)
     Destroy();
 }
 
-void APiece::spawnFractureMesh_Implementation(FVector aDirection)
+void APiece::spawnFractureMesh_Implementation(FVector aDirection) // client
 {
     if (pieceFractureMeshClass)
     {
