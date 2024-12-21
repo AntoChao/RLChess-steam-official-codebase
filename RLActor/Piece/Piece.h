@@ -162,9 +162,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
 	TSubclassOf<APieceConfirmedMesh> pieceConfirmedMeshClass;
-
+	 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
 	TSubclassOf<APieceFractureMesh> pieceFractureMeshClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
+	float randomSpawnFractureDist = 50.0f;
 
 	UFUNCTION(Client, Reliable, BlueprintCallable, BlueprintCallable, Category = "debugFunction")
 	void spawnFractureMesh(FVector aDirection); // piece set piece color
@@ -174,7 +177,7 @@ protected:
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
 		bool bFromSweep, const FHitResult& SweepResult);
 
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Collision")
+	UFUNCTION(BlueprintCallable, Category = "Piece Collision")
 		void collidedWithOtherPiece(APiece* collidedPiece);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
@@ -208,10 +211,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	bool getIsMoving();
 
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	void setIsCollidedBy(APiece* collidedPiece);
 
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Interaction")
+	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
 	void kill(APiece* pieceToKill);
 
 /* piece movement */

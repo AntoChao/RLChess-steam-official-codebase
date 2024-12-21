@@ -8,6 +8,7 @@
 #include "Curves/CurveFloat.h"
 #include "Math/UnrealMathUtility.h"
 #include "Net/UnrealNetwork.h"
+#include "Kismet/KismetMathLibrary.h"
 
 #include "../../RLHighLevel/GameplayGameMode.h"
 #include "../../RLHighLevel/RLGameState.h"
@@ -500,7 +501,11 @@ EPieceDirection APiece::getOppositeDirection(EPieceDirection Direction)
 
 void APiece::die_Implementation(APiece* killer) // server
 {
-    dieEffect(killer);
+    if (!isDied)
+    {
+        isDied = true;
+        dieEffect(killer);
+    }
 }
 
 void APiece::dieEffect_Implementation(APiece* killer) // netmulticast
@@ -536,7 +541,11 @@ void APiece::spawnFractureMesh_Implementation(FVector aDirection) // client
         UWorld* serverWorld = GetWorld();
         if (serverWorld)
         {
-            APieceFractureMesh* fractureMesh = serverWorld->SpawnActor<APieceFractureMesh>(pieceFractureMeshClass, GetActorLocation(), GetActorRotation());
+            FVector RandomOffset = FMath::RandPointInBox(FBox(FVector(-randomSpawnFractureDist, -randomSpawnFractureDist, -randomSpawnFractureDist), FVector(randomSpawnFractureDist, randomSpawnFractureDist, randomSpawnFractureDist)));
+
+            FVector SpawnLocation = GetActorLocation() + RandomOffset;
+
+            APieceFractureMesh* fractureMesh = serverWorld->SpawnActor<APieceFractureMesh>(pieceFractureMeshClass, SpawnLocation, GetActorRotation());
             if (fractureMesh)
             {
                 fractureMesh->setMaterial(selectedMaterial);
@@ -588,7 +597,7 @@ void APiece::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Ot
     }
 }
 
-void APiece::collidedWithOtherPiece_Implementation(APiece* collidedPiece)
+void APiece::collidedWithOtherPiece(APiece* collidedPiece)
 {
     if (!isCollided)
     {
@@ -620,7 +629,7 @@ void APiece::collidedWithOtherPiece_Implementation(APiece* collidedPiece)
     }
 }
 
-void APiece::setIsCollidedBy_Implementation(APiece* collidedPiece)
+void APiece::setIsCollidedBy(APiece* collidedPiece)
 {
     if (collidedPiece)
     {
@@ -634,7 +643,7 @@ void APiece::setIsCollidedBy_Implementation(APiece* collidedPiece)
     }
 }
 
-void APiece::kill_Implementation(APiece* pieceToKill)
+void APiece::kill(APiece* pieceToKill)
 {
     if (pieceToKill)
     {
