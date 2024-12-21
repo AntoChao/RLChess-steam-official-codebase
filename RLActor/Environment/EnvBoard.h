@@ -109,9 +109,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Board")
 	void setPossibleMoves(APiece* onePiece);
 
-	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Board")
+	UFUNCTION(BlueprintCallable, Category = "Board")
 	void resetBoard();
-	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Board")
+	UFUNCTION(BlueprintCallable, Category = "Board")
 	void resetConfirmedMeshBoard();
 
 	UFUNCTION(BlueprintCallable, Category = "Board")

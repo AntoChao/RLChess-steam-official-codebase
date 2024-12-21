@@ -287,14 +287,14 @@ int AEnvBoard::getSquareLength()
     return squareLength;
 }
 
-void AEnvBoard::setSpecificColor_Implementation(FColor aColor)
+void AEnvBoard::setSpecificColor_Implementation(FColor aColor) // server
 {
     for (AEnvSquare* aSquare : allSquares)
     {
         if (aSquare && aSquare->getSquareColorField() == aColor)
         {
             debugFunctionFour();
-            aSquare->setIsPossibleMove(true, aColor);
+            aSquare->setIsPossibleMove(true, aColor); // client
         }
     }
 }
@@ -310,7 +310,7 @@ void AEnvBoard::setAllUnoccupiedColor(FColor aColor)
     }
 }
 
-void AEnvBoard::setPossibleMoves(APiece* onePiece)
+void AEnvBoard::setPossibleMoves(APiece* onePiece) //non rpc
 {
     TArray<FVector2D> allPossibles = onePiece->calculatePossibleMove();
     FColor pieceColor = onePiece->getPieceColor();
@@ -322,26 +322,26 @@ void AEnvBoard::setPossibleMoves(APiece* onePiece)
             int index = getIndexFromLocation(eachLocation);
             if (allSquares[index])
             {
-                allSquares[index]->setIsPossibleMove(true, pieceColor);
-                allSquares[index]->setPreviewMesh(onePiece);
+                allSquares[index]->setIsPossibleMove(true, pieceColor); // client
+                allSquares[index]->setPreviewMesh(onePiece); // client
             }
         }
     }
 }
 
-void AEnvBoard::resetBoard_Implementation()
+void AEnvBoard::resetBoard() // Client
 {
     debugFunctionThree();
     for (AEnvSquare* aSquare : allSquares)
     {
         if (IsValid(aSquare))
         {
-            aSquare->setIsPossibleMove(false, FColor::Transparent);
-            aSquare->setPreviewMesh(nullptr);
+            aSquare->setIsPossibleMove(false, FColor::Transparent); // client
+            aSquare->setPreviewMesh(nullptr); // client
         }
     }
 }
-void AEnvBoard::resetConfirmedMeshBoard_Implementation()
+void AEnvBoard::resetConfirmedMeshBoard()
 {
     debugFunctionFour();
     for (AEnvSquare* aSquare : allSquares)

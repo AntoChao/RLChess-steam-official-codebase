@@ -24,9 +24,9 @@ protected:
 
 public:
     // Function to apply force to the geometry collection
-    UFUNCTION(Server, Reliable, BlueprintCallable, BlueprintCallable, Category = "Piece Fracture")
+    UFUNCTION(Client, Reliable, BlueprintCallable, BlueprintCallable, Category = "Piece Fracture")
     void setMaterial(UMaterialInterface* selectedMaterial);
 
-    UFUNCTION(Server, Reliable, BlueprintCallable, BlueprintCallable, Category = "Piece Fracture")
+    UFUNCTION(Client, Reliable, BlueprintCallable, BlueprintCallable, Category = "Piece Fracture")
     void applyForce(const FVector& Force);
 };

@@ -79,7 +79,7 @@ public:
 	virtual void inShopInteractedEffect(APlayerCharacter* Sender);
 	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Piece Movement")
 	virtual void inBenchInteractedEffect(APlayerCharacter* Sender);
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
+	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Piece Movement")
 	virtual void inBenchSpecialEffect();
 	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Piece Movement")
 	virtual void inBoardInteractedEffect(APlayerCharacter* Sender);
