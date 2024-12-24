@@ -29,9 +29,9 @@ public:
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionOne(); //square BeInteracted
+	void debugFunctionOne(); //setConfirmedMesh spawn
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionTwo();
+	void debugFunctionTwo(); //setConfirmedMesh delete
 
 public:
 	virtual FString GetActorName() override;

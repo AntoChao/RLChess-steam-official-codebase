@@ -1,12 +1,7 @@
 #include "PieceFractureMesh.h"
 
-#include "Net/UnrealNetwork.h"
-
 APieceFractureMesh::APieceFractureMesh()
 {
-    // Enable network replication
-    bReplicates = true;
-
     // Create and set the root component as a SceneComponent
     USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
     SetRootComponent(Root);
@@ -19,15 +14,7 @@ APieceFractureMesh::APieceFractureMesh()
     SetLifeSpan(lifeSpanSegs);
 }
 
-void APieceFractureMesh::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-    //Replicate current health.
-    DOREPLIFETIME(APieceFractureMesh, pieceFractureBodyMesh);
-}
-
-void APieceFractureMesh::setMaterial_Implementation(UMaterialInterface* selectedMaterial)
+void APieceFractureMesh::setMaterial(UMaterialInterface* selectedMaterial)
 {
     if (selectedMaterial && pieceFractureBodyMesh)
     {
@@ -41,7 +28,7 @@ void APieceFractureMesh::setMaterial_Implementation(UMaterialInterface* selected
     pieceFractureBodyMesh->SetVisibility(true);
 }
 
-void APieceFractureMesh::applyForce_Implementation(const FVector& Force)
+void APieceFractureMesh::applyForce(const FVector& Force)
 {
     if (pieceFractureBodyMesh)
     {

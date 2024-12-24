@@ -46,15 +46,15 @@ public:
 	APlayerCharacter();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionOne(); // selectPlacePieceLocation()
+	void debugFunctionOne(); // selectPlacePieceLocationByPreviewMesh()
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionTwo(); // moveSelectedPiece()
+	void debugFunctionTwo(); // setSelectedSquare()
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionThree(); // setSelectedSquare_Implementation
+	void debugFunctionThree(); // setSelectedSquareValue_Implementation
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionFour(); // player check is able to buy product
+	void debugFunctionFour(); // setSelectedSquareEffect 1
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionFive(); // player pay product
+	void debugFunctionFive(); // setSelectedSquareEffect 2
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
 	void debugFunctionSix(); // player receive product
 
@@ -62,8 +62,6 @@ public:
 	void debugFunctionSeven(); // player start turn
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
 	void debugFunctionEight(); // player end turn
-
-
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -82,6 +80,35 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 	class UCameraComponent* camera;
+
+protected:
+	/* character color*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	UMaterialInterface* silverMaterial; // gray is neutrol
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	UMaterialInterface* redMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	UMaterialInterface* blueMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	UMaterialInterface* greenMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	UMaterialInterface* yellowMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	UMaterialInterface* purpleMaterial;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Piece Stats")
+	TMap<FColor, UMaterialInterface*> colorToMaterial;
+
+	virtual void PossessedBy(AController* NewController) override;
+
+	UFUNCTION(BlueprintCallable, Category = "Piece Stats")
+	void initializeMaterials();
+
+	UPROPERTY(ReplicatedUsing = OnRep_selectedMaterial, EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	UMaterialInterface* selectedMaterial;
+
+	UFUNCTION(BlueprintCallable, Category = "Item Effect")
+	void OnRep_selectedMaterial();
 
 	/* character basic stats*/
 protected:
@@ -259,18 +286,22 @@ public:
 	void useItem();
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void pickUpItem();
+
+	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	void buyPiece(APiece* detectedPiece);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
+	void serverBuyInShopPiece();
+	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	void swapPieceLocations(APiece* detectedPiece);
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	void selectPiece(APiece* detectedPiece);
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
-	void serverSelectInShopPiece();
-
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	void attackPiece(APiece* pieceToAttack);
 
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
-	void selectPlacePieceLocationBySquare(AEnvSquare* detectedSquare);
+	void selectPlacePieceLocationBySquare2(AEnvSquare* detectedSquare);
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
-	void selectPlacePieceLocationByPreviewMesh(APiecePreviewMesh* detectedMesh);
+	void selectPlacePieceLocationByPreview(APiecePreviewMesh* detectedMesh);
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void moveSelectedPiece();
@@ -284,20 +315,23 @@ public:
 	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Interact Control")
 	void clientResetBoard();
 
-
 public:
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	APiece* getSelectedPiece();
+	UFUNCTION(BlueprintCallable, Category = "Interact Control")
+	APiece* getConfirmedPiece();
+
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
 	void setSelectedPiece(APiece* aPiece);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
+	void setConfirmedPiece(APiece* aPiece);
 
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	void setSelectedSquare(AEnvSquare* aSquare);
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
-	void setSelectedSquareValue(AEnvSquare* aSquare);
 	UFUNCTION(BlueprintCallable, Category = "Interact Control")
 	void setSelectedSquareEffect(AEnvSquare* aSquare);
-
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interact Control")
+	void setSelectedSquareValue(AEnvSquare* aSquare);
 
 protected:
 	// look stats
@@ -332,10 +366,13 @@ protected:
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	APiece* selectedPiece = nullptr;
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
+	APiece* confirmedPiece = nullptr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	int selectedItemIndex = 0;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	AEnvSquare* selectedSquare = nullptr;
 
 	/* item Effect*/

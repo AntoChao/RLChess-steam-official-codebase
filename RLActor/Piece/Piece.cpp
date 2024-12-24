@@ -8,6 +8,7 @@
 #include "Curves/CurveFloat.h"
 #include "Math/UnrealMathUtility.h"
 #include "Net/UnrealNetwork.h"
+#include "Kismet/KismetMathLibrary.h"
 
 #include "../../RLHighLevel/GameplayGameMode.h"
 #include "../../RLHighLevel/RLGameState.h"
@@ -133,35 +134,9 @@ bool APiece::IsAbleToBeInteracted(APlayerCharacter* Sender)
 	
 }
 
-/*
-no sure about this implementation, because it is done by: setrver->server->client
-
-another approach: player character detect the status of piece,
-                  directly call shop/bench/board interaction
-*/
 void APiece::BeInteracted(APlayerCharacter* Sender)
 {
-    debugFunctionEight();
-    switch (pieceStatus)
-    {
-        case EPieceStatus::EInShop:
-        {
-            inShopInteractedEffect(Sender);
-            break;
-        }
-        case EPieceStatus::EInBench:
-        {
-            inBenchInteractedEffect(Sender);
-            break;
-        }
-        case EPieceStatus::EInBoard:
-        {
-            inBoardInteractedEffect(Sender);
-            break;
-        }
-        default:
-            break;
-    }
+    return;
 }
 
 // if the rest interaction is client, maybe delagate this logic into a server func
@@ -195,7 +170,6 @@ void APiece::inBenchInteractedEffect_Implementation(APlayerCharacter* Sender) //
 
             if (gameBoard)
             {
-                debugFunctionNine();
                 gameBoard->setSpecificColor(pieceColor); // client
             }
 
@@ -269,10 +243,28 @@ void APiece::initializeDirection_Implementation(AEnvSquare* squareDestination)
         if (GameState)
         {
             gameBoard = GameState->getGameBoard();
+
+            pieceDirection = gameBoard->calculateInitDirection(squareDestination->getSquareLocation());
+            /*
+            switch (pieceDirection)
+            {
+            case EPieceDirection::EUp:
+                SetActorRotation(FRotator(0.0f, 0.0f, -90.0f));
+                break;
+            case EPieceDirection::EDown:
+                SetActorRotation(FRotator(0.0f, 0.0f, 90.0f));
+                break;
+            case EPieceDirection::ELeft:
+                SetActorRotation(FRotator(0.0f, 0.0f, 180.0f));
+                break;
+            case EPieceDirection::ERight:
+                SetActorRotation(FRotator(0.0f, 0.0f, 0.0f));
+                break;
+            default:
+                SetActorRotation(FRotator(0.0f, 0.0f, 45.0f));
+            }*/
         }
     }
-
-    pieceDirection = gameBoard->calculateInitDirection(squareDestination->getSquareLocation());
 }
 
 TArray<FVector2D> APiece::calculatePossibleMove()
@@ -329,19 +321,19 @@ TArray<FVector2D> APiece::getDiagonalDirections() const
     switch (pieceDirection)
     {
     case EPieceDirection::EUp:
-        DiagonalDirections.Add(FVector2D(-1, 1));  // Top-left
-        DiagonalDirections.Add(FVector2D(1, 1));   // Top-right
+        DiagonalDirections.Add(FVector2D(-1, -1));  // Top-left
+        DiagonalDirections.Add(FVector2D(-1, 1));   // Top-right
         break;
     case EPieceDirection::EDown:
-        DiagonalDirections.Add(FVector2D(-1, -1)); // Bottom-left
-        DiagonalDirections.Add(FVector2D(1, -1));  // Bottom-right
+        DiagonalDirections.Add(FVector2D(1, -1)); // Bottom-left
+        DiagonalDirections.Add(FVector2D(1, 1));  // Bottom-right
         break;
     case EPieceDirection::ELeft: // Not typically used but included for completeness
-        DiagonalDirections.Add(FVector2D(-1, -1)); // Left-bottom
-        DiagonalDirections.Add(FVector2D(-1, 1));  // Left-top
+        DiagonalDirections.Add(FVector2D(-1, -1)); // Left-Top
+        DiagonalDirections.Add(FVector2D(1, -1));  // Left-Down
         break;
     case EPieceDirection::ERight: // Not typically used but included for completeness
-        DiagonalDirections.Add(FVector2D(1, -1));  // Right-bottom
+        DiagonalDirections.Add(FVector2D(-1, 1));  // Right-bottom
         DiagonalDirections.Add(FVector2D(1, 1));   // Right-top
         break;
     default:
@@ -500,13 +492,21 @@ EPieceDirection APiece::getOppositeDirection(EPieceDirection Direction)
 
 void APiece::die_Implementation(APiece* killer) // server
 {
-    dieEffect(killer);
+    if (!isDied)
+    {
+        isDied = true;
+
+        if (curSquare)
+        {
+            curSquare->occupiedPieceLeaved();
+        }
+        
+        dieEffect(killer);
+    }
 }
 
 void APiece::dieEffect_Implementation(APiece* killer) // netmulticast
 {
-    // DrawDebugPoint(GetWorld(), GetActorLocation(), 300.0f, FColor::Red, false, 5.0f);
-
     FVector Direction = FVector::ZeroVector;
     FVector MyLocation = GetActorLocation();
     if (killer)
@@ -536,7 +536,11 @@ void APiece::spawnFractureMesh_Implementation(FVector aDirection) // client
         UWorld* serverWorld = GetWorld();
         if (serverWorld)
         {
-            APieceFractureMesh* fractureMesh = serverWorld->SpawnActor<APieceFractureMesh>(pieceFractureMeshClass, GetActorLocation(), GetActorRotation());
+            FVector RandomOffset = FMath::RandPointInBox(FBox(FVector(-randomSpawnFractureDist, -randomSpawnFractureDist, -randomSpawnFractureDist), FVector(randomSpawnFractureDist, randomSpawnFractureDist, randomSpawnFractureDist)));
+
+            FVector SpawnLocation = GetActorLocation() + RandomOffset;
+
+            APieceFractureMesh* fractureMesh = serverWorld->SpawnActor<APieceFractureMesh>(pieceFractureMeshClass, SpawnLocation, GetActorRotation());
             if (fractureMesh)
             {
                 fractureMesh->setMaterial(selectedMaterial);
@@ -588,39 +592,39 @@ void APiece::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Ot
     }
 }
 
-void APiece::collidedWithOtherPiece_Implementation(APiece* collidedPiece)
+void APiece::collidedWithOtherPiece(APiece* collidedPiece)
 {
-    if (!isCollided)
+    if (collidedPiece)
     {
-        if (collidedPiece)
+        collidedPiece->setIsCollidedBy(this); // disable the other piece collision calculation
+        setIsCollidedBy(collidedPiece);
+
+        // DrawDebugLine(GetWorld(), GetActorLocation(), collidedPiece->GetActorLocation(), FColor::Blue, false, 10, 0, 10);
+
+        if (collidedPiece->getIsMoving())
         {
-            collidedPiece->setIsCollidedBy(this); // disable the other piece collision calculation
-            setIsCollidedBy(collidedPiece);
-            if (collidedPiece->getIsMoving())
+            if (collisionPriority > collidedPiece->getPiecePriority())
             {
-                if (collisionPriority > collidedPiece->getPiecePriority())
-                {
-                    kill(collidedPiece);
-                }
-                else if (collisionPriority < collidedPiece->getPiecePriority())
-                {
-                    collidedPiece->kill(this);
-                }
-                else
-                {
-                    kill(collidedPiece);
-                    die(collidedPiece);
-                }
+                kill(collidedPiece);
+            }
+            else if (collisionPriority < collidedPiece->getPiecePriority())
+            {
+                collidedPiece->kill(this);
             }
             else
             {
                 kill(collidedPiece);
+                die(collidedPiece);
             }
+        }
+        else
+        {
+            kill(collidedPiece);
         }
     }
 }
 
-void APiece::setIsCollidedBy_Implementation(APiece* collidedPiece)
+void APiece::setIsCollidedBy(APiece* collidedPiece)
 {
     if (collidedPiece)
     {
@@ -634,7 +638,7 @@ void APiece::setIsCollidedBy_Implementation(APiece* collidedPiece)
     }
 }
 
-void APiece::kill_Implementation(APiece* pieceToKill)
+void APiece::kill(APiece* pieceToKill)
 {
     if (pieceToKill)
     {
@@ -660,8 +664,6 @@ void APiece::setPieceStatusInBoard_Implementation()
 void APiece::setPieceColor_Implementation(FColor aColor)
 {
     pieceColor = aColor;
-
-    debugFunctionOne();
 
     if (colorToMaterial.Contains(aColor))
     {
@@ -710,10 +712,6 @@ void APiece::updateRestStatus_Implementation()
 /* setActor location in a time constraint*/
 void APiece::bePlaced_Implementation(AEnvSquare* squareDestination)
 {
-    debugFunctionTwo();
-
-    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PIECE BE PLACED"));
-
     if (pieceStatus == EPieceStatus::EInShop)
     {
         bePlacedInShopEffect(squareDestination);
@@ -750,7 +748,6 @@ void APiece::setLocationMulti_Implementation(FVector aLocation)
 
 void APiece::bePlacedInShopEffect_Implementation(AEnvSquare* squareDestination)
 {
-    debugFunctionThree();
     // setPieceStatus(EPieceStatus::EInBench);
 
     if (IsValid(curSquare))
@@ -761,14 +758,13 @@ void APiece::bePlacedInShopEffect_Implementation(AEnvSquare* squareDestination)
     // teleport to squareLocation
     curSquare = squareDestination;
     initializeDirection(curSquare); // initialize the direction
-
+    
     curSquare->beOccupied(this);
     setLocationMulti(curSquare->getPlacementLocation());
 }
 
 void APiece::bePlacedInBenchEffect_Implementation(AEnvSquare* squareDestination)
 {
-    debugFunctionFour();
     // enable swap position
     if (squareDestination->getIsOccupied())
     {
@@ -815,7 +811,6 @@ void APiece::swapLocation_Implementation(AEnvSquare* squareDestination)
 // all pieces are inboard when setup time is finished
 void APiece::bePlacedInBoardEffect_Implementation(AEnvSquare* squareDestination)
 {
-    debugFunctionFive();
     if (!bHasMoved)
     {
         firstInBoardMovedEffect(squareDestination);
@@ -843,7 +838,6 @@ void APiece::bePlacedSpecialSquareEffect_Implementation(AEnvSquare* squareDestin
 
 void APiece::startMoving_Implementation(AEnvSquare* squareDestination)
 {
-    debugFunctionSix();
     if (IsValid(curSquare))
     {
         curSquare->occupiedPieceLeaved();
@@ -909,7 +903,6 @@ EPieceDirection APiece::calculateMovingDirection(AEnvSquare* squareDestination)
 
 void APiece::endMoving_Implementation()
 {
-    debugFunctionSeven();
     setLocationMulti(endLocation);
     isMoving = false;
 

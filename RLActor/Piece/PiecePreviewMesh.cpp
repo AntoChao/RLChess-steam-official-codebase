@@ -4,9 +4,6 @@
 
 APiecePreviewMesh::APiecePreviewMesh()
 {
-    // Enable network replication
-    bReplicates = true;
-
     // Create and set the root component as a SceneComponent
     USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
     SetRootComponent(Root);
@@ -16,7 +13,11 @@ APiecePreviewMesh::APiecePreviewMesh()
 
     previewStaticBody->SetupAttachment(RootComponent);
     previewStaticBody->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-    previewStaticBody->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+    
+    previewStaticBody->SetCollisionEnabled(ECollisionEnabled::QueryOnly); // Enables collision queries (traces), not physics collisions
+    previewStaticBody->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore); // Ignore all channels by default
+    previewStaticBody->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Block); // Block camera traces
+    previewStaticBody->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block); // Block visibility traces
 }
 
 FString APiecePreviewMesh::GetActorName()

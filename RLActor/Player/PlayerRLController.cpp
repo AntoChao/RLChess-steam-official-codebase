@@ -64,9 +64,13 @@ FColor APlayerRLController::getPlayerColor()
 	{
 		return FColor::Green;
 	}
-	else
+	else if (playerIndex == 1)
 	{
 		return FColor::Red;
+	}
+	else
+	{
+		return FColor::Blue;
 	}
 }
 
@@ -128,7 +132,6 @@ void APlayerRLController::serverPossesses_Implementation(APlayerRLController* cu
 
 			setupMappingContextBasedOnGameModeMulticast();
 
-			debugFunction(); // possess finished
 			GameState->playersReady();
 		}
 	}

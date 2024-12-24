@@ -13,16 +13,12 @@
 #include "RLGameState.h"
 
 AGameplayGameMode::AGameplayGameMode() {
-	// roundManager = NewObject<URoundManager>();
 }
 
 void AGameplayGameMode::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
-    UE_LOG(LogTemp, Error, TEXT("--------------------------------------"));
-    UE_LOG(LogTemp, Warning, TEXT("Player %s logged in."), *NewPlayer->GetName());
-    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Player %s logged in."));
-
+    
     APlayerRLController* rlController = Cast<APlayerRLController>(NewPlayer);
     rlController->setPlayerIndex(allPlayerControllers.Num());
 
@@ -32,15 +28,13 @@ void AGameplayGameMode::PostLogin(APlayerController* NewPlayer)
 void AGameplayGameMode::Logout(AController* Exiting)
 {
     Super::Logout(Exiting);
-    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Player %s logged out."));
-
 }
 
 void AGameplayGameMode::BeginPlay()
 {
 	Super::BeginPlay();
     
-    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("GAMEMODE BEGIN PLAY"));
+    // GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("GAMEMODE BEGIN PLAY"));
 
 	setupGame(); // create everything
 }
@@ -78,8 +72,6 @@ void AGameplayGameMode::startIfAllPlayerLoggedIn(TArray<APlayerCharacter*> allPl
 {
     allPlayers = allPlayerBody;
 
-    debugFunctionOne();
-
     if (allPlayers.Num() == numberOfPlayers)
     {
         startSetUpRound();
@@ -89,8 +81,6 @@ void AGameplayGameMode::startIfAllPlayerLoggedIn(TArray<APlayerCharacter*> allPl
 
 void AGameplayGameMode::startSetUpRound()
 {
-    debugFunctionTwo();
-
     setBoard();
     spawnShop();
 
@@ -173,8 +163,6 @@ void AGameplayGameMode::startPlayerSetUpTime()
     UWorld* serverWorld = GetWorld();
     if (serverWorld)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("START SET UP ROUND"));
-
         for (APlayerCharacter* eachPlayer : allPlayers)
         {
             if (eachPlayer)
@@ -232,8 +220,6 @@ void AGameplayGameMode::startPlayerPreparePhase()
     UWorld* serverWorld = GetWorld();
     if (serverWorld)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("START Chose piece movement round"));
-
         for (APlayerCharacter* eachPlayer : allPlayers)
         {
             if (eachPlayer)
