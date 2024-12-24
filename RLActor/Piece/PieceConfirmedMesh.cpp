@@ -4,9 +4,6 @@
 
 APieceConfirmedMesh::APieceConfirmedMesh()
 {
-    // Enable network replication
-    bReplicates = true;
-
     // Create and set the root component as a SceneComponent
     USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
     SetRootComponent(Root);

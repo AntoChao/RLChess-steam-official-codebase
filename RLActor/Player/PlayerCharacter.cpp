@@ -51,14 +51,16 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	//Replicate current health.
+	DOREPLIFETIME(APlayerCharacter, selectedMaterial);
+
 	DOREPLIFETIME(APlayerCharacter, setUpTime);
 	DOREPLIFETIME(APlayerCharacter, isPlayerTurn);
 	DOREPLIFETIME(APlayerCharacter, playerBench);
 	DOREPLIFETIME(APlayerCharacter, army);
 
 	DOREPLIFETIME(APlayerCharacter, selectedPiece);
-	DOREPLIFETIME(APlayerCharacter, selectedSquare);
+	// DOREPLIFETIME(APlayerCharacter, selectedSquare);
+	DOREPLIFETIME(APlayerCharacter, confirmedPiece);
 
 	DOREPLIFETIME(APlayerCharacter, curMoney);
 
@@ -70,12 +72,69 @@ void APlayerCharacter::BeginPlay()
 
 	inventory.SetNum(inventorySize);
 	curMoney = totalMoney;
+
+}
+
+void APlayerCharacter::initializeMaterials()
+{
+	// Associate colors with materials
+	colorToMaterial.Add(FColor::Silver, silverMaterial);
+	colorToMaterial.Add(FColor::Red, redMaterial);
+	colorToMaterial.Add(FColor::Blue, blueMaterial);
+	colorToMaterial.Add(FColor::Green, greenMaterial);
+	colorToMaterial.Add(FColor::Yellow, yellowMaterial);
+	colorToMaterial.Add(FColor::Purple, purpleMaterial);
+}
+
+void APlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	initializeMaterials();
+
+	APlayerRLController* rlController = Cast<APlayerRLController>(NewController);
+
+	if (rlController)
+	{
+		FColor aColor = rlController->getPlayerColor();
+		if (colorToMaterial.Contains(aColor))
+		{
+			selectedMaterial = colorToMaterial[aColor];
+
+			if (GetLocalRole() == ROLE_Authority)
+			{
+				if (selectedMaterial)
+				{
+					int32 MaterialCount = GetMesh()->GetNumMaterials(); // Get the number of materials on the mesh
+					for (int32 Index = 0; Index < MaterialCount; ++Index)
+					{
+						GetMesh()->SetMaterial(Index, selectedMaterial); // Set the material for each index
+					}
+				}
+
+				GetMesh()->SetVisibility(true);
+			}
+		}
+	}
+}
+
+void APlayerCharacter::OnRep_selectedMaterial()
+{
+	if (selectedMaterial)
+	{
+		int32 MaterialCount = GetMesh()->GetNumMaterials(); // Get the number of materials on the mesh
+		for (int32 Index = 0; Index < MaterialCount; ++Index)
+		{
+			GetMesh()->SetMaterial(Index, selectedMaterial); // Set the material for each index
+		}
+	}
+
+	GetMesh()->SetVisibility(true); // Ensure the piece is visible after setting the materials
 }
 
 void APlayerCharacter::startSetup_Implementation()
 {
 	setUpTime = true;
-	debugFunctionOne();
 }
 void APlayerCharacter::endSetup_Implementation()
 {
@@ -118,8 +177,6 @@ void APlayerCharacter::startDying()
 }
 void APlayerCharacter::beCollidedByPiece(APiece* pieceCollided)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("player be collided"));
-
 	startDying();
 }
 
@@ -163,14 +220,15 @@ bool APlayerCharacter::isAbleToBenchPiece()
 }
 void APlayerCharacter::benchAPiece_Implementation(APiece* newPiece)
 {
-	debugFunctionThree();
-
 	army.Add(newPiece);
 	for (AEnvSquare* aBenchSquare : playerBench)
 	{
 		if (!aBenchSquare->getIsOccupied())
 		{
 			newPiece->bePlaced(aBenchSquare);
+
+			unselectPiece();
+			clientResetBoard(); // unselect the piece after piece benched
 			break;
 		}
 	}
@@ -269,11 +327,10 @@ void APlayerCharacter::detectReaction()
 // turn control
 void APlayerCharacter::startTurn()
 {
-	debugFunctionSeven();
-
 	UE_LOG(LogTemp, Warning, TEXT("LOGG: PLAYER STARTING TURN"));
 	isPlayerTurn = true;
 	selectedSquare = nullptr;
+	setConfirmedPiece(nullptr);
 	unselectPiece();
 	clientResetBoard();
 
@@ -298,8 +355,6 @@ void APlayerCharacter::startTurn()
 
 void APlayerCharacter::endTurn()
 {
-	debugFunctionEight();
-
 	isPlayerTurn = false;
 	moveSelectedPiece();
 	unselectPiece();
@@ -447,23 +502,52 @@ void APlayerCharacter::interact()
 					{
 						pickUpItem();
 					}
-					else if ((setUpTime || isPlayerTurn) && hitActor->IsA(APiece::StaticClass()))
+					/*
+						setup time + hit piece -> inshop -> buy piece (select piece) -> reset selected piece
+						setup time + hit piece -> same color + selected piece valid -> select piece
+						setup time + hit piece -> same color + selected piece no valid -> select piece
+						player turn + hit piece -> same color -> select piece
+						player turn + hit piece -> different color -> attack piece -> reset selecte piece
+					*/
+					else if (hitActor->IsA(APiece::StaticClass()))
 					{
 						APiece* detectedPiece = Cast<APiece>(hitActor);
-						if (detectedPiece->getPieceStatus() == EPieceStatus::EInShop || detectedPiece->getPieceColor() == getPlayerColor())
+						if (setUpTime)
 						{
-							selectPiece(detectedPiece);
-						}
-						else
-						{
-							if (IsValid(selectedPiece))
+							if (detectedPiece->getPieceStatus() == EPieceStatus::EInShop)
 							{
-								attackPiece(detectedPiece);
+								buyPiece(detectedPiece);
 							}
-							else
+							else if (detectedPiece->getPieceColor() == getPlayerColor())
 							{
-								unselectPiece();
-								clientResetBoard();
+								if (IsValid(selectedPiece))
+								{
+									AEnvSquare* anotherPieceSquare = selectedPiece->getOccupiedSquare();
+									if (anotherPieceSquare)
+									{
+										if (anotherPieceSquare->IsAbleToBeInteracted(this))
+										{
+											// because in setup, every same color piece is in bench
+											swapPieceLocations(detectedPiece);
+										}
+									}
+								}
+								else
+								{
+									selectPiece(detectedPiece); // in bench selection
+								}
+							}
+						}
+						else if (isPlayerTurn)
+						{
+							if (detectedPiece->getPieceColor() == getPlayerColor())
+							{
+								selectPiece(detectedPiece);
+							}
+							else if (IsValid(selectedPiece) && detectedPiece->getPieceColor() != getPlayerColor())
+							{
+								APiece* pieceToAttack = Cast<APiece>(hitActor);
+								attackPiece(pieceToAttack);
 							}
 						}
 					}
@@ -472,26 +556,24 @@ void APlayerCharacter::interact()
 						if (hitActor->IsA(AEnvSquare::StaticClass()))
 						{
 							AEnvSquare* squareToPlace = Cast<AEnvSquare>(hitActor);
-							selectPlacePieceLocationBySquare(squareToPlace);
+							selectPlacePieceLocationBySquare2(squareToPlace);
 						}
 						else if (hitActor->IsA(APiecePreviewMesh::StaticClass()))
 						{
 							APiecePreviewMesh* previewMeshDetected = Cast<APiecePreviewMesh>(hitActor);
-							selectPlacePieceLocationByPreviewMesh(previewMeshDetected);
-						}
-						else
-						{
-							unselectPiece();
+							selectPlacePieceLocationByPreview(previewMeshDetected);
 						}
 					}
 					else
 					{
 						unselectPiece();
+						clientResetBoard();
 					}
 				}
 				else
 				{
 					unselectPiece();
+					clientResetBoard();
 				}
 			}
 		}
@@ -524,28 +606,59 @@ void APlayerCharacter::pickUpItem_Implementation()
 }
 
 /*
-selectpiece -> 
-queue: unselectpiece -> clientResetBoard -> setselected piece -> inshop/inbench/inboard
-	   piece = null  -> reset board -> piece = selected -> effect
-
+setup time + hit piece -> inshop -> buy piece (select piece) -> reset selected piece
+setup time + hit piece -> same color + selected piece valid -> swap location -> reset selected piece
+setup time + hit piece -> same color + selected piece no valid -> select piece
+player turn + hit piece -> same color -> select piece
+player turn + hit piece -> different color -> attack piece -> reset selecte piece
 */
+void APlayerCharacter::buyPiece(APiece* detectedPiece)
+{
+	if (detectedPiece)
+	{
+		if (detectedPiece->getPieceStatus() == EPieceStatus::EInShop)
+		{
+			setSelectedPiece(detectedPiece); // server
+
+			serverBuyInShopPiece(); //server
+		}
+	}
+}
+void APlayerCharacter::serverBuyInShopPiece_Implementation()
+{
+	if (selectedPiece)
+	{
+		selectedPiece->inShopInteractedEffect(this);
+	}
+}
+void APlayerCharacter::swapPieceLocations(APiece* detectedPiece)
+{
+	if (detectedPiece && selectedPiece)
+	{
+		if (detectedPiece->getPieceStatus() == EPieceStatus::EInBench)
+		{
+			AEnvSquare* anotherPieceSquare = selectedPiece->getOccupiedSquare();
+			if (anotherPieceSquare)
+			{
+				detectedPiece->bePlaced(anotherPieceSquare);
+				unselectPiece();
+				clientResetBoard();
+			}
+		}
+	}
+}
 
 void APlayerCharacter::selectPiece(APiece* detectedPiece) // non rpc
 {
-	unselectPiece(); // server
+	// unselectPiece(); // server
 	clientResetBoard();
+
 	if (detectedPiece)
 	{
-		// detectedPiece->BeInteracted(this);
 		setSelectedPiece(detectedPiece); // server
 
 		switch (detectedPiece->getPieceStatus())
 		{
-		case EPieceStatus::EInShop:
-		{
-			serverSelectInShopPiece(); //server
-			break;
-		}
 		case EPieceStatus::EInBench:
 		{
 			detectedPiece->inBenchInteractedEffect(this); // client rpc
@@ -562,14 +675,6 @@ void APlayerCharacter::selectPiece(APiece* detectedPiece) // non rpc
 	}
 }
 
-void APlayerCharacter::serverSelectInShopPiece_Implementation()
-{
-	if (selectedPiece)
-	{
-		selectedPiece->inShopInteractedEffect(this);
-	}
-}
-
 void APlayerCharacter::attackPiece(APiece* pieceToAttack)
 {
 	if (pieceToAttack)
@@ -580,21 +685,20 @@ void APlayerCharacter::attackPiece(APiece* pieceToAttack)
 	}
 }
 
-void APlayerCharacter::selectPlacePieceLocationBySquare(AEnvSquare* detectedSquare)
+void APlayerCharacter::selectPlacePieceLocationBySquare2(AEnvSquare* detectedSquare)
 {
 	if (detectedSquare)
 	{
 		setSelectedSquare(detectedSquare);
 		if (setUpTime)
 		{
-			debugFunctionOne();
 			moveSelectedPiece();
 		}
 		clientResetBoard();
 	}
 }
 
-void APlayerCharacter::selectPlacePieceLocationByPreviewMesh(APiecePreviewMesh* detectedMesh)
+void APlayerCharacter::selectPlacePieceLocationByPreview(APiecePreviewMesh* detectedMesh)
 {
 	if (detectedMesh)
 	{
@@ -602,7 +706,6 @@ void APlayerCharacter::selectPlacePieceLocationByPreviewMesh(APiecePreviewMesh* 
 		setSelectedSquare(detectedSquare);
 		if (setUpTime)
 		{
-			debugFunctionOne();
 			moveSelectedPiece();
 		}
 		clientResetBoard();
@@ -613,10 +716,8 @@ void APlayerCharacter::moveSelectedPiece_Implementation()
 {
 	if (selectedSquare)
 	{
-		debugFunctionTwo();
 		// piece enter be place into new square
  		selectedSquare->BeInteracted(this);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Placing Piece"));
 	}
 	unselectPiece();
 	clientResetBoard();
@@ -654,16 +755,28 @@ APiece* APlayerCharacter::getSelectedPiece()
 {
 	return selectedPiece;
 }
+APiece* APlayerCharacter::getConfirmedPiece()
+{
+	return confirmedPiece;
+}
+
 void APlayerCharacter::setSelectedPiece_Implementation(APiece* aPiece) // client
 {
 	selectedPiece = aPiece;
 }
+void APlayerCharacter::setConfirmedPiece_Implementation(APiece* aPiece) // client
+{
+	confirmedPiece = aPiece;
+	selectedPiece = nullptr;
+}
 
 void APlayerCharacter::setSelectedSquare(AEnvSquare* aSquare) // non rpc
 {
-	setSelectedSquareValue(aSquare);
-	setSelectedSquareEffect(aSquare);
-	debugFunctionThree();
+	if (IsLocallyControlled())
+	{
+		setSelectedSquareEffect(aSquare);
+		setConfirmedPiece(selectedPiece);
+	}
 }
 
 void APlayerCharacter::setSelectedSquareValue_Implementation(AEnvSquare* aSquare) // server
@@ -680,7 +793,7 @@ void APlayerCharacter::setSelectedSquareEffect(AEnvSquare* aSquare) // non rpc
 {
 	if (selectedSquare)
 	{
-		selectedSquare->setConfirmedMesh(nullptr); // client
+		selectedSquare->setConfirmedMesh(nullptr); // non rpc
 	}
 
 	if (setUpTime || isPlayerTurn)
@@ -689,10 +802,12 @@ void APlayerCharacter::setSelectedSquareEffect(AEnvSquare* aSquare) // non rpc
 		{
 			if (isPlayerTurn)
 			{
-				aSquare->setConfirmedMesh(selectedPiece); // client
+				aSquare->setConfirmedMesh(selectedPiece); // non rpc
 			}
 		}
 	}
+
+	setSelectedSquareValue(aSquare);
 }
 
 /* item Effect*/

@@ -62,7 +62,6 @@ void AEnvShop::BeUnInteracted(APlayerCharacter* Sender)
 
 void AEnvShop::createRandomShop_Implementation()
 {
-	debugFunctionOne();
 
 	AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 	
@@ -111,29 +110,27 @@ void AEnvShop::createRandomShop_Implementation()
 			int counter = 1;
 			for (AEnvSquare* shopSquare : allShopSquares)
 			{
+				if (counter > numUnitsToSpawn)
+				{
+					break;
+				}
+
 				FVector productPieceLocation = shopSquare->getPlacementLocation();
 				FVector boardCenter = FVector(0.0f, 0.0f, productPieceLocation.Z);
 				FRotator productPieceRotation = (boardCenter - productPieceLocation).Rotation();
 
-				// DrawDebugLine(GetWorld(), productPieceLocation, boardCenter, FColor::Green, false, 5, 0, 5);
-
 				APiece* generatedPiece = Cast<APiece>(pieceFactory->createRLActorByCode(counter, productPieceLocation, productPieceRotation));
 				IRLProduct* productInterface = Cast<IRLProduct>(generatedPiece);
 
-				if (generatedPiece)
+				if (IsValid(generatedPiece))
 				{
 					TScriptInterface<IRLProduct> productInstance;
 					productInstance.SetObject(generatedPiece);
 					productInstance.SetInterface(Cast<IRLProduct>(productInterface));
 
 					productsInShop.Add(productInstance);
-					counter++;
 				}
-
-				if (counter > numUnitsToSpawn)
-				{
-					break;
-				}
+				counter++;
 			}
 		}
 	}
@@ -142,8 +139,6 @@ void AEnvShop::createRandomShop_Implementation()
 
 void AEnvShop::sellProduct_Implementation(APlayerCharacter* player, APiece* specificProduct)
 {
-	debugFunctionTwo();
-
 	if (player && specificProduct)
 	{
 		if (player->isEnableToBuyProduct(specificProduct))
@@ -159,8 +154,6 @@ void AEnvShop::sellProduct_Implementation(APlayerCharacter* player, APiece* spec
 
 void AEnvShop::refillProduct_Implementation(APiece* specificProduct)
 {
-	debugFunctionThree();
-
 	APiece* pieceToDuplicate = specificProduct;
 	if (pieceToDuplicate)
 	{
@@ -191,8 +184,6 @@ void AEnvShop::refillProduct_Implementation(APiece* specificProduct)
 
 				productsInShop.Add(productInstance);
 
-				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("REPLICATE PRODUCT"));
-
 			}
 
 		}
@@ -207,8 +198,6 @@ void AEnvShop::refreshShop_Implementation(APlayerCharacter* player)
 
 void AEnvShop::closeShop_Implementation()
 {
-	debugFunctionFour();
-
 	for (TScriptInterface<IRLProduct>& Product : productsInShop)
 	{
 		if (Product)

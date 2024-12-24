@@ -110,13 +110,10 @@ bool AEnvSquare::IsAbleToBeInteracted(APlayerCharacter* Sender)
 
 void AEnvSquare::BeInteracted_Implementation(APlayerCharacter* Sender)
 {
-	APiece* playerSelectedPiece = Sender->getSelectedPiece();
-	if (playerSelectedPiece)
+	APiece* playerConfirmedPiece = Sender->getConfirmedPiece();
+	if (playerConfirmedPiece)
 	{
-		debugFunctionOne();
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PLACING PLAYER SELECTED PIECE"));
-
-		playerSelectedPiece->bePlaced(this);
+		playerConfirmedPiece->bePlaced(this);
 		
 		cancelConfirmedMeshMulticast();
 	}
@@ -126,8 +123,6 @@ void AEnvSquare::beOccupied_Implementation(APiece* aPiece)
 {
 	isOccupied = true;
 	occupiedPiece = aPiece;
-	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("BEING OCCUPIED"));
-	// occupiedPiece->bePlaced(this);
 }
 
 void AEnvSquare::BeUnInteracted(APlayerCharacter* Sender)
@@ -215,8 +210,6 @@ void AEnvSquare::occupiedPieceLeaved_Implementation()
 {
 	isOccupied = false;
 	occupiedPiece = nullptr;
-
-	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PIECE LEAVED SQUARE"));
 }
 
 bool AEnvSquare::getIsOccupied()

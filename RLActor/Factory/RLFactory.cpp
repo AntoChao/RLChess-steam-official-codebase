@@ -24,8 +24,6 @@ AActor* URLFactory::createRLActor(const FString& name, FVector aLocation, FRotat
 
 void URLFactory::spawnRLActor_Implementation(const FString& name, FVector aLocation, FRotator aRotation)
 {
-    UE_LOG(LogTemp, Warning, TEXT("RLFactory: create RLActor_Implementataion"));
-
     if (!GEngine || !GWorld)
     {
         UE_LOG(LogTemp, Warning, TEXT("RLFactory: Engine or World context is null!"));

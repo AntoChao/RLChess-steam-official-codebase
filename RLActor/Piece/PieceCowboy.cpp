@@ -48,7 +48,7 @@ TArray<FVector2D> APieceCowboy::calculatePossibleMove()
             if (LineWithFirstObstacle.Num() > movePoint)
             {
                 // POSSIBLE ERROR
-                specialPossibleMove.Add(LineWithFirstObstacle[LineWithFirstObstacle.Num()]);
+                specialPossibleMove.Add(LineWithFirstObstacle[LineWithFirstObstacle.Num() - 1]);
             }
         }
     }

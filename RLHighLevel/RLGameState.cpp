@@ -102,7 +102,6 @@ void ARLGameState::createBoard_Implementation()
                 {
                     board->initialized();
                     board->initializeBoardColor();
-                    debugFunctionOne();
                 }
             }
         }
@@ -127,7 +126,6 @@ void ARLGameState::createShop_Implementation()
                 if (shop)
                 {
                     shop->createRandomShop();
-                    debugFunctionThree();
                 }
             }
         }
@@ -139,7 +137,6 @@ void ARLGameState::closeShop_Implementation()
     if (shop)
     {
         shop->closeShop();
-        debugFunctionFour();
     }
 }
 
