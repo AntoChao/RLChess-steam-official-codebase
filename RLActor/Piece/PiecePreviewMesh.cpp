@@ -44,6 +44,22 @@ void APiecePreviewMesh::BeUnInteracted(APlayerCharacter* Sender)
     return;
 }
 
+void APiecePreviewMesh::BeginPlay()
+{
+    Super::BeginPlay();
+
+    if (selectedMaterial && previewStaticBody)
+    {
+        int32 MaterialCount = previewStaticBody->GetNumMaterials();
+        for (int32 Index = 0; Index < MaterialCount; ++Index)
+        {
+            previewStaticBody->SetMaterial(Index, selectedMaterial);
+        }
+    }
+
+    previewStaticBody->SetVisibility(true);
+}
+
 void APiecePreviewMesh::setPreviewSquare(AEnvSquare* theSquare)
 {
     previewSquare = theSquare;

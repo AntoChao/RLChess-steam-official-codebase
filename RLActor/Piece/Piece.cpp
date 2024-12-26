@@ -521,11 +521,6 @@ void APiece::dieEffect_Implementation(APiece* killer) // netmulticast
 
     spawnFractureMesh(Direction); // client
 
-    if (isLaunched)
-    {
-        beExploted();
-    }
-
     Destroy();
 }
 
@@ -553,6 +548,10 @@ void APiece::spawnFractureMesh_Implementation(FVector aDirection) // client
 AEnvSquare* APiece::getOccupiedSquare()
 {
     return curSquare;
+}
+void APiece::setOccupiedSquare(AEnvSquare* aSquare)
+{
+    curSquare = aSquare;
 }
 
 int APiece::getPiecePriority()
@@ -723,6 +722,11 @@ void APiece::bePlaced_Implementation(AEnvSquare* squareDestination)
     else
     {
         bePlacedInBoardEffect(squareDestination);
+
+        if (specialPossibleMove.Contains(squareDestination->getSquareLocation()))
+        {
+            bePlacedSpecialSquareEffect(squareDestination);
+        }
     }
 
     if (UWorld* World = GetWorld())
@@ -794,16 +798,20 @@ void APiece::swapLocation_Implementation(AEnvSquare* squareDestination)
             if (IsValid(curSquare))
             {
                 curSquare->occupiedPieceLeaved();
-            } // avoid collision
-            setLocationMulti(curSquare->getPlacementLocation() - FVector(0.0f, 0.0f, -1000.0f));
+            } 
+            // avoid collision
+            setLocationMulti(curSquare->getPlacementLocation() - FVector(0.0f, 0.0f, -3000.0f));
         
             // let the piece occupy this position
-            pieceToSwap->bePlaced(curSquare);
+            pieceToSwap->setLocationMulti(curSquare->getPlacementLocation());
+            pieceToSwap->setOccupiedSquare(curSquare);
+            curSquare->beOccupied(pieceToSwap);
 
             // teleport to squareLocation
-            curSquare = squareDestination;
             curSquare->beOccupied(this);
-            setLocationMulti(curSquare->getPlacementLocation());
+            setLocationMulti(squareDestination->getPlacementLocation());
+
+            curSquare = squareDestination;
         }
     }
 }
@@ -814,10 +822,6 @@ void APiece::bePlacedInBoardEffect_Implementation(AEnvSquare* squareDestination)
     if (!bHasMoved)
     {
         firstInBoardMovedEffect(squareDestination);
-    }
-    if (specialPossibleMove.Contains(squareDestination->getSquareLocation()))
-    {
-        bePlacedSpecialSquareEffect(squareDestination);
     }
     
     if (!isMoving) // only move if it is not moving
@@ -1104,14 +1108,12 @@ void APiece::beExploted_Implementation()
                     {
                         checkSquare->getOccupiedPiece()->die(this);
                     }
-                    else if (checkSquare->getIsPlayerOnTop())
-                    {
-                        checkSquare->getPlayerOnTop()->startDying();
-                    }
                 }
             }
         }
     }
+
+    die(this);
 }
 
 
@@ -1124,7 +1126,8 @@ APiecePreviewMesh* APiece::getSpawnedPreviewMesh(FVector locationToSpawn)
         if (serverWorld)
         {
             APiecePreviewMesh* previewMesh = serverWorld->SpawnActor<APiecePreviewMesh>(piecePreviewMeshClass, locationToSpawn, GetActorRotation());
-            
+            // previewMesh->setMaterialColor(selectedMaterial);
+
             return previewMesh;
         }
     }

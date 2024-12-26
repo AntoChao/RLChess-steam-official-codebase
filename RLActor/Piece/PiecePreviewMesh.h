@@ -28,6 +28,7 @@ public:
     virtual void BeInteracted(APlayerCharacter* Sender) override;
 
     virtual void BeUnInteracted(APlayerCharacter* Sender) override;
+    virtual void BeginPlay() override;
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Piece Collision")
@@ -48,4 +49,6 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Piece Preview")
     AEnvSquare* getPreviewSquare();
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+    UMaterialInterface* selectedMaterial;
 };

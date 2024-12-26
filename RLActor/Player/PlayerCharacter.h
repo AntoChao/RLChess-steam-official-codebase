@@ -26,6 +26,7 @@ class APiece;
 class AItem;
 class AEnvShop;
 class APiecePreviewMesh;
+class APieceFractureMesh;
 
 /* Debug Tool
 GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Control stop use weapon secondary"));
@@ -165,15 +166,17 @@ public:
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Character Stats")
 	void endSetup();
 
-	UFUNCTION(BlueprintCallable, Category = "Character Stats")
-	bool checkIsAlive();
-	UFUNCTION(BlueprintCallable, Category = "Character Stats")
-	void setDied();
-	UFUNCTION(BlueprintCallable, Category = "Character Stats")
-	void startDying();
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Character Stats")
+	void spawnFracturePieces(APiece* pieceCollided);
+
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
 	void beCollidedByPiece(APiece* pieceCollided);
 
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character fracture")
+	TSubclassOf<APieceFractureMesh> kingFractureMeshClass;
+
+public:
 	/* inventory functions*/
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
 	int getInventorySize();
@@ -260,13 +263,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void look(FVector2D lookAxisVector);
 
-	UFUNCTION(BlueprintCallable, Category = "Control")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
 	void move(FVector2D movementVector);
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Control")
+	void moveMulticast(FVector2D movementVector);
 
 	UFUNCTION(BlueprintCallable, Category = "Run Controller")
 	void updateSpeed();
-	UFUNCTION(Server, Unreliable, BlueprintCallable, Category = "Run Controller")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Run Controller")
 	void run();
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Run Controller")
+	void runMulticast();
+
 	UFUNCTION(Server, Unreliable, BlueprintCallable, Category = "Run Controller")
 	void stopRun();
 

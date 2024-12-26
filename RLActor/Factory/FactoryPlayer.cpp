@@ -8,10 +8,11 @@ void UFactoryPlayer::spawnRLActor_Implementation(const FString& name, FVector aL
     {
         if (name == TEXT("testing"))
         {
-            UE_LOG(LogTemp, Warning, TEXT("RLFactory Player: create RLActor_Implementataion"));
-
-            // Spawn or create a specialized actor
             createdActor = gameWorld->SpawnActor<APlayerCharacter>(merchantClass, aLocation, aRotation);
+        }
+        if (name == TEXT("diedBody"))
+        {
+            createdActor = gameWorld->SpawnActor<APlayerCharacter>(dieClass, aLocation, aRotation);
         }
     }
     else

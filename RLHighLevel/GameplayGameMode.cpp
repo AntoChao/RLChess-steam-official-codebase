@@ -37,11 +37,13 @@ void AGameplayGameMode::BeginPlay()
     // GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("GAMEMODE BEGIN PLAY"));
 
 	setupGame(); // create everything
+
 }
 
 void AGameplayGameMode::setupGame()
 {
     setupSingletonClasses();
+    spawnMap();
 }
 
 void AGameplayGameMode::setupSingletonClasses()
@@ -81,14 +83,13 @@ void AGameplayGameMode::startIfAllPlayerLoggedIn(TArray<APlayerCharacter*> allPl
 
 void AGameplayGameMode::startSetUpRound()
 {
-    setBoard();
-    spawnShop();
+    initMap();
 
     setPlayerBench();
     setPlayerInitLocation();
 }
 
-void AGameplayGameMode::setBoard()
+void AGameplayGameMode::spawnMap()
 {
     UWorld* serverWorld = GetWorld();
     if (serverWorld)
@@ -96,11 +97,12 @@ void AGameplayGameMode::setBoard()
         ARLGameState* serverGameState = Cast<ARLGameState>(serverWorld->GetGameState());
         if (serverGameState)
         {
-            serverGameState->createBoard();
+            serverGameState->spawnBoard();
+            serverGameState->spawnShop();
         }
     }
 }
-void AGameplayGameMode::spawnShop()
+void AGameplayGameMode::initMap()
 {
     UWorld* serverWorld = GetWorld();
     if (serverWorld)
@@ -108,7 +110,8 @@ void AGameplayGameMode::spawnShop()
         ARLGameState* serverGameState = Cast<ARLGameState>(serverWorld->GetGameState());
         if (serverGameState)
         {
-            serverGameState->createShop();
+            serverGameState->initBoard();
+            serverGameState->initShop();
         }
     }
 }
@@ -285,9 +288,9 @@ bool AGameplayGameMode::checkIfGameEnd()
 {
     int alivePlayerCounter = 0;
 
-    for (APlayerCharacter* aPlayer : allPlayers)
+    for (APlayerRLController* aPlayer : allPlayerControllers)
     {
-        if (aPlayer && aPlayer->checkIsAlive())
+        if (aPlayer && !aPlayer->isDied)
         {
             alivePlayerCounter++;
             winner = aPlayer;

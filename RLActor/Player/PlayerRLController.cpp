@@ -33,6 +33,13 @@ void APlayerRLController::BeginPlay() {
 	}
 }
 
+void APlayerRLController::setupWidget()
+{
+	if (IsValid(PlayerHUDClass)) {
+		PlayerHUD = CreateWidget<UUserWidget>(this, PlayerHUDClass);
+		PlayerHUD->AddToPlayerScreen();
+	}
+}
 void APlayerRLController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -83,15 +90,21 @@ FString APlayerRLController::getCharacterName()
 	return rlPlayerState->characterName;
 }
 
+void APlayerRLController::controlledBodyDied_Implementation()
+{
+	if (rlPlayer)
+	{
+		UnPossess();
+	}
+	isDied = true;
+	setupControllerBody();
+}
+
 void APlayerRLController::setupControllerBody_Implementation()
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
 		gameStateCreateBody();
-		if (isPlayerAlive)
-		{
-			
-		}
 	}
 }
 
@@ -103,10 +116,9 @@ void APlayerRLController::gameStateCreateBody_Implementation()
 		if (GameState)
 		{
 			// Successfully cast to MyCustomGameMode, now you can access its members
-			GameState->createPlayerBody();
+			GameState->createPlayerBody(isDied, playerIndex);
 
 			serverPossesses(this);
-			
 		}
 	}
 }
@@ -356,7 +368,7 @@ void APlayerRLController::jumpEndFunc(const FInputActionValue& Value)
 void APlayerRLController::interactFunc(const FInputActionValue& Value) 
 {
 	validateRLPlayer();
-	if (rlPlayer) {
+	if (rlPlayer && !isDied) {
 		if (Value.Get<bool>())
 		{
 			if (curInteractionCount % 2 == 0)

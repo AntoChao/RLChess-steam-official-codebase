@@ -52,18 +52,18 @@ TArray<FVector2D> APieceScout::calculatePossibleMove()
 
 void APieceScout::inBenchInteractedEffect(APlayerCharacter* Sender)
 {
-    AEnvBoard* gameBoard = nullptr;
     if (UWorld* World = GetWorld())
     {
         ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
         if (GameState)
         {
-            gameBoard = GameState->getGameBoard();
+            AEnvBoard* gameBoard = GameState->getGameBoard();
+
+            if (gameBoard)
+            {
+                gameBoard->setAllUnoccupiedColor(pieceColor);
+            }
         }
-    }
-    if (gameBoard)
-    {
-        gameBoard->setAllUnoccupiedColor(pieceColor);
     }
 }
 

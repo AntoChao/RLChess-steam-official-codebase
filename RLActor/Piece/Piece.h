@@ -204,6 +204,8 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	AEnvSquare* getOccupiedSquare();
+	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	void setOccupiedSquare(AEnvSquare* aSquare);
 
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	int getPiecePriority();

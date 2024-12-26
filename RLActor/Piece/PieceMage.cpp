@@ -52,10 +52,6 @@ void APieceMage::endMoving_Implementation()
     swapLocation(targetSquare);
 
     isMoving = false;
-    /*
-    curSquare = targetSquare;
-    // teleport to squareLocation
-    curSquare->beOccupied(this);*/
 
     if (isKilledAnyActorThisTurn)
     {

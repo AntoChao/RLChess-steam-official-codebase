@@ -21,11 +21,14 @@
 #include "../Item/Item.h"
 #include "../Piece/Piece.h"
 #include "../Piece/PiecePreviewMesh.h"
+#include "../Piece/PieceFractureMesh.h"
 
 #include "../Environment/EnvBoard.h"
 #include "../Environment/EnvSquare.h"
 #include "../Environment/EnvShop.h"
 #include "Blueprint/UserWidget.h"
+
+#include "../Factory/FactoryPlayer.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -147,37 +150,49 @@ void APlayerCharacter::endSetup_Implementation()
 	setUpTime = false;
 }
 
-bool APlayerCharacter::checkIsAlive()
-{
-	return isAlive;
-}
-
 /*
 player die if:
 	got collided with a piece movement
 	player has no piece in board after initial setup
 */
-void APlayerCharacter::setDied()
-{
-	isAlive = false;
 
-	AController* aController = GetController();
-	if (Controller)
+void APlayerCharacter::spawnFracturePieces_Implementation(APiece* pieceCollided)
+{
+	if (kingFractureMeshClass && pieceCollided)
 	{
-		APlayerRLController* PlayerController = Cast<APlayerRLController>(aController);
-		if (PlayerController)
+		UWorld* serverWorld = GetWorld();
+		if (serverWorld)
 		{
-			PlayerController->UnPossessEffect();
+			float randomSpawnFractureDist = 1.0f;
+			FVector aDirection = (pieceCollided->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+
+			FVector SpawnLocation = GetActorLocation();
+
+			APieceFractureMesh* fractureMesh = serverWorld->SpawnActor<APieceFractureMesh>(kingFractureMeshClass, SpawnLocation, GetActorRotation());
+			if (fractureMesh)
+			{
+				fractureMesh->setMaterial(selectedMaterial);
+				fractureMesh->applyForce(aDirection * 1000.0f);
+			}
 		}
 	}
-}
-void APlayerCharacter::startDying()
-{
-	return;
+	Destroy();
 }
 void APlayerCharacter::beCollidedByPiece(APiece* pieceCollided)
 {
-	startDying();
+	AController* aController = GetController();
+
+	if (Controller)
+	{
+		APlayerRLController* PlayerController = Cast<APlayerRLController>(aController);
+
+		if (PlayerController)
+		{
+			PlayerController->controlledBodyDied();
+		}
+	}
+
+	spawnFracturePieces(pieceCollided);
 }
 
 int APlayerCharacter::getInventorySize()
@@ -419,22 +434,30 @@ void APlayerCharacter::look(FVector2D lookAxisVector)
 	}
 }
 
-void APlayerCharacter::move(FVector2D movementVector)
+void APlayerCharacter::move_Implementation(FVector2D movementVector)
 {
-	if (isAbleToMove) {
-		// find out which way is forward
-		const FRotator Rotation = GetController()->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+	moveMulticast(movementVector);
+}
+void APlayerCharacter::moveMulticast_Implementation(FVector2D movementVector)
+{
+	if (isAbleToMove)
+	{
+		if (GetController())
+		{
+			// find out which way is forward
+			const FRotator Rotation = GetController()->GetControlRotation();
+			const FRotator YawRotation(0, Rotation.Yaw, 0);
 
-		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+			// get forward vector
+			const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
-		// get right vector 
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+			// get right vector 
+			const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-		// add movement 
-		AddMovementInput(ForwardDirection, movementVector.Y * move_XSensitivity);
-		AddMovementInput(RightDirection, movementVector.X * move_YSensitivity);
+			// add movement 
+			AddMovementInput(ForwardDirection, movementVector.Y * move_XSensitivity);
+			AddMovementInput(RightDirection, movementVector.X * move_YSensitivity);
+		}
 	}
 }
 
@@ -444,13 +467,17 @@ void APlayerCharacter::updateSpeed()
 }
 void APlayerCharacter::run_Implementation()
 {
+	runMulticast();
+
+}
+void APlayerCharacter::runMulticast_Implementation()
+{
 	if (isAbleToRun) {
 		isRunning = true;
 		curSpeed = runSpeed;
 		updateSpeed();
 	}
 }
-
 void APlayerCharacter::stopRun_Implementation()
 {
 	isRunning = false;
@@ -477,6 +504,11 @@ void APlayerCharacter::interact()
 	if (detectHit.bBlockingHit)
 	{
 		AActor* hitActor = detectHit.GetActor();
+		if (!IsValid(hitActor))
+		{ 
+			return;
+		}
+
 		UClass* detectedActorClass = hitActor->GetClass(); // Fixed `Actor` to `rlActor`
 
 		if (hitActor && detectedActorClass->ImplementsInterface(URLActor::StaticClass()))

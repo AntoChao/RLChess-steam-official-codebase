@@ -44,8 +44,8 @@ TArray<FVector2D> APieceCowboy::calculatePossibleMove()
             PossibleMoves.Append(LineMoves);
 
             // Detect the first obstacle in the same directions beyond the free movement
-            TArray<FVector2D> LineWithFirstObstacle = getLineMoveWithFirstObstacle(CurrentLocation, Direction, movePoint + 2);
-            if (LineWithFirstObstacle.Num() > movePoint)
+            TArray<FVector2D> LineWithFirstObstacle = getLineMoveWithFirstObstacle(CurrentLocation, Direction, movePoint * 2);
+            if (LineWithFirstObstacle.Num() > movePoint && LineWithFirstObstacle.Num() <= movePoint * 2)
             {
                 // POSSIBLE ERROR
                 specialPossibleMove.Add(LineWithFirstObstacle[LineWithFirstObstacle.Num() - 1]);

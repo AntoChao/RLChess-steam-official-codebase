@@ -15,3 +15,20 @@ APieceConfirmedMesh::APieceConfirmedMesh()
     confirmedStaticBody->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     confirmedStaticBody->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 }
+
+
+void APieceConfirmedMesh::BeginPlay()
+{
+    Super::BeginPlay();
+
+    if (selectedMaterial && confirmedStaticBody)
+    {
+        int32 MaterialCount = confirmedStaticBody->GetNumMaterials();
+        for (int32 Index = 0; Index < MaterialCount; ++Index)
+        {
+            confirmedStaticBody->SetMaterial(Index, selectedMaterial);
+        }
+    }
+
+    confirmedStaticBody->SetVisibility(true);
+}

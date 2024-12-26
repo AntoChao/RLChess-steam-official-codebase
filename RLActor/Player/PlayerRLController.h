@@ -4,7 +4,7 @@
 #include "Engine/EngineTypes.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
-
+#include "Blueprint/UserWidget.h"
 #include "../../CommonEnum.h"
 
 #include "PlayerRLController.generated.h"
@@ -22,6 +22,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Player State")
 	class APlayerRLState* rlPlayerState;
 
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Components")
+	bool isDied = false;
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
+	void controlledBodyDied();
+
 	// debug value
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Components")
 	int playerIndex = 0;
@@ -30,6 +35,14 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
 	void debugFunction();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
+	TSubclassOf<class UUserWidget> PlayerHUDClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
+	class UUserWidget* PlayerHUD;
+
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void setupWidget();
 
 public:
 	APlayerRLController();

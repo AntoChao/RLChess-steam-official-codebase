@@ -17,5 +17,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player TSubclass")
 	TSubclassOf<APlayerCharacter> merchantClass = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player TSubclass")
+	TSubclassOf<APlayerCharacter> dieClass = nullptr;
+
 };
 
