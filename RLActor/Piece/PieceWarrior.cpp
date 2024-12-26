@@ -53,13 +53,14 @@ TArray<FVector2D> APieceWarrior::calculatePossibleMove()
 
     return PossibleMoves;
 }
-/*
+
 void APieceWarrior::endMoving_Implementation()
 {
-    Super::endMoving();
-
+    setLocationMulti(endLocation);
     AEnvBoard* GameBoard = nullptr;
     UWorld* World = GetWorld();
+    curSquare = targetSquare;
+
     if (World)
     {
         ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
@@ -96,4 +97,11 @@ void APieceWarrior::endMoving_Implementation()
             }
         }
     }
-}*/
+
+    isMoving = false;
+
+    if (isKilledAnyActorThisTurn)
+    {
+        killEffect();
+    }
+}

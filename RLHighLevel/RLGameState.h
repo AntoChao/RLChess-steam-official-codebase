@@ -57,7 +57,7 @@ public:
         spawn from gamemode and hold variables*/
 
     UFUNCTION(Server, Reliable, BlueprintCallable)
-        void createPlayerBody();
+        void createPlayerBody(bool alive, int index);
 
     UFUNCTION(BlueprintCallable)
         APlayerCharacter* getPlayerBody(int controllerIndex);
@@ -85,10 +85,14 @@ protected:
 public:
     // netmulticast works, but it arise the error where client board can not access gamemode server
     UFUNCTION(Server, Reliable, BlueprintCallable, Category = "MapManager")
-    void createBoard();
+    void spawnBoard();
+    UFUNCTION(Server, Reliable, BlueprintCallable, Category = "MapManager")
+    void spawnShop();
 
     UFUNCTION(Server, Reliable, BlueprintCallable, Category = "MapManager")
-    void createShop();
+    void initBoard();
+    UFUNCTION(Server, Reliable, BlueprintCallable, Category = "MapManager")
+    void initShop();
 
     UFUNCTION(Server, Reliable, BlueprintCallable, Category = "MapManager")
     void closeShop();

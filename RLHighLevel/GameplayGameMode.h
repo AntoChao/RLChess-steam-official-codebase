@@ -103,9 +103,10 @@ protected:
     void startGameplayRound();
 
     UFUNCTION(BlueprintCallable, Category = "GameMode")
-    void setBoard();
-    UFUNCTION(Category = "GameMode")
-    void spawnShop();
+    void spawnMap();
+    UFUNCTION(BlueprintCallable, Category = "GameMode")
+    void initMap();
+
     UFUNCTION(BlueprintCallable, Category = "GameMode")
     void setPlayerBench();
     UFUNCTION(Category = "GameMode")
@@ -157,7 +158,7 @@ protected:
     void endGameplayGameMode();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-    APlayerCharacter* winner = nullptr;
+    APlayerRLController* winner = nullptr;
 
 };
 

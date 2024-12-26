@@ -11,7 +11,11 @@ APieceCatapult::APieceCatapult()
 
 TArray<FVector2D> APieceCatapult::calculatePossibleMove()
 {
+    launchPiece = nullptr;
     TArray<FVector2D> PossibleMoves;
+
+    allValidAdjacentSquares.Empty();
+    allValidAdjacentPieces.Empty();
 
     if (!curSquare) // Ensure the catapult is on the board
     {
@@ -39,18 +43,21 @@ TArray<FVector2D> APieceCatapult::calculatePossibleMove()
 
         for (const FVector2D& Direction : AdjacentDirections)
         {
-            FVector2D PotentialLocation = CurrentLocation + Direction;
-
-            // Check if the potential location is valid and occupied
-            if (GameBoard->isValidLocation(PotentialLocation) && GameBoard->isSquareOccupied(PotentialLocation))
+            TArray<FVector2D> LineMoves = getLineMoveWithFirstObstacle(CurrentLocation, directionVectorToEnum(Direction), INT_MAX); // INT_MAX to simulate unlimited range
+            
+            if (LineMoves.Num() == 1)
             {
+                AEnvSquare* adjacentSquare = GameBoard->getSquareAtLocation(LineMoves[0]);
+
                 EPieceDirection aDirection = directionVectorToEnum(Direction);
                 TArray<FVector2D> allLaunchablePlaces = getLineMove(CurrentLocation, aDirection, INT_MAX);
 
+                allValidAdjacentSquares.Add(adjacentSquare);
+                allValidAdjacentPieces.Add(adjacentSquare->getOccupiedPiece());
                 PossibleMoves.Append(allLaunchablePlaces);
-                // PossibleMoves.Add(PotentialLocation);
             }
         }
+
     }
 
     return PossibleMoves;
@@ -60,28 +67,20 @@ void APieceCatapult::bePlacedInBoardEffect_Implementation(AEnvSquare* squareDest
 {
     if (squareDestination)
     {
-        lastMoveDirection = calculateMovingDirection(squareDestination);
-        FVector2D directionVector = getDirectionVector(lastMoveDirection);
-        FVector2D pieceLocation = curSquare->getSquareLocation() + directionVector;
-
-        AEnvBoard* gameBoard = nullptr;
-        if (UWorld* World = GetWorld())
+        for (APiece* adjPiece : allValidAdjacentPieces)
         {
-            ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
-            if (GameState)
+            if (adjPiece && adjPiece->getOccupiedSquare())
             {
-                gameBoard = GameState->getGameBoard();
-            }
-        }
-        if (gameBoard)
-        {
-            APiece* targetPiece = gameBoard->getSquareAtLocation(pieceLocation)->getOccupiedPiece();
-            if (targetPiece)
-            {
-                targetPiece->beLaunchedTo(squareDestination);
-            }
+                AEnvSquare* aSquare = adjPiece->getOccupiedSquare();
 
-            gameBoard->resetBoard();
+                FVector2D aLocation = aSquare->getSquareLocation();
+                FVector2D anotherLocation = squareDestination->getSquareLocation();
+
+                if (aLocation.X == anotherLocation.X || aLocation.Y == anotherLocation.Y)
+                {
+                    adjPiece->beLaunchedTo(squareDestination);
+                }
+            }
         }
     }
 }

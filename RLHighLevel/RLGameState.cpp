@@ -44,7 +44,7 @@ void ARLGameState::BeginPlay()
 	Super::BeginPlay();
 }
 
-void ARLGameState::createPlayerBody_Implementation()
+void ARLGameState::createPlayerBody_Implementation(bool isDied, int index)
 {
     AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
     
@@ -54,12 +54,22 @@ void ARLGameState::createPlayerBody_Implementation()
 
         if (playerFac)
         {
-            AActor* createdActor = playerFac->createRLActor(TEXT("testing"), temporaryPlayerSpawnLocation, FRotator::ZeroRotator);
-            APlayerCharacter* curPlayerBody = Cast<APlayerCharacter>(createdActor);
-
-            if (curPlayerBody)
+            if (!isDied)
             {
-                allPlayers.Add(curPlayerBody);
+                AActor* createdActor = playerFac->createRLActor(TEXT("testing"), temporaryPlayerSpawnLocation, FRotator::ZeroRotator);
+                APlayerCharacter* curPlayerBody = Cast<APlayerCharacter>(createdActor);
+
+                if (curPlayerBody)
+                {
+                    allPlayers.Add(curPlayerBody);
+                }
+            }
+            else
+            {
+                AActor* createdActor = playerFac->createRLActor(TEXT("diedBody"), temporaryPlayerSpawnLocation, FRotator::ZeroRotator);
+                APlayerCharacter* curPlayerBody = Cast<APlayerCharacter>(createdActor);
+
+                allPlayers[index] = curPlayerBody;
             }
         }
     }
@@ -69,7 +79,6 @@ APlayerCharacter* ARLGameState::getPlayerBody(int controllerIndex)
 {
     worldIndex = controllerIndex;
     APlayerCharacter* returnPlayerBody = allPlayers[controllerIndex];
-    // playersReady();
     return returnPlayerBody;
 }
 
@@ -84,7 +93,7 @@ void ARLGameState::playersReady_Implementation()
     }
 }
 
-void ARLGameState::createBoard_Implementation()
+void ARLGameState::spawnBoard_Implementation()
 {
     if (GetLocalRole() == ROLE_Authority)
     {
@@ -97,19 +106,25 @@ void ARLGameState::createBoard_Implementation()
             {
                 AActor* createdActor = boardFactory->createRLActor(TEXT("Board"), boardLocation, boardRotation);
                 board = Cast<AEnvBoard>(createdActor);
-
+                
                 if (board)
                 {
                     board->initialized();
-                    board->initializeBoardColor();
                 }
             }
         }
 
     }
 }
+void ARLGameState::initBoard_Implementation()
+{
+    if (board)
+    {
+        board->initializeBoardColor();
+    }
+}
 
-void ARLGameState::createShop_Implementation()
+void ARLGameState::spawnShop_Implementation()
 {
     if (GetLocalRole() == ROLE_Authority)
     {
@@ -122,13 +137,16 @@ void ARLGameState::createShop_Implementation()
             {
                 AActor* createdActor = shopFactory->createRLActor(TEXT("Shop"), boardLocation, boardRotation);
                 shop = Cast<AEnvShop>(createdActor);
-
-                if (shop)
-                {
-                    shop->createRandomShop();
-                }
             }
         }
+    }
+}
+
+void ARLGameState::initShop_Implementation()
+{
+    if (shop)
+    {
+        shop->createRandomShop();
     }
 }
 

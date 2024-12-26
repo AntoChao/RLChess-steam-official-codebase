@@ -87,18 +87,25 @@ void AEnvBoard::initialized_Implementation()
 void AEnvBoard::initializeBoardColor_Implementation()
 {
     UWorld* serverWorld = GetWorld();
-    if (serverWorld)
+
+    AGameplayGameMode* gameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
+
+    if (gameMode && serverWorld)
     {
         ARLGameState* serverGameState = Cast<ARLGameState>(serverWorld->GetGameState());
-        if (serverGameState)
+        UFactoryEnvironment* squareFactory = gameMode->environmentFactoryInstance;
+
+        if (serverGameState && squareFactory)
         {
             TArray<APlayerCharacter*> allPlayers = serverGameState->getAllPlayers();
+            bool isPlayerZone;
 
             // Iterate over the board and assign colorField based on player sections
             for (int Y = 0; Y < columnSize; ++Y)
             {
                 for (int X = 0; X < rowSize; ++X)
                 {
+                    isPlayerZone = false;
                     int Index = getIndexFromLocation(FVector2D(Y, X));
                     if (!allSquares.IsValidIndex(Index)) continue;  // Safety check
 
@@ -109,21 +116,32 @@ void AEnvBoard::initializeBoardColor_Implementation()
                     if (Y < 2 && X >= 2 && X <= rowSize - 3 && allPlayers.IsValidIndex(0))
                     {
                         allSquares[Index]->setSquareColorField(allPlayers[0]->getPlayerColor());
+                        isPlayerZone = true;
                     }
                     // Player 1: bottom centre rows
                     else if (Y >= columnSize - 2 && X >= 2 && X <= rowSize - 3 && allPlayers.IsValidIndex(1))
                     {
                         allSquares[Index]->setSquareColorField(allPlayers[1]->getPlayerColor());
+                        isPlayerZone = true;
                     }
                     // Player 2: left centre columns
                     else if (X < 2 && Y >= 2 && Y <= columnSize - 3 && allPlayers.IsValidIndex(2))
                     {
                         allSquares[Index]->setSquareColorField(allPlayers[2]->getPlayerColor());
+                        isPlayerZone = true;
                     }
                     // Player 3: right centre columns
                     else if (X >= rowSize - 2 && Y >= 2 && Y <= columnSize - 3 && allPlayers.IsValidIndex(3))
                     {
                         allSquares[Index]->setSquareColorField(allPlayers[3]->getPlayerColor());
+                        isPlayerZone = true;
+                    }
+
+                    if (isPlayerZone)
+                    {
+                        // spawn the invinsible wall
+                        FVector locationToSpawn = allSquares[Index]->GetActorLocation() + FVector(0.0f, 0.0f, squareLength);
+                        AEnvSquare* newInvSquare = Cast<AEnvSquare>(squareFactory->createRLActor(TEXT("InvisibleSquare"), locationToSpawn, squareRotation));
                     }
                 }
             }
@@ -290,9 +308,12 @@ void AEnvBoard::setAllUnoccupiedColor(FColor aColor)
 {
     for (AEnvSquare* aSquare : allSquares)
     {
-        if (aSquare && aSquare->getSquareColorField() == aColor && !aSquare->getIsOccupied())
+        if (aSquare && !aSquare->getIsOccupied())
         {
-            aSquare->setIsPossibleMove(true, aColor);
+            if (aSquare->getSquareColorField() == aColor || aSquare->getSquareColorField() == FColor::White)
+            {
+                aSquare->setIsPossibleMove(true, aColor);
+            }
         }
     }
 }

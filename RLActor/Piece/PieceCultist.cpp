@@ -47,9 +47,3 @@ TArray<FVector2D> APieceCultist::calculatePossibleMove()
 
     return PossibleMoves;
 }
-
-void APieceCultist::dieEffect_Implementation(APiece* killer)
-{
-    Super::dieEffect(killer);
-    beExploted();
-}

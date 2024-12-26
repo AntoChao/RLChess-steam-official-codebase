@@ -14,8 +14,13 @@ class APieceConfirmedMesh : public AActor
 public:
     APieceConfirmedMesh();
 
+    virtual void BeginPlay() override;
+
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Piece Collision")
     UStaticMeshComponent* confirmedStaticBody;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+    UMaterialInterface* selectedMaterial;
 
 };

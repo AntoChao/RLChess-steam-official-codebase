@@ -21,4 +21,9 @@ public:
 protected:
     UPROPERTY(EditAnywhere, Category = "Piece Movement")
     APiece* launchPiece = nullptr;
+
+    UPROPERTY(EditAnywhere, Category = "Piece Movement")
+    TArray<AEnvSquare*> allValidAdjacentSquares;
+    UPROPERTY(EditAnywhere, Category = "Piece Movement")
+    TArray<APiece*> allValidAdjacentPieces;
 };
