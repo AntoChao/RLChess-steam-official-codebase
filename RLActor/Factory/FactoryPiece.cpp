@@ -4,7 +4,6 @@
 
 void UFactoryPiece::spawnRLActor_Implementation(const FString& name, FVector aLocation, FRotator aRotation)
 {
-    // UE_LOG(LogTemp, Warning, TEXT("RLFactory Piece"));
     if (gameWorld)
     {
         if (name == TEXT("Pawn"))

@@ -39,10 +39,21 @@ protected:
 	virtual void BeginPlay() override;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-    int numberOfPlayers = 2;
+    int numberOfAIPlayers = 2;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+    int numberOfHumanPlayers = 2;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+    TArray<FColor> allRestColor = {
+        FColor::Red,
+        FColor::Green,
+        FColor::Blue,
+        FColor::Yellow,
+        FColor::Purple
+    };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-	TArray<APlayerRLController*> allPlayerControllers;
+	TArray<AController*> allPlayerControllers;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
 	TArray<APlayerCharacter*> allPlayers;
@@ -87,7 +98,10 @@ public:
 
     // round start
     UFUNCTION(BlueprintCallable, Category = "GameMode")
-    void startIfAllPlayerLoggedIn(TArray<APlayerCharacter*> allPlayerBody);
+    void updateAllPlayersBody(TArray<APlayerCharacter*> allPlayerBody);
+
+        UFUNCTION(BlueprintCallable, Category = "GameMode")
+        void startIfAllPlayerLoggedIn();
 
 protected:
 	// set up
@@ -102,6 +116,9 @@ protected:
     UFUNCTION(Category = "GameMode")
     void startGameplayRound();
 
+    
+    UFUNCTION(BlueprintCallable, Category = "GameMode")
+    void initAIPlayers();
     UFUNCTION(BlueprintCallable, Category = "GameMode")
     void spawnMap();
     UFUNCTION(BlueprintCallable, Category = "GameMode")
@@ -158,7 +175,7 @@ protected:
     void endGameplayGameMode();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-    APlayerRLController* winner = nullptr;
+    AController* winner = nullptr;
 
 };
 

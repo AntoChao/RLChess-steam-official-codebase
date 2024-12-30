@@ -14,14 +14,19 @@ AItem::AItem()
 	itemBody->SetVisibility(true);
 }
 
-FString AItem::GetActorName()
+FString AItem::GetActorName(ELanguage curLanguage)
 {
 	return itemName;
 }
 
-FString AItem::GetDescription()
+FString AItem::GetDescription(ELanguage curLanguage)
 {
 	return itemDescription;
+}
+
+FString AItem::GetInteractionDescription(ELanguage curLanguage)
+{
+	return itemInteractionDesc;
 }
 
 bool AItem::IsAbleToBeInteracted(APlayerCharacter* Sender)

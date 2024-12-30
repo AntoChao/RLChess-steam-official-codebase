@@ -27,6 +27,8 @@ void AEnvBoard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 
 void AEnvBoard::initialized_Implementation()
 {
+    UE_LOG(LogTemp, Warning, TEXT("Board: Been initialized"));
+
     totalSquareNum = rowSize * columnSize;
     allSquares.SetNum(totalSquareNum);
 
@@ -86,6 +88,8 @@ void AEnvBoard::initialized_Implementation()
 
 void AEnvBoard::initializeBoardColor_Implementation()
 {
+    UE_LOG(LogTemp, Warning, TEXT("Board: Initialed board color"));
+
     UWorld* serverWorld = GetWorld();
 
     AGameplayGameMode* gameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
@@ -255,14 +259,19 @@ AEnvSquare* AEnvBoard::getSquareAtLocation(FVector2D aLocation)
     return allSquares[getIndexFromLocation(aLocation)];
 }
 
-FString AEnvBoard::GetActorName()
+FString AEnvBoard::GetActorName(ELanguage curLanguage)
 {
     return TEXT("Board");
 }
 
-FString AEnvBoard::GetDescription()
+FString AEnvBoard::GetDescription(ELanguage curLanguage)
 {
     return TEXT("A Board");
+}
+
+FString AEnvBoard::GetInteractionDescription(ELanguage curLanguage)
+{
+    return TEXT("Interact with Board");
 }
 
 bool AEnvBoard::IsAbleToBeInteracted(APlayerCharacter* Sender)

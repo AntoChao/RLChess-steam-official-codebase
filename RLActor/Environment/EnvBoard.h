@@ -20,22 +20,12 @@ public:
 	
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionOne(); // board initialize
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionTwo(); // board initialize all color
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionThree(); // board being reset
-
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionFour(); 
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionFive(); 
 public:
-	FString GetActorName() override;
+	virtual FString GetActorName(ELanguage curLanguage) override;
 
-	FString GetDescription() override;
+	virtual FString GetDescription(ELanguage curLanguage) override;
+
+	virtual FString GetInteractionDescription(ELanguage curLanguage) override;
 
 	bool IsAbleToBeInteracted(APlayerCharacter* Sender) override;
 

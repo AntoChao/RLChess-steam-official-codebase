@@ -28,15 +28,34 @@ public:
 
 	virtual void BeginPlay() override;
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionOne(); //setConfirmedMesh spawn
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionTwo(); //setConfirmedMesh delete
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "square Stats")
+	FString squareNameEng;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "square Stats")
+	FString squareNameChi;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "square Stats")
+	FString squareNameSpa;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "square Stats")
+	FString squareDescriptionEng;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "square Stats")
+	FString squareDescriptionChi;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "square Stats")
+	FString squareDescriptionSpa;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "square Stats")
+	FString squareInteractDescriptionEng;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "square Stats")
+	FString squareInteractDescriptionChi;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "square Stats")
+	FString squareInteractDescriptionSpa;
 
 public:
-	virtual FString GetActorName() override;
+	virtual FString GetActorName(ELanguage curLanguage) override;
 
-	virtual FString GetDescription() override;
+	virtual FString GetDescription(ELanguage curLanguage) override;
+
+	virtual FString GetInteractionDescription(ELanguage curLanguage) override;
 
 	virtual bool IsAbleToBeInteracted(APlayerCharacter* Sender) override;
 

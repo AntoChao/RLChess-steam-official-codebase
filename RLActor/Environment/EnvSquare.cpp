@@ -92,15 +92,66 @@ void AEnvSquare::setColor(const FColor& newColor)
 	}
 }
 
-FString AEnvSquare::GetActorName()
+FString AEnvSquare::GetActorName(ELanguage curLanguage)
 {
-	return TEXT("Square");
+	switch (curLanguage)
+	{
+	case ELanguage::EEnglish:
+	{
+		return squareNameEng;
+	}
+	case ELanguage::EChinese:
+	{
+		return squareNameChi;
+	}
+	case ELanguage::ESpanish:
+	{
+		return squareNameSpa;
+	}
+	}
+	return squareNameEng;
 }
 
-FString AEnvSquare::GetDescription()
+FString AEnvSquare::GetDescription(ELanguage curLanguage)
 {
-	return TEXT("To be moved");
+	switch (curLanguage)
+	{
+	case ELanguage::EEnglish:
+	{
+		return squareDescriptionEng;
+	}
+	case ELanguage::EChinese:
+	{
+		return squareDescriptionChi;
+	}
+	case ELanguage::ESpanish:
+	{
+		return squareDescriptionSpa;
+	}
+	}
+	return squareDescriptionEng;
 }
+
+FString AEnvSquare::GetInteractionDescription(ELanguage curLanguage)
+{
+	switch (curLanguage)
+	{
+	case ELanguage::EEnglish:
+	{
+		return squareInteractDescriptionEng;
+	}
+	case ELanguage::EChinese:
+	{
+		return squareInteractDescriptionChi;
+	}
+	case ELanguage::ESpanish:
+	{
+		return squareInteractDescriptionSpa;
+	}
+	}
+	return squareInteractDescriptionEng;
+}
+
 
 bool AEnvSquare::IsAbleToBeInteracted(APlayerCharacter* Sender)
 {

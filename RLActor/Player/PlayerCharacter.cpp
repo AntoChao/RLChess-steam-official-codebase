@@ -16,6 +16,7 @@
 #include "../../RLHighLevel/RLGameState.h"
 
 #include "../AI/AIRLController.h"
+#include "../AI/SimulatedBoardState.h"
 
 #include "../RLActor.h"
 #include "../Item/Item.h"
@@ -26,7 +27,11 @@
 #include "../Environment/EnvBoard.h"
 #include "../Environment/EnvSquare.h"
 #include "../Environment/EnvShop.h"
-#include "Blueprint/UserWidget.h"
+
+#include "RLWidget/HUDGameplay.h"
+
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerState.h"
 
 #include "../Factory/FactoryPlayer.h"
 
@@ -62,7 +67,6 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(APlayerCharacter, army);
 
 	DOREPLIFETIME(APlayerCharacter, selectedPiece);
-	// DOREPLIFETIME(APlayerCharacter, selectedSquare);
 	DOREPLIFETIME(APlayerCharacter, confirmedPiece);
 
 	DOREPLIFETIME(APlayerCharacter, curMoney);
@@ -75,7 +79,26 @@ void APlayerCharacter::BeginPlay()
 
 	inventory.SetNum(inventorySize);
 	curMoney = totalMoney;
+}
 
+void APlayerCharacter::updateWidget()
+{
+	if (PlayerHUD)
+	{
+		PlayerHUD->isSetupTime = setUpTime;
+		PlayerHUD->ownerMoney = curMoney;
+		PlayerHUD->isAlive = isAlive;
+		PlayerHUD->isPlayerTurn = isPlayerTurn;
+		PlayerHUD->curDetectedActor = detectedActor;
+	}
+	else
+	{
+		APlayerRLController* rlCont = Cast<APlayerRLController>(GetController());
+		if (rlCont)
+		{
+			PlayerHUD = rlCont->getWidget();
+		}
+	}
 }
 
 void APlayerCharacter::initializeMaterials()
@@ -119,6 +142,31 @@ void APlayerCharacter::PossessedBy(AController* NewController)
 			}
 		}
 	}
+
+	AAIRLController* airlController = Cast<AAIRLController>(NewController);
+	if (airlController)
+	{
+		FColor aColor = airlController->getPlayerColor();
+		if (colorToMaterial.Contains(aColor))
+		{
+			selectedMaterial = colorToMaterial[aColor];
+
+			if (GetLocalRole() == ROLE_Authority)
+			{
+				if (selectedMaterial)
+				{
+					int32 MaterialCount = GetMesh()->GetNumMaterials(); // Get the number of materials on the mesh
+					for (int32 Index = 0; Index < MaterialCount; ++Index)
+					{
+						GetMesh()->SetMaterial(Index, selectedMaterial); // Set the material for each index
+					}
+				}
+
+				GetMesh()->SetVisibility(true);
+			}
+		}
+		setIsPossessedByAI(true, airlController);
+	}
 }
 
 void APlayerCharacter::OnRep_selectedMaterial()
@@ -138,9 +186,19 @@ void APlayerCharacter::OnRep_selectedMaterial()
 void APlayerCharacter::startSetup_Implementation()
 {
 	setUpTime = true;
+
+	if (isAIPossessed)
+	{
+		initializeRandomArmy();
+	}
 }
 void APlayerCharacter::endSetup_Implementation()
 {
+	if (isAIPossessed)
+	{
+		// setRandomBench();
+	}
+
 	// all pieces in bench should be in board right now
 	for (APiece* eachPiece : army)
 	{
@@ -290,7 +348,34 @@ void APlayerCharacter::Tick(float DeltaTime)
 	// Call the base class  
 	Super::Tick(DeltaTime);
 
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (PC)
+	{
+		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Player Ccontrol valid"));
+
+		if (PC->PlayerState)
+		{
+			float Ping = PC->PlayerState->GetPing();
+			if (Ping != 0.0f)
+			{
+				FString PingMessage = FString::Printf(TEXT("Current Ping: %f ms"), Ping);
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, PingMessage);
+			}
+
+		}
+		else
+		{
+			// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Player State not valid"));
+
+		}
+	}
+	else
+	{
+		// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Player Ccontrol NOT valid"));
+	}
+
 	detect();
+	updateWidget();
 }
 
 void APlayerCharacter::detect()
@@ -362,7 +447,27 @@ void APlayerCharacter::startTurn()
 			else
 			{
 				// got eliminated
-				army.Remove(eachPiece);
+				army.RemoveAt(i);
+			}
+		}
+	}
+
+	if (isAIPossessed)
+	{
+		if (UWorld* World = GetWorld())
+		{
+			ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+			if (GameState)
+			{
+				AEnvBoard* gameBoard = GameState->getGameBoard();
+
+				if (gameBoard)
+				{
+					FMove selectedMove = myAIController->selectBestMove(army);
+					confirmedPiece = selectedMove.Piece;
+
+					selectedSquare = gameBoard->getSquareAtLocation(selectedMove.Target);
+				}
 			}
 		}
 	}
@@ -371,7 +476,7 @@ void APlayerCharacter::startTurn()
 void APlayerCharacter::endTurn()
 {
 	isPlayerTurn = false;
-	moveSelectedPiece();
+	// moveSelectedPiece();
 	unselectPiece();
 	clientResetBoard();
 }
@@ -383,7 +488,7 @@ FString APlayerCharacter::getPlayerName()
 	{
 		return PC->getPlayerName();
 	}
-	return TEXT("");
+	return TEXT("Player");
 }
 
 FColor APlayerCharacter::getPlayerColor()
@@ -392,15 +497,24 @@ FColor APlayerCharacter::getPlayerColor()
 	{
 		return PC->getPlayerColor();
 	}
+	else if (AAIRLController* AIPC = Cast<AAIRLController>(GetController()))
+	{
+		return AIPC->getPlayerColor();
+	}
 	return FColor::Purple;
 }
 
-FString APlayerCharacter::GetActorName()
+FString APlayerCharacter::GetActorName(ELanguage curLanguage)
 {
 	return getPlayerName();
 }
 
-FString APlayerCharacter::GetDescription()
+FString APlayerCharacter::GetDescription(ELanguage curLanguage)
+{
+	return TEXT("");
+}
+
+FString APlayerCharacter::GetInteractionDescription(ELanguage curLanguage)
 {
 	return TEXT("");
 }
@@ -436,14 +550,19 @@ void APlayerCharacter::look(FVector2D lookAxisVector)
 
 void APlayerCharacter::move_Implementation(FVector2D movementVector)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("character server move"));
 	moveMulticast(movementVector);
 }
 void APlayerCharacter::moveMulticast_Implementation(FVector2D movementVector)
 {
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("character multicast move"));
 	if (isAbleToMove)
 	{
 		if (GetController())
 		{
+
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("character move ok"));
 			// find out which way is forward
 			const FRotator Rotation = GetController()->GetControlRotation();
 			const FRotator YawRotation(0, Rotation.Yaw, 0);
@@ -767,17 +886,20 @@ void APlayerCharacter::unselectPiece_Implementation() // Client
 
 void APlayerCharacter::clientResetBoard_Implementation()
 {
-	AEnvBoard* gameBoard = nullptr;
-	if (UWorld* World = GetWorld())
+	if (!isAIPossessed)
 	{
-		ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
-		if (GameState)
+		AEnvBoard* gameBoard = nullptr;
+		if (UWorld* World = GetWorld())
 		{
-			gameBoard = GameState->getGameBoard();
-
-			if (gameBoard)
+			ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
+			if (GameState)
 			{
-				gameBoard->resetBoard(); // non rpc
+				gameBoard = GameState->getGameBoard();
+
+				if (gameBoard)
+				{
+					gameBoard->resetBoard(); // non rpc
+				}
 			}
 		}
 	}
@@ -856,7 +978,7 @@ void APlayerCharacter::setIsPossessedByAI(bool status, AAIRLController* aAIContr
 }
 
 // call at beginning of setup
-void APlayerCharacter::initializeArmy()
+void APlayerCharacter::initializeRandomArmy()
 {
 	AEnvShop* gameShop = nullptr;
 	if (UWorld* World = GetWorld())
@@ -892,15 +1014,4 @@ AEnvSquare* APlayerCharacter::selectRandomBenchSquare()
 	int randomInt = FMath::RandRange(0, playerBench.Num() - 1);
 
 	return playerBench[randomInt];
-}
-
-// called at the end of selecting phrase
-void APlayerCharacter::aiSelectMovement()
-{
-	if (myAIController)
-	{
-		myAIController->setCurrentValueMap();
-		myAIController->makeTheBestMove();
-		moveSelectedPiece();
-	}
 }

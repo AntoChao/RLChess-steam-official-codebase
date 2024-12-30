@@ -4,7 +4,6 @@
 #include "Engine/EngineTypes.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
-#include "Blueprint/UserWidget.h"
 #include "../../CommonEnum.h"
 
 #include "PlayerRLController.generated.h"
@@ -12,6 +11,7 @@
 class APlayerRLState;
 struct FInputActionValue;
 class UEnhancedInputComponent;
+class UHUDGameplay;
 
 UCLASS(BlueprintType, Blueprintable)
 class APlayerRLController : public APlayerController
@@ -36,13 +36,17 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
 	void debugFunction();
 
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
-	TSubclassOf<class UUserWidget> PlayerHUDClass;
+	TSubclassOf<UHUDGameplay> PlayerHUDClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
-	class UUserWidget* PlayerHUD;
+	UHUDGameplay* PlayerHUD;
 
+	// UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Control")
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void setupWidget();
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void updateWidgetLanguage();
 
 public:
 	APlayerRLController();
@@ -87,9 +91,6 @@ protected:
 
 	virtual void Tick(float DeltaTime) override;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	bool isLocalPlayerValid;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	bool isPlayerAlive = true;
 
@@ -209,5 +210,9 @@ protected:
 	bool selectItemAvailable(int num);
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void selectItem(int itemIndex);
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	UHUDGameplay* getWidget();
 };
 

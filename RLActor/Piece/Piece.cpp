@@ -104,15 +104,67 @@ void APiece::Tick(float DeltaTime)
     movementTimeline.TickTimeline(DeltaTime);
 }
 
-FString APiece::GetActorName()
+FString APiece::GetActorName(ELanguage curLanguage)
 {
-	return pieceName;
+    switch (curLanguage)
+    {
+    case ELanguage::EEnglish:
+    {
+        return pieceNameEng;
+    }
+    case ELanguage::EChinese:
+    {
+        return pieceNameChi;
+    }
+    case ELanguage::ESpanish:
+    {
+        return pieceNameSpa;
+    }
+    }
+	return pieceNameEng;
 }
 
-FString APiece::GetDescription()
+FString APiece::GetDescription(ELanguage curLanguage)
 {
-	return pieceDescription;
+    switch (curLanguage)
+    {
+    case ELanguage::EEnglish:
+    {
+        return pieceDescriptionEng;
+    }
+    case ELanguage::EChinese:
+    {
+        return pieceDescriptionChi;
+    }
+    case ELanguage::ESpanish:
+    {
+        return pieceDescriptionSpa;
+    }
+    }
+    return pieceDescriptionEng;
 }
+
+FString APiece::GetInteractionDescription(ELanguage curLanguage)
+{
+    switch (curLanguage)
+    {
+    case ELanguage::EEnglish:
+    {
+        return pieceInteractDescriptionEng;
+    }
+    case ELanguage::EChinese:
+    {
+        return pieceInteractDescriptionChi;
+    }
+    case ELanguage::ESpanish:
+    {
+        return pieceInteractDescriptionSpa;
+    }
+    }
+    return pieceInteractDescriptionEng;
+}
+
+
 
 bool APiece::IsAbleToBeInteracted(APlayerCharacter* Sender)
 {
@@ -214,7 +266,7 @@ int APiece::GetProductCost()
 
 FString APiece::GetProductName()
 {
-    return pieceName;
+    return pieceNameEng;
 }
 
 UTexture2D* APiece::GetProductImage()
@@ -1126,7 +1178,7 @@ APiecePreviewMesh* APiece::getSpawnedPreviewMesh(FVector locationToSpawn)
         if (serverWorld)
         {
             APiecePreviewMesh* previewMesh = serverWorld->SpawnActor<APiecePreviewMesh>(piecePreviewMeshClass, locationToSpawn, GetActorRotation());
-            // previewMesh->setMaterialColor(selectedMaterial);
+            previewMesh->setMaterial(selectedMaterial);
 
             return previewMesh;
         }
@@ -1142,6 +1194,7 @@ APieceConfirmedMesh* APiece::getSpawnedConfirmedMesh(FVector locationToSpawn)
         if (serverWorld)
         {
             APieceConfirmedMesh* confirmedMesh = serverWorld->SpawnActor<APieceConfirmedMesh>(pieceConfirmedMeshClass, locationToSpawn, GetActorRotation());
+            confirmedMesh->setMaterial(selectedMaterial);
 
             return confirmedMesh;
         }

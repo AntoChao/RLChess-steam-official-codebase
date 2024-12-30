@@ -63,6 +63,8 @@ public:
         APlayerCharacter* getPlayerBody(int controllerIndex);
 
     UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
+        void notifyBodyCreation();
+    UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
         void playersReady();
 
 protected:
@@ -97,6 +99,9 @@ public:
     UFUNCTION(Server, Reliable, BlueprintCallable, Category = "MapManager")
     void closeShop();
 
+    UFUNCTION(Server, Reliable, BlueprintCallable, Category = "AI")
+    void initAIPlayers(int numberOfAIPlayers);
+
     UFUNCTION()
     TArray<APlayerCharacter*> getAllPlayers() const;
 
@@ -104,5 +109,4 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Shop")
     AEnvShop* getShop() const { return shop; }
-
 };
