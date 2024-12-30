@@ -17,22 +17,15 @@ class AEnvShop : public AActor, public IRLActor
 public:
 	AEnvShop();
 	
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionOne(); // shop create random shop
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionTwo(); // board sell product
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionThree(); // board refill product
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionFour(); // board close shop
-
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual void BeginPlay() override;
 
-	virtual FString GetActorName() override;
+	virtual FString GetActorName(ELanguage curLanguage) override;
 
-	virtual FString GetDescription() override;
+	virtual FString GetDescription(ELanguage curLanguage) override;
+
+	virtual FString GetInteractionDescription(ELanguage curLanguage) override;
 
 	virtual bool IsAbleToBeInteracted(APlayerCharacter* Sender) override;
 

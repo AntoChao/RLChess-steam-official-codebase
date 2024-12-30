@@ -17,6 +17,7 @@
 #include "../RLActor/Environment/EnvBoard.h"
 #include "../RLActor/Environment/EnvShop.h"
 
+#include "../RLActor/AI/AIRLController.h"
 
 ARLGameState::ARLGameState()
 {
@@ -46,6 +47,7 @@ void ARLGameState::BeginPlay()
 
 void ARLGameState::createPlayerBody_Implementation(bool isDied, int index)
 {
+    UE_LOG(LogTemp, Warning, TEXT("GS: create body"));
     AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
     
     if (curGameMode)
@@ -61,6 +63,7 @@ void ARLGameState::createPlayerBody_Implementation(bool isDied, int index)
 
                 if (curPlayerBody)
                 {
+                    UE_LOG(LogTemp, Warning, TEXT("GS: the body is not create correctly"));
                     allPlayers.Add(curPlayerBody);
                 }
             }
@@ -72,26 +75,43 @@ void ARLGameState::createPlayerBody_Implementation(bool isDied, int index)
                 allPlayers[index] = curPlayerBody;
             }
         }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("GS: the player factory is not valid"));
+        }
     }
 }
 
 APlayerCharacter* ARLGameState::getPlayerBody(int controllerIndex)
 {
-    worldIndex = controllerIndex;
-    APlayerCharacter* returnPlayerBody = allPlayers[controllerIndex];
-    return returnPlayerBody;
+    if (controllerIndex < allPlayers.Num())
+    {
+        worldIndex = controllerIndex;
+        APlayerCharacter* returnPlayerBody = allPlayers[controllerIndex];
+        return returnPlayerBody;
+    }
+    return nullptr;
 }
 
+void ARLGameState::notifyBodyCreation_Implementation()
+{
+    AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
 
+    if (curGameMode)
+    {
+        curGameMode->updateAllPlayersBody(allPlayers);
+    }
+}
 void ARLGameState::playersReady_Implementation()
 {
     AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
 
     if (curGameMode)
     {
-        curGameMode->startIfAllPlayerLoggedIn(allPlayers);
+        curGameMode->startIfAllPlayerLoggedIn();
     }
 }
+
 
 void ARLGameState::spawnBoard_Implementation()
 {
@@ -160,11 +180,34 @@ void ARLGameState::closeShop_Implementation()
 
 TArray<APlayerCharacter*> ARLGameState::getAllPlayers() const
 {
-    /*
-    TArray<const APlayerCharacter*> safeCopy;
-    for (const auto* player : allPlayers) {
-        safeCopy.Add(player);
-    }
-    return safeCopy;*/
     return allPlayers;
+}
+
+void ARLGameState::initAIPlayers_Implementation(int numberOfAIPlayers)
+{
+    AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(GetWorld()->GetAuthGameMode());
+
+    if (curGameMode)
+    {
+        UFactoryPlayer* playerFac = curGameMode->playerFactoryInstance;
+
+        if (playerFac)
+        {
+            for (int i = 0; i < numberOfAIPlayers; i++)
+            {
+                AActor* createdBodyActor = playerFac->createRLActor(TEXT("testing"), FVector(500.0f, 0.0f, 0.0f), FRotator::ZeroRotator);
+                APlayerCharacter* aiBody = Cast<APlayerCharacter>(createdBodyActor);
+
+                AActor* createdControllerActor = playerFac->createRLActor(TEXT("aiController"), FVector(500.0f, 0.0f, 0.0f), FRotator::ZeroRotator);
+                AAIRLController* aiController = Cast<AAIRLController>(createdControllerActor);
+
+                if (aiBody && aiController)
+                {
+                    aiController->Possess(aiBody);
+                    allPlayers.Add(aiBody);
+                    notifyBodyCreation();
+                }
+            }
+        }
+    }
 }

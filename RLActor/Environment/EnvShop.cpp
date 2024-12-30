@@ -33,17 +33,25 @@ void AEnvShop::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 void AEnvShop::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UE_LOG(LogTemp, Warning, TEXT("Shop: begin play"));
 }
 
-FString AEnvShop::GetActorName()
+FString AEnvShop::GetActorName(ELanguage curLanguage)
 {
 	return TEXT("shop");
 }
 
-FString AEnvShop::GetDescription()
+FString AEnvShop::GetDescription(ELanguage curLanguage)
+{
+	return TEXT("a place to recruit army");
+}
+
+FString AEnvShop::GetInteractionDescription(ELanguage curLanguage)
 {
 	return TEXT("buy things");
 }
+
 
 bool AEnvShop::IsAbleToBeInteracted(APlayerCharacter* Sender)
 {
@@ -221,10 +229,13 @@ void AEnvShop::fullFill_Implementation(APlayerCharacter* controlledPlayer)
 	{
 		if (randomProduct)
 		{
-			randomProduct->BeInteracted(controlledPlayer);
+			randomProduct->inShopInteractedEffect(controlledPlayer);
 		}
 		randomProduct = selectRandomProduct();
 	}
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("GAMEMODE BEGIN PLAY"));
+
 }
 
 APiece* AEnvShop::selectRandomProduct()

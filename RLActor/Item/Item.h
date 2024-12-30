@@ -19,9 +19,11 @@ public:
 	AItem();
 
 public:
-	virtual FString GetActorName() override;
+	virtual FString GetActorName(ELanguage curLanguage) override;
 
-	virtual FString GetDescription() override;
+	virtual FString GetDescription(ELanguage curLanguage) override;
+
+	virtual FString GetInteractionDescription(ELanguage curLanguage) override;
 
 	virtual bool IsAbleToBeInteracted(APlayerCharacter* Sender) override;
 
@@ -41,6 +43,8 @@ protected:
 	FString itemName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Stats")
 	FString itemDescription;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Stats")
+	FString itemInteractionDesc;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item Stats")
 	UStaticMeshComponent* itemBody;

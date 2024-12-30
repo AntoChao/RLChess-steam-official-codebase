@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -10,7 +8,6 @@
 
 #include "../RLActor.h"
 #include "../RLProduct.h"
-#include "../../CommonEnum.h"
 #include "Piece.generated.h"
 
 class UBoxComponent;
@@ -36,30 +33,13 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionOne(); // piece set piece color
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionTwo(); // piece be place
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionThree(); // piece be placed in shop
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionFour(); // piece be placed in bench
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionFive(); // piece be placed in board
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionSix(); // piece start moving
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionSeven(); // piece end moving
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionEight();
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionNine(); 
 	/* RLActor functions*/
 public:
-	virtual FString GetActorName() override;
+	virtual FString GetActorName(ELanguage curLanguage) override;
 
-	virtual FString GetDescription() override;
+	virtual FString GetDescription(ELanguage curLanguage) override;
+
+	virtual FString GetInteractionDescription(ELanguage curLanguage) override;
 
 	virtual bool IsAbleToBeInteracted(APlayerCharacter* Sender) override;
 
@@ -67,7 +47,6 @@ public:
 	virtual void BeInteracted(APlayerCharacter* Sender) override;
 
 	virtual void BeUnInteracted(APlayerCharacter* Sender) override;
-
 
 	virtual int GetProductCost() override;
 
@@ -111,13 +90,31 @@ protected:
 	/* Piece information*/
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
-	FString pieceName;
+	FString pieceNameEng;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
-	FString pieceDescription;
+	FString pieceNameChi;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	FString pieceNameSpa;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	FString pieceDescriptionEng;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	FString pieceDescriptionChi;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	FString pieceDescriptionSpa;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	FString pieceInteractDescriptionEng;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	FString pieceInteractDescriptionChi;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	FString pieceInteractDescriptionSpa;
+
+
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
 	FColor pieceColor;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
-	int pieceLevel;
+	int pieceLevel = 1;
 
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")

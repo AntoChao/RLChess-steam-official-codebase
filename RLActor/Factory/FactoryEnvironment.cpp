@@ -8,8 +8,6 @@
 
 void UFactoryEnvironment::spawnRLActor_Implementation(const FString& name, FVector aLocation, FRotator aRotation)
 {
-    UE_LOG(LogTemp, Warning, TEXT("RLFactory Environment: create RLActor_Implementataion"));
-
     if (gameWorld)
     {
         if (name == TEXT("Board"))

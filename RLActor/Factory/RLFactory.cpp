@@ -24,20 +24,14 @@ AActor* URLFactory::createRLActor(const FString& name, FVector aLocation, FRotat
 
 void URLFactory::spawnRLActor_Implementation(const FString& name, FVector aLocation, FRotator aRotation)
 {
-    if (!GEngine || !GWorld)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("RLFactory: Engine or World context is null!"));
-    }
 }
 
 AActor* URLFactory::createRandom(FVector aLocation, FRotator aRotation)
 {
-    UE_LOG(LogTemp, Warning, TEXT("RLFactory: createRandom called"));
     return nullptr;
 }
 
 AActor* URLFactory::createRLActorByCode(int code, FVector aLocation, FRotator aRotation)
 {
-    UE_LOG(LogTemp, Warning, TEXT("RLFactory: createByCode called"));
     return nullptr;
 }

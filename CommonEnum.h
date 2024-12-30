@@ -6,7 +6,15 @@
 #include "CommonEnum.generated.h"
 
 UENUM(BlueprintType, Blueprintable)
-enum class EGameMode: uint8 {
+enum class ELanguage : uint8 {
+	EEnglish,
+	EChinese,
+	ESpanish,
+	EEnd
+};
+
+UENUM(BlueprintType, Blueprintable)
+enum class EGameModeEnum: uint8 {
 	EInit,
 	ELobby,
 	EGameplay,

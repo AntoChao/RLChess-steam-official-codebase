@@ -16,6 +16,7 @@ class USceneComponent;
 class USkeletalMeshComponent;
 class UCameraComponent;
 struct FInputActionValue;
+class UHUDGameplay;
 
 class UAnimMontage;
 class USoundBase;
@@ -46,28 +47,7 @@ class APlayerCharacter : public ACharacter, public IRLActor
 public:
 	APlayerCharacter();
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionOne(); // selectPlacePieceLocationByPreviewMesh()
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionTwo(); // setSelectedSquare()
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionThree(); // setSelectedSquareValue_Implementation
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionFour(); // setSelectedSquareEffect 1
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionFive(); // setSelectedSquareEffect 2
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionSix(); // player receive product
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionSeven(); // player start turn
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunctionEight(); // player end turn
-
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
-	void debugFunction();
 
 protected:
 	virtual void BeginPlay() override;
@@ -111,6 +91,14 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Item Effect")
 	void OnRep_selectedMaterial();
 
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
+	UHUDGameplay* PlayerHUD;
+
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void updateWidget();
+
 	/* character basic stats*/
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
@@ -134,10 +122,10 @@ protected:
 	int rangeRank = 1;
 
 	/* shopping*/
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
-	int totalMoney = 5;
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
-	int curMoney = 5;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	int totalMoney = 16;
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Character Stats")
+	int curMoney = 16;
 
 	/* inventory*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
@@ -245,9 +233,11 @@ public:
 
 	/* RL actor functions */
 public:
-	virtual FString GetActorName() override;
+	virtual FString GetActorName(ELanguage curLanguage) override;
 
-	virtual FString GetDescription() override;
+	virtual FString GetDescription(ELanguage curLanguage) override;
+
+	virtual FString GetInteractionDescription(ELanguage curLanguage) override;
 
 	virtual bool IsAbleToBeInteracted(APlayerCharacter* Sender) override;
 
@@ -405,7 +395,7 @@ public:
 	void setIsPossessedByAI(bool status, AAIRLController* aAIController);
 
 	UFUNCTION(BlueprintCallable, Category = "AI Controller")
-	void initializeArmy();
+	void initializeRandomArmy();
 
 	UFUNCTION(BlueprintCallable, Category = "AI Controller")
 	TArray<APiece*> getArmy();
@@ -416,7 +406,5 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "AI Controller")
 	AEnvSquare* selectRandomBenchSquare();
 
-	UFUNCTION(BlueprintCallable, Category = "AI Controller")
-	void aiSelectMovement();
 };
 

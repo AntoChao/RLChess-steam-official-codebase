@@ -20,14 +20,64 @@ APiecePreviewMesh::APiecePreviewMesh()
     previewStaticBody->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block); // Block visibility traces
 }
 
-FString APiecePreviewMesh::GetActorName()
+FString APiecePreviewMesh::GetActorName(ELanguage curLanguage)
 {
-    return previewPieceName;
+	switch (curLanguage)
+	{
+	case ELanguage::EEnglish:
+	{
+		return piecePrevoewNameEng;
+	}
+	case ELanguage::EChinese:
+	{
+		return piecePreviewNameChi;
+	}
+	case ELanguage::ESpanish:
+	{
+		return piecePreviewNameSpa;
+	}
+	}
+	return piecePrevoewNameEng;
 }
 
-FString APiecePreviewMesh::GetDescription()
+FString APiecePreviewMesh::GetDescription(ELanguage curLanguage)
 {
-    return previewPieceDescription;
+	switch (curLanguage)
+	{
+	case ELanguage::EEnglish:
+	{
+		return piecePreviewDescriptionEng;
+	}
+	case ELanguage::EChinese:
+	{
+		return piecePreviewDescriptionChi;
+	}
+	case ELanguage::ESpanish:
+	{
+		return piecePreviewDescriptionSpa;
+	}
+	}
+	return piecePreviewDescriptionEng;
+}
+
+FString APiecePreviewMesh::GetInteractionDescription(ELanguage curLanguage)
+{
+	switch (curLanguage)
+	{
+	case ELanguage::EEnglish:
+	{
+		return piecePreviewInteractDescEng;
+	}
+	case ELanguage::EChinese:
+	{
+		return piecePreviewInteractDescChi;
+	}
+	case ELanguage::ESpanish:
+	{
+		return piecePreviewInteractDescSpa;
+	}
+	}
+	return piecePreviewInteractDescEng;
 }
 
 bool APiecePreviewMesh::IsAbleToBeInteracted(APlayerCharacter* Sender)
@@ -48,6 +98,10 @@ void APiecePreviewMesh::BeginPlay()
 {
     Super::BeginPlay();
 
+}
+
+void APiecePreviewMesh::setMaterial(UMaterialInterface* selectedMaterial)
+{
     if (selectedMaterial && previewStaticBody)
     {
         int32 MaterialCount = previewStaticBody->GetNumMaterials();

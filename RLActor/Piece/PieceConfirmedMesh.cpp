@@ -20,7 +20,10 @@ APieceConfirmedMesh::APieceConfirmedMesh()
 void APieceConfirmedMesh::BeginPlay()
 {
     Super::BeginPlay();
+}
 
+void APieceConfirmedMesh::setMaterial(UMaterialInterface* selectedMaterial)
+{
     if (selectedMaterial && confirmedStaticBody)
     {
         int32 MaterialCount = confirmedStaticBody->GetNumMaterials();
@@ -31,4 +34,79 @@ void APieceConfirmedMesh::BeginPlay()
     }
 
     confirmedStaticBody->SetVisibility(true);
+}
+
+FString APieceConfirmedMesh::GetActorName(ELanguage curLanguage)
+{
+    switch (curLanguage)
+    {
+    case ELanguage::EEnglish:
+    {
+        return pieceConfirmNameEng;
+    }
+    case ELanguage::EChinese:
+    {
+        return pieceConfirmNameChi;
+    }
+    case ELanguage::ESpanish:
+    {
+        return pieceConfirmNameSpa;
+    }
+    }
+    return pieceConfirmNameEng;
+}
+
+FString APieceConfirmedMesh::GetDescription(ELanguage curLanguage)
+{
+    switch (curLanguage)
+    {
+    case ELanguage::EEnglish:
+    {
+        return pieceConfirmDescriptionEng;
+    }
+    case ELanguage::EChinese:
+    {
+        return pieceConfirmDescriptionChi;
+    }
+    case ELanguage::ESpanish:
+    {
+        return pieceConfirmDescriptionSpa;
+    }
+    }
+    return pieceConfirmDescriptionEng;
+}
+
+FString APieceConfirmedMesh::GetInteractionDescription(ELanguage curLanguage)
+{
+    switch (curLanguage)
+    {
+    case ELanguage::EEnglish:
+    {
+        return pieceConfirmInteractDescEng;
+    }
+    case ELanguage::EChinese:
+    {
+        return pieceConfirmInteractDescChi;
+    }
+    case ELanguage::ESpanish:
+    {
+        return pieceConfirmInteractDescSpa;
+    }
+    }
+    return pieceConfirmInteractDescEng;
+}
+
+bool APieceConfirmedMesh::IsAbleToBeInteracted(APlayerCharacter* Sender)
+{
+    return false;
+}
+
+void APieceConfirmedMesh::BeInteracted(APlayerCharacter* Sender)
+{
+    return;
+}
+
+void APieceConfirmedMesh::BeUnInteracted(APlayerCharacter* Sender)
+{
+    return;
 }

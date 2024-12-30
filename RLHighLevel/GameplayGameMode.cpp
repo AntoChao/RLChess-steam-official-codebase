@@ -10,6 +10,7 @@
 #include "../RLActor/Player/PlayerCharacter.h"
 #include "../RLActor/Player/PlayerRLController.h"
 
+#include "../RLActor/AI/AIRLController.h"
 #include "RLGameState.h"
 
 AGameplayGameMode::AGameplayGameMode() {
@@ -19,24 +20,31 @@ void AGameplayGameMode::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
     
+    setupSingletonClasses();
+
     APlayerRLController* rlController = Cast<APlayerRLController>(NewPlayer);
     rlController->setPlayerIndex(allPlayerControllers.Num());
 
     allPlayerControllers.Add(rlController);
+
+    UE_LOG(LogTemp, Warning, TEXT("GM: One player log in"))
 }
 
 void AGameplayGameMode::Logout(AController* Exiting)
 {
     Super::Logout(Exiting);
+
+    UE_LOG(LogTemp, Warning, TEXT("GM: One player log out"));
 }
 
 void AGameplayGameMode::BeginPlay()
 {
 	Super::BeginPlay();
     
-    // GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("GAMEMODE BEGIN PLAY"));
+    UE_LOG(LogTemp, Warning, TEXT("GM: begin play"));
 
 	setupGame(); // create everything
+
 
 }
 
@@ -70,27 +78,9 @@ void AGameplayGameMode::setupSingletonClasses()
     }
 }
 
-void AGameplayGameMode::startIfAllPlayerLoggedIn(TArray<APlayerCharacter*> allPlayerBody)
-{
-    allPlayers = allPlayerBody;
-
-    if (allPlayers.Num() == numberOfPlayers)
-    {
-        startSetUpRound();
-        startGameplayRound();
-    }
-}
-
-void AGameplayGameMode::startSetUpRound()
-{
-    initMap();
-
-    setPlayerBench();
-    setPlayerInitLocation();
-}
-
 void AGameplayGameMode::spawnMap()
 {
+    UE_LOG(LogTemp, Warning, TEXT("map created"));
     UWorld* serverWorld = GetWorld();
     if (serverWorld)
     {
@@ -102,8 +92,75 @@ void AGameplayGameMode::spawnMap()
         }
     }
 }
+void AGameplayGameMode::updateAllPlayersBody(TArray<APlayerCharacter*> allPlayerBody)
+{
+    allPlayers = allPlayerBody;
+}
+void AGameplayGameMode::startIfAllPlayerLoggedIn()
+{
+    if (allPlayers.Num() == numberOfHumanPlayers)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("GM: all players logged in"));
+        for (APlayerCharacter* eachPlayer : allPlayers)
+        {
+            allRestColor.Remove(eachPlayer->getPlayerColor());
+        }
+
+        initAIPlayers();
+
+        startSetUpRound();
+        startGameplayRound();
+    }
+}
+
+void AGameplayGameMode::startSetUpRound()
+{
+    UE_LOG(LogTemp, Warning, TEXT("GM: start setup round"));
+
+    initMap();
+
+    setPlayerBench();
+    setPlayerInitLocation();
+}
+
+void AGameplayGameMode::initAIPlayers()
+{
+    UWorld* serverWorld = GetWorld();
+    if (serverWorld)
+    {
+        ARLGameState* serverGameState = Cast<ARLGameState>(serverWorld->GetGameState());
+        if (serverGameState)
+        {
+            // serverGameState->initAIPlayers(numberOfAIPlayers);
+            for (int i = 0; i < numberOfAIPlayers; i++)
+            {
+                AActor* createdControllerActor = playerFactoryInstance->createRLActor(TEXT("aiController"), FVector(500.0f, 0.0f, 0.0f), FRotator::ZeroRotator);
+                AAIRLController* aiController = Cast<AAIRLController>(createdControllerActor);
+
+                if (aiController)
+                {
+                    aiController->setIndex(allPlayerControllers.Num() + i);
+                    
+                    int32 randomIndex = FMath::RandRange(0, allRestColor.Num()-1);
+                    FColor randomColor = allRestColor[randomIndex];
+                    aiController->setAIPlayerColor(randomColor);
+                    allRestColor.Remove(randomColor);
+
+                    aiController->gameStateCreateBody();
+
+                    if (allPlayerControllers.Num() == numberOfAIPlayers + numberOfHumanPlayers)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
 void AGameplayGameMode::initMap()
 {
+    UE_LOG(LogTemp, Warning, TEXT("GM: initialize map"));
     UWorld* serverWorld = GetWorld();
     if (serverWorld)
     {
@@ -118,12 +175,13 @@ void AGameplayGameMode::initMap()
 
 void AGameplayGameMode::setPlayerBench()
 {
+    UE_LOG(LogTemp, Warning, TEXT("GM: set player bench"));
+
     for (APlayerCharacter* eachPlayer : allPlayers)
     {
         if (eachPlayer)
         {
             eachPlayer->setUpBench();
-            // eachPlayer->setPlayerBench(board->getAllSquaresOfSpecificColor(eachPlayer->getPlayerColor()));
         }
     }
 }
@@ -143,6 +201,7 @@ void AGameplayGameMode::setPlayerInitLocation()
                 {
                     if (allPlayers[i])
                     {
+                        UE_LOG(LogTemp, Warning, TEXT("GM: Set up player location"));
                         FVector spawnLocation = gameBoard->getSpawnStartPositionForPlayer(i) + FVector(0.0f, 0.0f, playerSpawnHeight);
                         FRotator spawnRotation = gameBoard->getSpawnStartRotationForPlayer(i);
 
@@ -163,6 +222,8 @@ void AGameplayGameMode::startGameplayRound()
 // give one minutes to let player do anything they want
 void AGameplayGameMode::startPlayerSetUpTime()
 {
+    UE_LOG(LogTemp, Warning, TEXT("GM: start player set up time"));
+
     UWorld* serverWorld = GetWorld();
     if (serverWorld)
     {
@@ -184,6 +245,8 @@ void AGameplayGameMode::startPlayerSetUpTime()
 
 void AGameplayGameMode::endPlayerSetUpTime()
 {
+    UE_LOG(LogTemp, Warning, TEXT("GM: end player setup time"));
+
     if (UWorld* World = GetWorld())
     {
         ARLGameState* serverGameState = Cast<ARLGameState>(World->GetGameState());
@@ -214,6 +277,8 @@ void AGameplayGameMode::endPlayerSetUpTime()
 
 void AGameplayGameMode::startPlayerPreparePhase()
 {
+    UE_LOG(LogTemp, Warning, TEXT("GM: start player prepare phase"));
+
     if (checkIfGameEnd())
     {
         endGameplayGameMode();
@@ -240,6 +305,9 @@ void AGameplayGameMode::startPlayerPreparePhase()
 
 void AGameplayGameMode::startPieceMovingPhase()
 {
+    UE_LOG(LogTemp, Warning, TEXT("GM: start pieces moving phase"));
+
+
     // unable player selecting piece
     for (APlayerCharacter* eachPlayer : allPlayers)
     {
@@ -288,13 +356,27 @@ bool AGameplayGameMode::checkIfGameEnd()
 {
     int alivePlayerCounter = 0;
 
-    for (APlayerRLController* aPlayer : allPlayerControllers)
+    for (AController* rlController : allPlayerControllers)
     {
-        if (aPlayer && !aPlayer->isDied)
+        APlayerRLController* aPlayer = Cast<APlayerRLController>(rlController);
+        AAIRLController* aAIPlayer = Cast<AAIRLController>(rlController);
+        if (aPlayer)
         {
-            alivePlayerCounter++;
-            winner = aPlayer;
+            if (aPlayer && !aPlayer->isDied)
+            {
+                alivePlayerCounter++;
+                winner = aPlayer;
+            }
         }
+        else if (aAIPlayer)
+        {
+            if (aAIPlayer && !aAIPlayer->isDied)
+            {
+                alivePlayerCounter++;
+                winner = aAIPlayer;
+            }
+        }
+        
     }
 
     return alivePlayerCounter <= 1;
