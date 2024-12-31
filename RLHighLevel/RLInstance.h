@@ -72,13 +72,20 @@ public:
 	virtual void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
 	UFUNCTION(BlueprintCallable)
+	void CreateServer();
+
+	UFUNCTION(BlueprintCallable)
+	void JoinServerSimple();
+
+	/*
+	UFUNCTION(BlueprintCallable)
 	void CreateServer(FName sessionName, int numPlayers);
 
 	UFUNCTION(BlueprintCallable)
 	void SearchServer();
 
 	UFUNCTION(BlueprintCallable)
-	void JoinServer(int32 SessionIndex);
+	void JoinServer(int32 SessionIndex);*/
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Level Control")
