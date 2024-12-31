@@ -58,6 +58,77 @@ void URLInstance::Init()
 	}
 }
 
+void URLInstance::OnCreateSessionComplete(FName SessionName, bool Succeeded)
+{
+	if (Succeeded)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Create Server Success"));
+		GetWorld()->ServerTravel("/Game/HighLevel/GameplayLevel?listen");
+	}
+}
+
+void URLInstance::OnFindSessionComplete(bool Succeeded)
+{
+	if (Succeeded)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Find session completed"));
+
+		TArray<FOnlineSessionSearchResult> SearchResults = SessionSearch->SearchResults;
+		UE_LOG(LogTemp, Warning, TEXT("Find session num: %d"), SearchResults.Num());
+		if (SearchResults.Num())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Try joining session"));
+
+			SessionInterface->JoinSession(0, FName("Crete Session"), SearchResults[0]);
+		}
+	}
+}
+
+void URLInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Join session completed"));
+
+	if (APlayerController* PController = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+	{
+		FString JoinAddress = "";
+		SessionInterface->GetResolvedConnectString(SessionName, JoinAddress);
+		if (JoinAddress != "")
+		{
+			PController->ClientTravel(JoinAddress, ETravelType::TRAVEL_Absolute);
+		}
+	}
+}
+
+void URLInstance::CreateServer()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Create Server"));
+	FOnlineSessionSettings SessionSettings;
+	SessionSettings.bAllowJoinInProgress = true;
+	SessionSettings.bIsDedicated = false;
+	SessionSettings.bIsLANMatch = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
+	SessionSettings.bShouldAdvertise = true;
+	SessionSettings.bUsesPresence = true;
+	SessionSettings.NumPublicConnections = 5;
+
+	SessionInterface->CreateSession(0, FName("Crete Session"), SessionSettings);
+}
+
+void URLInstance::JoinServerSimple()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Try Join Server -> Find session"));
+
+	SessionSearch = MakeShareable(new FOnlineSessionSearch());
+	SessionSearch->bIsLanQuery = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
+	SessionSearch->MaxSearchResults = 10000;
+	SessionSearch->QuerySettings.Set("SEARCH_PRESENCE", true, EOnlineComparisonOp::Equals);
+
+	SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
+	
+}
+
+
+
+/*
 void URLInstance::CreateServer(FName sessionName, int numPlayers)
 {
 	UE_LOG(LogTemp, Warning, TEXT("CreateServer"));
@@ -157,7 +228,7 @@ void URLInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionComplet
 		}
 	}
 }
-
+*/
 
 EGameModeEnum URLInstance::getCurGameMode() {
 	return curGameMode;
