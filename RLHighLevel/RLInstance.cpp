@@ -58,27 +58,89 @@ void URLInstance::Init()
 	}
 }
 
+void URLInstance::CreateServer(FName sessionName, int numPlayers)
+{
+	UE_LOG(LogTemp, Warning, TEXT("CreateServer"));
+	FOnlineSessionSettings SessionSettings;
+	SessionSettings.bAllowJoinInProgress = true;
+	SessionSettings.bIsDedicated = false;
+	SessionSettings.bIsLANMatch = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
+	SessionSettings.bShouldAdvertise = true;
+	SessionSettings.bUsesPresence = true;
+	SessionSettings.NumPublicConnections = numPlayers;
+
+	// SessionInterface->CreateSession(0, sessionName, SessionSettings);
+	SessionInterface->CreateSession(0, sessionName, SessionSettings);
+}
+
 void URLInstance::OnCreateSessionComplete(FName SessionName, bool Succeeded)
 {
 	if (Succeeded)
 	{
 		// GetWorld()->ServerTravel("/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap?listen");
 		UE_LOG(LogTemp, Warning, TEXT("Session created succeeed: %d"), Succeeded);
-		GetWorld()->ServerTravel("/Game/HighLevel/GameplayLevel?listen");
+		if (!testing)
+		{
+			GetWorld()->ServerTravel("/Game/HighLevel/GameplayLevel?listen");
+		}
 	}
+}
+
+void URLInstance::SearchServer()
+{
+	foundSuccessed = false;
+
+	UE_LOG(LogTemp, Warning, TEXT("Server searching"));
+
+	SessionSearch = MakeShareable(new FOnlineSessionSearch());
+	SessionSearch->bIsLanQuery = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
+	SessionSearch->MaxSearchResults = 10000;
+	SessionSearch->QuerySettings.Set("SEARCH_PRESENCE", true, EOnlineComparisonOp::Equals);
+
+	SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
 }
 
 void URLInstance::OnFindSessionComplete(bool Succeeded)
 {
-	if (Succeeded)
+	
+	foundSuccessed = Succeeded;
+	if (Succeeded && SessionSearch.IsValid())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("On Find Session succeeed: %d"), Succeeded);
 		TArray<FOnlineSessionSearchResult> SearchResults = SessionSearch->SearchResults;
 
-		if (SearchResults.Num())
+		UE_LOG(LogTemp, Warning, TEXT("On Find Session succeeded: %d"), Succeeded);
+		// TArray<FOnlineSessionSearchResult> SearchResults = SessionSearch->SearchResults; // Assuming these are now by value
+		UE_LOG(LogTemp, Warning, TEXT("Session result found num: %d"), SearchResults.Num());
+
+		if (SearchResults.Num() > 0)
 		{
-			SessionInterface->JoinSession(0, FName("Crete Session"), SearchResults[0]);
+			SessionList.Empty();
+			for (int32 i = 0; i < SearchResults.Num(); ++i)
+			{
+				FOnlineSessionSearchResult& SearchResult = SearchResults[i];
+				FSessionInfo Info;
+				Info.SessionIndex = i;
+				Info.SessionName = SearchResult.GetSessionIdStr();
+				Info.CurrentPlayers = SearchResult.Session.SessionSettings.NumPublicConnections -
+					SearchResult.Session.NumOpenPublicConnections;
+				Info.MaxPlayers = SearchResult.Session.SessionSettings.NumPublicConnections;
+				SessionList.Add(Info);
+				
+				UE_LOG(LogTemp, Warning, TEXT("Session search info created"));
+			}
 		}
+	}
+}
+
+void URLInstance::JoinServer(int32 SessionIndex)
+{
+	if (SessionInterface.IsValid() && SessionList.IsValidIndex(SessionIndex))
+	{
+		const FSessionInfo& SelectedSession = SessionList[SessionIndex];
+		FName SessionName(*SelectedSession.SessionName);
+		FOnlineSessionSearchResult SearchResult = SessionSearch->SearchResults[SessionIndex];
+
+		SessionInterface->JoinSession(0, SessionName, SearchResult);
 	}
 }
 
@@ -94,30 +156,6 @@ void URLInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionComplet
 			PController->ClientTravel(JoinAddress, ETravelType::TRAVEL_Absolute);
 		}
 	}
-}
-
-void URLInstance::CreateServer()
-{
-	UE_LOG(LogTemp, Warning, TEXT("CreateServer"));
-	FOnlineSessionSettings SessionSettings;
-	SessionSettings.bAllowJoinInProgress = true;
-	SessionSettings.bIsDedicated = false;
-	SessionSettings.bIsLANMatch = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
-	SessionSettings.bShouldAdvertise = true;
-	SessionSettings.bUsesPresence = true;
-	SessionSettings.NumPublicConnections = 5;
-
-	SessionInterface->CreateSession(0, FName("Crete Session"), SessionSettings);
-}
-
-void URLInstance::JoinServer()
-{
-	SessionSearch = MakeShareable(new FOnlineSessionSearch());
-	SessionSearch->bIsLanQuery = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
-	SessionSearch->MaxSearchResults = 10000;
-	SessionSearch->QuerySettings.Set("SEARCH_PRESENCE", true, EOnlineComparisonOp::Equals);
-
-	SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
 }
 
 

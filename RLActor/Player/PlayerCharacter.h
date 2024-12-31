@@ -19,7 +19,7 @@ struct FInputActionValue;
 class UHUDGameplay;
 
 class UAnimMontage;
-class USoundBase;
+class USoundCue;
 
 class AAIRLController;
 
@@ -253,8 +253,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void look(FVector2D lookAxisVector);
 
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
+	UFUNCTION(BlueprintCallable, Category = "Control")
 	void move(FVector2D movementVector);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
+	void moveServer(FVector2D movementVector);
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Control")
 	void moveMulticast(FVector2D movementVector);
 
@@ -406,5 +408,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "AI Controller")
 	AEnvSquare* selectRandomBenchSquare();
 
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
+	USoundCue* selectPieceSC;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
+	USoundCue* unselectPieceSC;
 };
 
