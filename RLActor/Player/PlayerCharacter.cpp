@@ -11,6 +11,7 @@
 
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
 
 #include "../../RLHighLevel/GameplayGameMode.h"
 #include "../../RLHighLevel/RLGameState.h"
@@ -548,20 +549,42 @@ void APlayerCharacter::look(FVector2D lookAxisVector)
 	}
 }
 
-void APlayerCharacter::move_Implementation(FVector2D movementVector)
+void APlayerCharacter::move(FVector2D movementVector)
+{
+	if (IsLocallyControlled() && isAbleToMove)
+	{
+		if (GetController())
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("character local move"));
+			// find out which way is forward
+			const FRotator Rotation = GetController()->GetControlRotation();
+			const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+			const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+			const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+			// add movement 
+			AddMovementInput(ForwardDirection, movementVector.Y * move_XSensitivity);
+			AddMovementInput(RightDirection, movementVector.X * move_YSensitivity);
+
+			moveServer(movementVector);
+		}
+	}
+}
+
+void APlayerCharacter::moveServer_Implementation(FVector2D movementVector)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("character server move"));
 	moveMulticast(movementVector);
 }
 void APlayerCharacter::moveMulticast_Implementation(FVector2D movementVector)
 {
-
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("character multicast move"));
-	if (isAbleToMove)
+	if (IsLocallyControlled() && isAbleToMove)
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("character multicast move"));
+
 		if (GetController())
 		{
-
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("character move ok"));
 			// find out which way is forward
 			const FRotator Rotation = GetController()->GetControlRotation();
@@ -807,6 +830,7 @@ void APlayerCharacter::selectPiece(APiece* detectedPiece) // non rpc
 	if (detectedPiece)
 	{
 		setSelectedPiece(detectedPiece); // server
+		UGameplayStatics::PlaySoundAtLocation(this, selectPieceSC, GetActorLocation());
 
 		switch (detectedPiece->getPieceStatus())
 		{
@@ -881,6 +905,8 @@ bool APlayerCharacter::isAbleToPickUpItem()
 
 void APlayerCharacter::unselectPiece_Implementation() // Client
 {
+	UGameplayStatics::PlaySoundAtLocation(this, unselectPieceSC, GetActorLocation());
+
 	selectedPiece = nullptr;
 }
 

@@ -13,6 +13,8 @@
 class UBoxComponent;
 class UCurveFloat;
 class ARLGameState;
+class USoundCue;
+class UAudioComponent;
 
 class UStaticMeshComponent;
 class APiecePreviewMesh;
@@ -154,6 +156,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
 	UBoxComponent* pieceCollision;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
+	UAudioComponent* pieceAudioComponent;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")
 	TSubclassOf<APiecePreviewMesh> piecePreviewMeshClass;
 
@@ -396,5 +401,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	APieceConfirmedMesh* getSpawnedConfirmedMesh(FVector locationToSpawn);
 
+protected:
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Audio")
+	void playSound_server(USoundCue* aSoundCue);
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Audio")
+	void playSound_multicast(USoundCue* aSoundCue);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
+	USoundCue* pieceMovingSC;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
+	USoundCue* pieceColliedSC;
 };
 

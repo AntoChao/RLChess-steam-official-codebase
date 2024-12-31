@@ -9,6 +9,8 @@
 #include "Math/UnrealMathUtility.h"
 #include "Net/UnrealNetwork.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Components/AudioComponent.h"
+#include "Sound/SoundCue.h"
 
 #include "../../RLHighLevel/GameplayGameMode.h"
 #include "../../RLHighLevel/RLGameState.h"
@@ -46,6 +48,9 @@ APiece::APiece()
     pieceCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
     pieceCollision->SetCollisionObjectType(ECC_WorldDynamic);
     pieceCollision->SetCollisionResponseToAllChannels(ECR_Overlap);
+
+    pieceAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComponent"));
+    pieceAudioComponent->SetupAttachment(RootComponent);
 
     PrimaryActorTick.bCanEverTick = true;
 }
@@ -1200,4 +1205,18 @@ APieceConfirmedMesh* APiece::getSpawnedConfirmedMesh(FVector locationToSpawn)
         }
     }
     return nullptr;
+}
+
+void APiece::playSound_server_Implementation(USoundCue* aSoundCue)
+{
+    playSound_multicast(aSoundCue);
+}
+
+void APiece::playSound_multicast_Implementation(USoundCue* aSoundCue)
+{
+    if (aSoundCue && !pieceAudioComponent->IsPlaying())
+    {
+        pieceAudioComponent->SetSound(aSoundCue);
+        pieceAudioComponent->Play();
+    }
 }
