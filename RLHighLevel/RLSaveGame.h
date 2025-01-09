@@ -13,6 +13,9 @@ class URLSaveGame: public USaveGame
 
 public:
 	URLSaveGame();
+
+public:
+	FString playerNameSaved;
 };
 
 

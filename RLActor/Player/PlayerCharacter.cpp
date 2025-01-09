@@ -356,7 +356,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 		if (PC->PlayerState)
 		{
-			float Ping = PC->PlayerState->GetPing();
+			float Ping = PC->PlayerState->GetPingInMilliseconds();
 			if (Ping != 0.0f)
 			{
 				FString PingMessage = FString::Printf(TEXT("Current Ping: %f ms"), Ping);
@@ -537,7 +537,28 @@ void APlayerCharacter::BeUnInteracted(APlayerCharacter* Sender)
 
 void APlayerCharacter::openMenu(const FInputActionValue& Value)
 {
-	return;
+	if (menuHUD)
+	{
+		menuHUD->RemoveFromParent();
+		menuHUD = nullptr;
+	}
+	else
+	{
+		if (IsValid(menuHUDClass))
+		{
+			AController* theController = GetController();
+			APlayerController* thePlayerController = Cast<APlayerController>(theController);
+			if (thePlayerController)
+			{
+				menuHUD = CreateWidget<UUserWidget>(thePlayerController, menuHUDClass);
+
+				if (menuHUD)
+				{
+					menuHUD->AddToPlayerScreen();
+				}
+			}
+		}
+	}
 }
 
 void APlayerCharacter::look(FVector2D lookAxisVector)
@@ -574,7 +595,28 @@ void APlayerCharacter::move(FVector2D movementVector)
 
 void APlayerCharacter::moveServer_Implementation(FVector2D movementVector)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("character server move"));
+	/*
+	if (isAbleToMove)
+	{
+		if (GetController())
+		{
+
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("character server move"));
+			// find out which way is forward
+			const FRotator Rotation = GetController()->GetControlRotation();
+			const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+			const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+			const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+			// add movement 
+			AddMovementInput(ForwardDirection, movementVector.Y * move_XSensitivity);
+			AddMovementInput(RightDirection, movementVector.X * move_YSensitivity);
+
+			moveServer(movementVector);
+		}
+	}*/
+	
 	moveMulticast(movementVector);
 }
 void APlayerCharacter::moveMulticast_Implementation(FVector2D movementVector)

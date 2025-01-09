@@ -11,6 +11,9 @@
 #include "../RLActor/Player/PlayerRLController.h"
 
 #include "../RLActor/AI/AIRLController.h"
+
+#include "Blueprint/UserWidget.h"
+
 #include "RLGameState.h"
 
 AGameplayGameMode::AGameplayGameMode() {
@@ -384,5 +387,20 @@ bool AGameplayGameMode::checkIfGameEnd()
 
 void AGameplayGameMode::endGameplayGameMode()
 {
-    return;
+    for (AController* rlController : allPlayerControllers)
+    {
+        if (rlController)
+        {
+            APlayerRLController* theRLController = Cast<APlayerRLController>(rlController);
+            if (theRLController)
+            {
+                theRLController->createEndGameHUD();
+            }
+        }
+    }
+}
+
+TArray<AController*> AGameplayGameMode::GetAllPlayerControllers()
+{
+    return allPlayerControllers;
 }

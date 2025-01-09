@@ -15,23 +15,7 @@
 
 #include "RLInstance.generated.h"
 
-USTRUCT(BlueprintType)
-struct FSessionInfo
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadOnly, Category = "Session Info")
-	int32 SessionIndex;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Session Info")
-	FString SessionName;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Session Info")
-	int32 CurrentPlayers;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Session Info")
-	int32 MaxPlayers;
-};
+class UHUDLobby;
 
 UCLASS(minimalapi)
 class URLInstance: public UGameInstance
@@ -53,7 +37,7 @@ public:
 		void openNextLevel(EGameModeEnum gameToOpen);
 
 // online sessions steam
-	TSharedPtr<FOnlineSessionSearch> SessionSearch;
+	TSharedPtr<FOnlineSessionSearch> searchSettings;
 
 	IOnlineSessionPtr SessionInterface;
 
@@ -64,32 +48,74 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "Level Control")
 	bool testing = false;
+	
+	UPROPERTY(BlueprintReadWrite, Category = "Level Control")
+	FName curSessionName;
 
 	virtual void Init() override;
+	virtual void Shutdown() override;
 
-	virtual void OnCreateSessionComplete(FName SessionName, bool Succeeded);
-	virtual void OnFindSessionComplete(bool Succeeded);
-	virtual void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+	void createSaveFile();
+	FString generateRandomUserString();
+	void saveGame();
+	void loadGame();
+	
+	/* saved data*/
+	UPROPERTY(BlueprintReadWrite, Category = "Level Control")
+	FString curPlayerName;
+
+
+	/* multiplayer actions*/
+	UFUNCTION(BlueprintCallable)
+	void hostSession(FName sessionName, int numPlayers);
+	UFUNCTION(BlueprintCallable)
+	void hostSessionCompleted(FName sessionName, bool createdSession);
 
 	UFUNCTION(BlueprintCallable)
-	void CreateServer();
+	void searchForSessions();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Session Info")
+	UHUDLobby* searchWidget;
+	UFUNCTION(BlueprintCallable)
+	void setSearchWidget(UHUDLobby* aSearchWidget);
+	UFUNCTION(BlueprintCallable)
+	void searchForSessionsCompleted(bool searchCompleted);
 
 	UFUNCTION(BlueprintCallable)
-	void JoinServerSimple();
+	void joinSession(int32 SessionIndex);
 
-	/*
+	void joinSessionCompleted(FName sessionName, EOnJoinSessionCompleteResult::Type joinResult);
+	// void joinSessionCompleted(FName sessionName, EOnJoinSessionCompleteResult joinResult);
+	
 	UFUNCTION(BlueprintCallable)
-	void CreateServer(FName sessionName, int numPlayers);
+	bool travelToSession(FName sessionName);
 
 	UFUNCTION(BlueprintCallable)
-	void SearchServer();
+	void endSession();
+	UFUNCTION(BlueprintCallable)
+	void endSessionCompleted(FName sessionName, bool endedSession);
 
 	UFUNCTION(BlueprintCallable)
-	void JoinServer(int32 SessionIndex);*/
+	void destroySession(FName sessionName);
+	UFUNCTION(BlueprintCallable)
+	void destroySessionCompleted(FName sessionName, bool endedSession);
+
+	FOnCreateSessionCompleteDelegate createSessionsCompletedDelegate;
+	FDelegateHandle createSessionsCompletedHandle;
+	FOnFindSessionsCompleteDelegate searchForSessionsCompletedDelegate;
+	FDelegateHandle searchForSessionsCompletedHandle;
+	FOnJoinSessionCompleteDelegate joinSessionCompletedDelegate;
+	FDelegateHandle joinSessionCompletedHandle;
+	FOnEndSessionCompleteDelegate endSessionCompletedDelegate;
+	FDelegateHandle endSessionCompletedHandle;
+	FOnDestroySessionCompleteDelegate destroySessionCompletedDelegate;
+	FDelegateHandle destroySessionCompletedHandle;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Level Control")
 		EGameModeEnum getCurGameMode();
+
+	UFUNCTION(BlueprintCallable, Category = "Level Control")
+		void setLanguage(ELanguage aLanguage);
 
 	UFUNCTION(BlueprintCallable, Category = "Level Control")
 		ELanguage getLanguage();

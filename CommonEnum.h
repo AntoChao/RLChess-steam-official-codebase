@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
 #include "CommonEnum.generated.h"
 
 UENUM(BlueprintType, Blueprintable)
@@ -59,4 +60,23 @@ enum class EPieceMoveMode: uint8 {
 	EStaticJump,
 	ETeleport,
 	ENone
+};
+
+
+USTRUCT(BlueprintType)
+struct FSessionInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "Session Info")
+	int32 SessionIndex;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Session Info")
+	FString SessionName;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Session Info")
+	int32 CurrentPlayers;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Session Info")
+	int32 MaxPlayers;
 };

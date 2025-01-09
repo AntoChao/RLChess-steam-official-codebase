@@ -36,8 +36,20 @@ void APlayerRLController::BeginPlay() {
 
 	if (IsLocalPlayerController())
 	{
-		setupControllerBody();
+		initName();
 		setupWidget();
+		setupControllerBody();
+	}
+}
+
+void APlayerRLController::initName()
+{
+	URLInstance* gameInstance = Cast<URLInstance>(GetWorld()->GetGameInstance());
+
+	if (gameInstance)
+	{
+		playerName = gameInstance->curPlayerName;
+		UE_LOG(LogTemp, Error, TEXT("controller initName: %s"), *playerName);
 	}
 }
 
@@ -53,6 +65,21 @@ void APlayerRLController::setupWidget()
 		}
 	}
 }
+void APlayerRLController::createEndGameHUD()
+{
+	bShowMouseCursor = true;
+	SetInputMode(FInputModeUIOnly());
+	if (IsValid(endGameHUDClass)) {
+		endGameHUD = CreateWidget<UHUDGameplay>(this, endGameHUDClass);
+
+		if (endGameHUD)
+		{
+			updateWidgetLanguage();
+			endGameHUD->AddToPlayerScreen();
+		}
+	}
+}
+
 void APlayerRLController::updateWidgetLanguage()
 {
 	if (PlayerHUD)
@@ -86,6 +113,7 @@ void APlayerRLController::setPlayerIndex_Implementation(int curPlayerIndex)
 
 FString APlayerRLController::getPlayerName()
 {
+	/*
 	if (rlPlayerState)
 	{
 		return rlPlayerState->playerName;
@@ -93,7 +121,9 @@ FString APlayerRLController::getPlayerName()
 	else
 	{
 		return TEXT("no rl state");
-	}
+	}*/
+
+	return playerName;
 }
 FColor APlayerRLController::getPlayerColor()
 {

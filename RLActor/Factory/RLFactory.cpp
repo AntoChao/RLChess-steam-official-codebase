@@ -4,16 +4,6 @@
 URLFactory::URLFactory()
 {
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    // SpawnParams.Owner = nullptr; // No specific owner unless necessary
-    // SpawnParams.Instigator = nullptr;
-}
-
-void URLFactory::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-    //Replicate current health.
-    DOREPLIFETIME(URLFactory, createdActor);
 }
 
 AActor* URLFactory::createRLActor(const FString& name, FVector aLocation, FRotator aRotation)
