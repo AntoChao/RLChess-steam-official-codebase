@@ -245,6 +245,11 @@ public:
 
 	virtual void BeUnInteracted(APlayerCharacter* Sender) override;
 
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
+	TSubclassOf<UUserWidget> menuHUDClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
+	UUserWidget* menuHUD;
 	/* controller functions*/
 public:
 	UFUNCTION(BlueprintCallable, Category = "Control")

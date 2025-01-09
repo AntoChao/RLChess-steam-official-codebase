@@ -101,6 +101,7 @@ void APiece::BeginPlay()
     }
 
     initializeMaterials();
+    collisionPriority = 5 - pieceLevel;
 }
 
 void APiece::Tick(float DeltaTime)

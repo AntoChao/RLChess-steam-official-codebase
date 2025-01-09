@@ -36,6 +36,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
 	void debugFunction();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
+	FString playerName;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
 	TSubclassOf<UHUDGameplay> PlayerHUDClass;
@@ -47,6 +50,14 @@ protected:
 	void setupWidget();
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void updateWidgetLanguage();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
+	TSubclassOf<UUserWidget> endGameHUDClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
+	UUserWidget* endGameHUD;
+public :
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void createEndGameHUD();
 
 public:
 	APlayerRLController();
@@ -73,6 +84,9 @@ public:
 	// can not be server, because it has to be local controller
 	// usage -> host -> local + authority -> none/ server/ multicast
 	//		 -> client -> local + proxy -> none/ multicast
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void initName();
+
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
 	void setupControllerBody();
 

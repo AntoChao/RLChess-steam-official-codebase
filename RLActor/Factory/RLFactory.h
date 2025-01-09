@@ -15,16 +15,14 @@ protected:
     // Protected constructor for singleton pattern
     URLFactory();
 
-    void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
     FActorSpawnParameters SpawnParams;
    
 public:
     // Method to create an RLActor by name
-    UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Map Manager")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map Manager")
     UWorld* gameWorld = nullptr;
 
-    UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Map Manager")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map Manager")
     AActor* createdActor = nullptr;
     
     UFUNCTION(BlueprintCallable, Category = "RLFactory")

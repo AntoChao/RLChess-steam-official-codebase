@@ -176,7 +176,14 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
     AController* winner = nullptr;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
+    TSubclassOf<UUserWidget> gameResultHUDClass;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
+    UUserWidget* gameResultHUD;
 
+
+    UFUNCTION(BlueprintCallable, Category = "GameMode")
+    TArray<AController*> GetAllPlayerControllers();
 };
 
 
