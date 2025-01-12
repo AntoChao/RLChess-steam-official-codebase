@@ -445,7 +445,6 @@ void URLInstance::loadGame()
 	}
 }
 
-
 EGameModeEnum URLInstance::getCurGameMode() {
 	return curGameMode;
 }
