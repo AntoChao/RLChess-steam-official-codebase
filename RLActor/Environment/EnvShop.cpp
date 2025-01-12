@@ -39,12 +39,12 @@ void AEnvShop::BeginPlay()
 
 FString AEnvShop::GetActorName(ELanguage curLanguage)
 {
-	return TEXT("shop");
+	return TEXT("");
 }
 
 FString AEnvShop::GetDescription(ELanguage curLanguage)
 {
-	return TEXT("a place to recruit army");
+	return TEXT("");
 }
 
 FString AEnvShop::GetInteractionDescription(ELanguage curLanguage)

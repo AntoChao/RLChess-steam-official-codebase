@@ -394,12 +394,13 @@ void APlayerRLController::lookFunc(const FInputActionValue& Value) {
 }
 
 void APlayerRLController::moveFunc(const FInputActionValue& Value) {
-	validateRLPlayer();
 	if (rlPlayer) {
 		FVector2D moveVector = Value.Get<FVector2D>();
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("control move"));
 
-		rlPlayer->move(moveVector);
+		rlPlayer->moveForward(moveVector.Y);
+		rlPlayer->moveRight(moveVector.X);
+		// rlPlayer->move(moveVector);
 	}
 }
 
