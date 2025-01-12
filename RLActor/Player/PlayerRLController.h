@@ -195,6 +195,11 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void moveFunc(const FInputActionValue& Value);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
+	float move_XSensitivity = 1.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
+	float move_YSensitivity = 1.0f;
+
 
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void runFunc(const FInputActionValue& Value);

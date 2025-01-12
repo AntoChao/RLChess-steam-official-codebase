@@ -258,6 +258,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void look(FVector2D lookAxisVector);
 
+	/*testing*/
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void moveForward(int value);
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	void moveRight(int value);
+
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void move(FVector2D movementVector);
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
@@ -350,10 +356,6 @@ protected:
 	// move stats
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	bool isAbleToMove = true;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
-	float move_XSensitivity = 1.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
-	float move_YSensitivity = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	bool isRunning = false;

@@ -12,6 +12,8 @@
 
 #include "../RLActor/AI/AIRLController.h"
 
+#include "RLInstance.h"
+
 #include "Blueprint/UserWidget.h"
 
 #include "RLGameState.h"
@@ -101,6 +103,12 @@ void AGameplayGameMode::updateAllPlayersBody(TArray<APlayerCharacter*> allPlayer
 }
 void AGameplayGameMode::startIfAllPlayerLoggedIn()
 {
+    URLInstance* GI = Cast<URLInstance>(GetWorld()->GetGameInstance());
+    if (GI)
+    {
+        numberOfHumanPlayers = GI->sessionSize;
+    }
+
     if (allPlayers.Num() == numberOfHumanPlayers)
     {
         UE_LOG(LogTemp, Warning, TEXT("GM: all players logged in"));

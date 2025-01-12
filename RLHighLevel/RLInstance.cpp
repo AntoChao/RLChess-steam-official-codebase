@@ -80,17 +80,18 @@ void URLInstance::hostSession(FName sessionName, int numPlayers)
 			sessionSettings.bShouldAdvertise = true;
 
 			sessionSettings.NumPublicConnections = numPlayers;  // Total players including the host
-			sessionSettings.NumPrivateConnections = 0;
+			sessionSize = numPlayers + 1;
+			// sessionSettings.NumPrivateConnections = 0;
 
 			sessionSettings.bUsesPresence = true;
 			sessionSettings.bAllowJoinInProgress = true;
-			sessionSettings.bAllowInvites = true;
-			sessionSettings.bAllowJoinViaPresence = true;
-			sessionSettings.bAllowJoinViaPresenceFriendsOnly = true;
-
+			// sessionSettings.bAllowInvites = true;
+			// sessionSettings.bAllowJoinViaPresence = true;
+			// sessionSettings.bAllowJoinViaPresenceFriendsOnly = true;
 			sessionSettings.Set(FName("SESSION_NAME"), sessionName.ToString(), EOnlineDataAdvertisementType::ViaOnlineService); // Storing session name
 
 			const ULocalPlayer* localPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+			// if (onlineSessionInterface->CreateSession(0, sessionName, sessionSettings)) //*sessionSettings
 			if (onlineSessionInterface->CreateSession(*localPlayer->GetPreferredUniqueNetId(), sessionName, sessionSettings)) //*sessionSettings
 			{
 				UE_LOG(LogTemp, Error, TEXT("A session has been created"));
@@ -104,6 +105,20 @@ void URLInstance::hostSession(FName sessionName, int numPlayers)
 		}
 	}
 }
+/*
+void URLInstance::CreateServer()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Create Server"));
+	FOnlineSessionSettings SessionSettings;
+	SessionSettings.bAllowJoinInProgress = true;
+	SessionSettings.bIsDedicated = false;
+	SessionSettings.bIsLANMatch = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
+	SessionSettings.bShouldAdvertise = true;
+	SessionSettings.bUsesPresence = true;
+	SessionSettings.NumPublicConnections = 5;
+
+	SessionInterface->CreateSession(0, FName("Crete Session"), SessionSettings);
+}*/
 
 void URLInstance::hostSessionCompleted(FName sessionName, bool createdSession)
 {
@@ -128,7 +143,15 @@ void URLInstance::hostSessionCompleted(FName sessionName, bool createdSession)
 		}
 	}
 }
-
+/*
+void URLInstance::OnCreateSessionComplete(FName SessionName, bool Succeeded)
+{
+	if (Succeeded)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Create Server Success"));
+		GetWorld()->ServerTravel("/Game/HighLevel/GameplayLevel?listen");
+	}
+}*/
 void URLInstance::setSearchWidget(UHUDLobby* aSearchWidget)
 {
 	searchWidget = aSearchWidget;
@@ -145,10 +168,14 @@ void URLInstance::searchForSessions()
 			searchSettings = MakeShareable(new FOnlineSessionSearch());
 			searchSettings->bIsLanQuery = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
 			searchSettings->MaxSearchResults = 10000;
-			searchSettings->PingBucketSize = 60;
-			searchSettings->TimeoutInSeconds = 10.0f;
+			searchSettings->QuerySettings.Set("SEARCH_PRESENCE", true, EOnlineComparisonOp::Equals);
+
+			// searchSettings->PingBucketSize = 60;
+			// searchSettings->TimeoutInSeconds = 10.0f;
 
 			const ULocalPlayer* localPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+			// if (onlineSessionInterface->FindSessions(0, searchSettings.ToSharedRef()))
+
 			if (onlineSessionInterface->FindSessions(*localPlayer->GetPreferredUniqueNetId(), searchSettings.ToSharedRef()))
 			{
 				UE_LOG(LogTemp, Error, TEXT("search started"));
@@ -160,7 +187,20 @@ void URLInstance::searchForSessions()
 		}
 	}
 }
+/*
+void URLInstance::SearchServer()
+{
+	foundSuccessed = false;
 
+	UE_LOG(LogTemp, Warning, TEXT("Server searching"));
+
+	SessionSearch = MakeShareable(new FOnlineSessionSearch());
+	SessionSearch->bIsLanQuery = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
+	SessionSearch->MaxSearchResults = 10000;
+	SessionSearch->QuerySettings.Set("SEARCH_PRESENCE", true, EOnlineComparisonOp::Equals);
+
+	SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
+}*/
 void URLInstance::searchForSessionsCompleted(bool Succeeded)
 {
 	foundSuccessed = Succeeded;
@@ -229,6 +269,7 @@ void URLInstance::joinSession(int32 SessionIndex)
 				FOnlineSessionSearchResult SearchResult = searchSettings->SearchResults[SessionIndex];
 
 				onlineSessionInterface->JoinSession(*localPlayer->GetPreferredUniqueNetId(), SessionName, SearchResult);
+				// onlineSessionInterface->JoinSession(0, SessionName, SearchResult);
 			}
 		}
 	}
@@ -378,6 +419,7 @@ void URLInstance::saveGame()
     {
         dataToSave->playerNameSaved = curPlayerName;
         UGameplayStatics::SaveGameToSlot(dataToSave, "Slot1", 0);
+		UE_LOG(LogTemp, Warning, TEXT("game saved"));
     }
 }
 void URLInstance::loadGame()
@@ -386,9 +428,16 @@ void URLInstance::loadGame()
 
 	if (dataToLoad != nullptr)
 	{
-		curPlayerName = dataToLoad->playerNameSaved;
-		UE_LOG(LogTemp, Error, TEXT("save data load, player name: %s"), *curPlayerName);
-
+		if (dataToLoad->playerNameSaved.IsEmpty())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("The name is empty."));
+			createSaveFile();
+		}
+		else
+		{
+			curPlayerName = dataToLoad->playerNameSaved;
+			UE_LOG(LogTemp, Error, TEXT("save data load, player name: %s"), *curPlayerName);
+		}
 	}
 	else if (!UGameplayStatics::DoesSaveGameExist("Slot1", 0))
 	{

@@ -40,7 +40,7 @@ APlayerCharacter::APlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	NetUpdateFrequency = 150.0f; // 100 updates per second
+	NetUpdateFrequency = 150.0f; // 150 updates per second
 	MinNetUpdateFrequency = 50.0f;
 
 	// Enable network replication
@@ -570,6 +570,15 @@ void APlayerCharacter::look(FVector2D lookAxisVector)
 	}
 }
 
+void APlayerCharacter::moveForward(int value)
+{
+	AddMovementInput(GetActorForwardVector(), value);
+}
+void APlayerCharacter::moveRight(int value)
+{
+	AddMovementInput(GetActorRightVector(), value);
+}
+
 void APlayerCharacter::move(FVector2D movementVector)
 {
 	if (IsLocallyControlled() && isAbleToMove)
@@ -585,10 +594,11 @@ void APlayerCharacter::move(FVector2D movementVector)
 			const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
 			// add movement 
+			/*
 			AddMovementInput(ForwardDirection, movementVector.Y * move_XSensitivity);
 			AddMovementInput(RightDirection, movementVector.X * move_YSensitivity);
-
-			moveServer(movementVector);
+			*/
+			// moveServer(movementVector);
 		}
 	}
 }
@@ -639,8 +649,8 @@ void APlayerCharacter::moveMulticast_Implementation(FVector2D movementVector)
 			const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
 			// add movement 
-			AddMovementInput(ForwardDirection, movementVector.Y * move_XSensitivity);
-			AddMovementInput(RightDirection, movementVector.X * move_YSensitivity);
+			// AddMovementInput(ForwardDirection, movementVector.Y * move_XSensitivity);
+			// AddMovementInput(RightDirection, movementVector.X * move_YSensitivity);
 		}
 	}
 }
