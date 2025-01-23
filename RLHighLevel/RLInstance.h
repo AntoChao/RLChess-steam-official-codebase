@@ -42,7 +42,7 @@ public:
 		int sessionSize = 2;
 
 // online sessions steam
-	TSharedPtr<FOnlineSessionSearch> searchSettings;
+	TSharedPtr<FOnlineSessionSearch> searchSettings ;
 
 	IOnlineSessionPtr SessionInterface;
 

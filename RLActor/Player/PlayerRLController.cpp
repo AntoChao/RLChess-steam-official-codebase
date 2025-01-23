@@ -27,6 +27,7 @@ void APlayerRLController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(APlayerRLController, playerIndex);
+	DOREPLIFETIME(APlayerRLController, playerName);
 }
 
 void APlayerRLController::BeginPlay() {
@@ -42,7 +43,7 @@ void APlayerRLController::BeginPlay() {
 	}
 }
 
-void APlayerRLController::initName()
+void APlayerRLController::initName_Implementation()
 {
 	URLInstance* gameInstance = Cast<URLInstance>(GetWorld()->GetGameInstance());
 
@@ -53,7 +54,7 @@ void APlayerRLController::initName()
 	}
 }
 
-void APlayerRLController::setupWidget()
+void APlayerRLController::setupWidget_Implementation()
 {
 	if (IsValid(PlayerHUDClass)) {
 		PlayerHUD = CreateWidget<UHUDGameplay>(this, PlayerHUDClass);
@@ -65,7 +66,7 @@ void APlayerRLController::setupWidget()
 		}
 	}
 }
-void APlayerRLController::createEndGameHUD()
+void APlayerRLController::createEndGameHUD_Implementation()
 {
 	bShowMouseCursor = true;
 	SetInputMode(FInputModeUIOnly());
@@ -80,7 +81,32 @@ void APlayerRLController::createEndGameHUD()
 	}
 }
 
-void APlayerRLController::updateWidgetLanguage()
+void APlayerRLController::createMenuHUD_Implementation()
+{
+	if (menuHUD)
+	{
+		bShowMouseCursor = false;
+		SetInputMode(FInputModeGameOnly());
+		menuHUD->RemoveFromParent();
+		menuHUD = false;
+	}
+	else
+	{
+		bShowMouseCursor = true;
+		SetInputMode(FInputModeUIOnly());
+		if (IsValid(menuHUDClass)) {
+			menuHUD = CreateWidget<UUserWidget>(this, menuHUDClass);
+
+			if (menuHUD)
+			{
+				updateWidgetLanguage();
+				menuHUD->AddToPlayerScreen();
+			}
+		}
+	}
+}
+
+void APlayerRLController::updateWidgetLanguage_Implementation()
 {
 	if (PlayerHUD)
 	{

@@ -37,12 +37,16 @@ public:
 
 	/* RLActor functions*/
 public:
+	UFUNCTION(BlueprintCallable, Category = "Piece")
 	virtual FString GetActorName(ELanguage curLanguage) override;
 
+	UFUNCTION(BlueprintCallable, Category = "Piece")
 	virtual FString GetDescription(ELanguage curLanguage) override;
 
+	UFUNCTION(BlueprintCallable, Category = "Piece")
 	virtual FString GetInteractionDescription(ELanguage curLanguage) override;
 
+	UFUNCTION(BlueprintCallable, Category = "Piece")
 	virtual bool IsAbleToBeInteracted(APlayerCharacter* Sender) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Piece")
@@ -50,10 +54,13 @@ public:
 
 	virtual void BeUnInteracted(APlayerCharacter* Sender) override;
 
+	UFUNCTION(BlueprintCallable, Category = "Piece")
 	virtual int GetProductCost() override;
 
+	UFUNCTION(BlueprintCallable, Category = "Piece")
 	virtual FString GetProductName() override;
 
+	UFUNCTION(BlueprintCallable, Category = "Piece")
 	virtual UTexture2D* GetProductImage() override;
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")
@@ -408,7 +415,11 @@ protected:
 	void playSound_multicast(USoundCue* aSoundCue);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
+	USoundCue* pieceBeSelectedSC;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
 	USoundCue* pieceMovingSC;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
+	USoundCue* pieceHitSC;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
 	USoundCue* pieceColliedSC;
 };
