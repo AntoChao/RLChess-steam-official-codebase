@@ -100,7 +100,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "GameMode")
     void updateAllPlayersBody(TArray<APlayerCharacter*> allPlayerBody);
 
-        UFUNCTION(BlueprintCallable, Category = "GameMode")
+    UFUNCTION(BlueprintCallable, Category = "GameMode")
         void startIfAllPlayerLoggedIn();
 
 protected:
@@ -138,6 +138,13 @@ protected:
     UFUNCTION(Category = "GameMode")
     void startPieceMovingPhase();
 
+    UFUNCTION(Category = "GameMode")
+    void countDown();
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+    int curRestTime;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+    FTimerHandle countDownHandle;
+    
     // manage player setup time
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
     bool isPlayerSetupTime = true;

@@ -209,6 +209,7 @@ void APiece::inShopInteractedEffect_Implementation(APlayerCharacter* Sender)
 
             if (gameShop)
             {
+                playSound_server(pieceBeSelectedSC);
                 gameShop->sellProduct(Sender, this);
 
                 setPieceStatus(EPieceStatus::EInBench);
@@ -228,6 +229,7 @@ void APiece::inBenchInteractedEffect_Implementation(APlayerCharacter* Sender) //
 
             if (gameBoard)
             {
+                playSound_server(pieceBeSelectedSC);
                 gameBoard->setSpecificColor(pieceColor); // client
             }
 
@@ -253,6 +255,7 @@ void APiece::inBoardInteractedEffect_Implementation(APlayerCharacter* Sender) //
         
             if (gameBoard)
             {
+                playSound_server(pieceBeSelectedSC);
                 gameBoard->setPossibleMoves(this); // non rpc
             }
         }
@@ -303,24 +306,7 @@ void APiece::initializeDirection_Implementation(AEnvSquare* squareDestination)
             gameBoard = GameState->getGameBoard();
 
             pieceDirection = gameBoard->calculateInitDirection(squareDestination->getSquareLocation());
-            /*
-            switch (pieceDirection)
-            {
-            case EPieceDirection::EUp:
-                SetActorRotation(FRotator(0.0f, 0.0f, -90.0f));
-                break;
-            case EPieceDirection::EDown:
-                SetActorRotation(FRotator(0.0f, 0.0f, 90.0f));
-                break;
-            case EPieceDirection::ELeft:
-                SetActorRotation(FRotator(0.0f, 0.0f, 180.0f));
-                break;
-            case EPieceDirection::ERight:
-                SetActorRotation(FRotator(0.0f, 0.0f, 0.0f));
-                break;
-            default:
-                SetActorRotation(FRotator(0.0f, 0.0f, 45.0f));
-            }*/
+
         }
     }
 }
@@ -530,7 +516,7 @@ EPieceDirection APiece::getOppositeDirection(EPieceDirection Direction)
     case EPieceDirection::EUpLeft:
         return EPieceDirection::EDownRight;
     case EPieceDirection::ELeft:
-        return EPieceDirection::ERight;
+        return EPieceDirection::ERight; 
     case EPieceDirection::EDownLeft:
         return EPieceDirection::EUpRight;
     case EPieceDirection::EDown:
@@ -576,7 +562,7 @@ void APiece::dieEffect_Implementation(APiece* killer) // netmulticast
     {
         Direction = (MyLocation - collisionLocation).GetSafeNormal();
     }
-
+    playSound_server(pieceColliedSC);
     spawnFractureMesh(Direction); // client
 
     Destroy();
@@ -657,6 +643,7 @@ void APiece::collidedWithOtherPiece(APiece* collidedPiece)
         setIsCollidedBy(collidedPiece);
 
         // DrawDebugLine(GetWorld(), GetActorLocation(), collidedPiece->GetActorLocation(), FColor::Blue, false, 10, 0, 10);
+        playSound_server(pieceHitSC);
 
         if (collidedPiece->getIsMoving())
         {
@@ -904,7 +891,7 @@ void APiece::startMoving_Implementation(AEnvSquare* squareDestination)
     {
         curSquare->occupiedPieceLeaved();
     }
-
+    playSound_server(pieceMovingSC);
     lastMoveDirection = calculateMovingDirection(squareDestination);
 
     isMoving = true;
@@ -1215,8 +1202,12 @@ void APiece::playSound_server_Implementation(USoundCue* aSoundCue)
 
 void APiece::playSound_multicast_Implementation(USoundCue* aSoundCue)
 {
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Try playing sound multicast"));
+
     if (aSoundCue && !pieceAudioComponent->IsPlaying())
     {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("sound multicast OKKK"));
+
         pieceAudioComponent->SetSound(aSoundCue);
         pieceAudioComponent->Play();
     }

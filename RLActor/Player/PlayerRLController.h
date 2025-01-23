@@ -36,19 +36,19 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "debugFunction")
 	void debugFunction();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "UI Main")
 	FString playerName;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
 	TSubclassOf<UHUDGameplay> PlayerHUDClass;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "UI Main")
 	UHUDGameplay* PlayerHUD;
 
 	// UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Control")
-	UFUNCTION(BlueprintCallable, Category = "Control")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
 	void setupWidget();
-	UFUNCTION(BlueprintCallable, Category = "Control")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
 	void updateWidgetLanguage();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
@@ -56,18 +56,27 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
 	UUserWidget* endGameHUD;
 public :
-	UFUNCTION(BlueprintCallable, Category = "Control")
+	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Control")
 	void createEndGameHUD();
+
+protected :
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
+	TSubclassOf<UUserWidget> menuHUDClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
+	UUserWidget* menuHUD;
+public:
+	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Control")
+	void createMenuHUD();
 
 public:
 	APlayerRLController();
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
+	/*
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
 	FTimerHandle mappingContextTimerHandle;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
-	int mappingContextTimerSegs = 3;
+	int mappingContextTimerSegs = 3;*/
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Control")
@@ -84,7 +93,7 @@ public:
 	// can not be server, because it has to be local controller
 	// usage -> host -> local + authority -> none/ server/ multicast
 	//		 -> client -> local + proxy -> none/ multicast
-	UFUNCTION(BlueprintCallable, Category = "Control")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
 	void initName();
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")

@@ -15,10 +15,10 @@ void UHUDOptions::LoadSettings()
 {
     // Initialize common resolutions
     AllResolutions = {
-        FIntPoint(1920, 1080),
-        FIntPoint(1600, 900),
         FIntPoint(1280, 720),
         FIntPoint(1366, 768),
+        FIntPoint(1600, 900),
+        FIntPoint(1920, 1080),       
         FIntPoint(2560, 1440)
     };
 

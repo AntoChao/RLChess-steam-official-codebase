@@ -40,6 +40,15 @@ void AGameplayGameMode::Logout(AController* Exiting)
     Super::Logout(Exiting);
 
     UE_LOG(LogTemp, Warning, TEXT("GM: One player log out"));
+
+    APlayerRLController* rlController = Cast<APlayerRLController>(Exiting);
+
+    allPlayerControllers.Remove(rlController);
+
+    if (checkIfGameEnd())
+    {
+        endGameplayGameMode();
+    }
 }
 
 void AGameplayGameMode::BeginPlay()
@@ -251,6 +260,9 @@ void AGameplayGameMode::startPlayerSetUpTime()
         FTimerDelegate playerSetUpTimerDel;
         playerSetUpTimerDel.BindUFunction(this, FName("endPlayerSetUpTime"));
         serverWorld->GetTimerManager().SetTimer(playerSetUpTimerHandle, playerSetUpTimerDel, playerSetUpTimerSegs, false);
+    
+        curRestTime = playerSetUpTimerSegs;
+        countDown();
     }
 }
 
@@ -286,6 +298,24 @@ void AGameplayGameMode::endPlayerSetUpTime()
     startPlayerPreparePhase();
 }
 
+void AGameplayGameMode::countDown()
+{
+    UWorld* serverWorld = GetWorld();
+    if (serverWorld)
+    {
+        if (curRestTime >= 0)
+        {
+            curRestTime -= 1;
+        }
+
+        serverWorld->GetTimerManager().ClearTimer(countDownHandle);
+        FTimerDelegate countDownTimerDel;
+        countDownTimerDel.BindUFunction(this, FName("countDown"));
+        serverWorld->GetTimerManager().SetTimer(countDownHandle, countDownTimerDel, 1, false);
+
+    }
+}
+
 void AGameplayGameMode::startPlayerPreparePhase()
 {
     UE_LOG(LogTemp, Warning, TEXT("GM: start player prepare phase"));
@@ -311,6 +341,8 @@ void AGameplayGameMode::startPlayerPreparePhase()
         FTimerDelegate playerPrepareTimerDel;
         playerPrepareTimerDel.BindUFunction(this, FName("startPieceMovingPhase"));
         serverWorld->GetTimerManager().SetTimer(playerPrepareTimerHandle, playerPrepareTimerDel, playerPrepareTimerSegs, false);
+    
+        curRestTime = playerPrepareTimerSegs;
     }
 }
 
@@ -359,6 +391,8 @@ void AGameplayGameMode::startPieceMovingPhase()
         FTimerDelegate piecesMovedTimerDel;
         piecesMovedTimerDel.BindUFunction(this, FName("startPlayerPreparePhase"));
         serverWorld->GetTimerManager().SetTimer(piecesMovedTimerHandle, piecesMovedTimerDel, piecesMovedTimerSegs, false);
+    
+        curRestTime = piecesMovedTimerSegs;
     }
 }
 
