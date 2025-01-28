@@ -72,6 +72,9 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	DOREPLIFETIME(APlayerCharacter, curMoney);
 
+	DOREPLIFETIME(APlayerCharacter, isAbleToRun);
+	DOREPLIFETIME(APlayerCharacter, isRunning);
+	DOREPLIFETIME(APlayerCharacter, curSpeed);
 }
 
 void APlayerCharacter::BeginPlay()
@@ -80,12 +83,14 @@ void APlayerCharacter::BeginPlay()
 
 	inventory.SetNum(inventorySize);
 	curMoney = totalMoney;
+	isWaitingOtherPlayers = true;
 }
 
 void APlayerCharacter::updateWidget()
 {
 	if (PlayerHUD)
 	{
+		PlayerHUD->isWaitingTime = isWaitingOtherPlayers;
 		PlayerHUD->isSetupTime = setUpTime;
 		PlayerHUD->ownerMoney = curMoney;
 		PlayerHUD->isAlive = isAlive;
@@ -187,7 +192,7 @@ void APlayerCharacter::OnRep_selectedMaterial()
 void APlayerCharacter::startSetup_Implementation()
 {
 	setUpTime = true;
-
+	isWaitingOtherPlayers = false;
 	if (isAIPossessed)
 	{
 		initializeRandomArmy();
@@ -295,6 +300,8 @@ bool APlayerCharacter::isAbleToBenchPiece()
 void APlayerCharacter::benchAPiece_Implementation(APiece* newPiece)
 {
 	army.Add(newPiece);
+	newPiece->pieceOwner = this;
+
 	for (AEnvSquare* aBenchSquare : playerBench)
 	{
 		if (!aBenchSquare->getIsOccupied())
@@ -338,10 +345,35 @@ void APlayerCharacter::receiveProduct_Implementation(APiece* aProduct)
 }
 
 /* army function*/
-void APlayerCharacter::pieceDied(APiece* pieceDie)
+void APlayerCharacter::updateArmyStatus(APiece* aPiece)
 {
-	// pieceDie->dieEffect();
-	army.Remove(pieceDie);
+	UE_LOG(LogTemp, Error, TEXT("CHARACTER: UPDATE ARMY STATUS"));
+
+	if (aPiece && aPiece->getIfIsDie())
+	{
+		army.Remove(aPiece);
+		UE_LOG(LogTemp, Error, TEXT("CHARACTER: PIECE GOT REMOVED"));
+
+	}
+
+	checkArmyStatus();
+}
+
+void APlayerCharacter::checkArmyStatus()
+{
+	if (army.IsEmpty())
+	{
+		AController* aController = GetController();
+		if (Controller)
+		{
+			APlayerRLController* PlayerController = Cast<APlayerRLController>(aController);
+			if (PlayerController)
+			{
+				UE_LOG(LogTemp, Error, TEXT("CHARACTER: ARMY EMPTY, PLAYER DIED"));
+				PlayerController->controlledBodyDied();
+			}
+		}
+	}
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -352,8 +384,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
 	if (PC)
 	{
-		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Player Ccontrol valid"));
-
 		if (PC->PlayerState)
 		{
 			float Ping = PC->PlayerState->GetPingInMilliseconds();
@@ -364,15 +394,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 			}
 
 		}
-		else
-		{
-			// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Player State not valid"));
-
-		}
-	}
-	else
-	{
-		// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Player Ccontrol NOT valid"));
 	}
 
 	detect();
@@ -605,28 +626,6 @@ void APlayerCharacter::move(FVector2D movementVector)
 
 void APlayerCharacter::moveServer_Implementation(FVector2D movementVector)
 {
-	/*
-	if (isAbleToMove)
-	{
-		if (GetController())
-		{
-
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("character server move"));
-			// find out which way is forward
-			const FRotator Rotation = GetController()->GetControlRotation();
-			const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-			const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-			const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-			// add movement 
-			AddMovementInput(ForwardDirection, movementVector.Y * move_XSensitivity);
-			AddMovementInput(RightDirection, movementVector.X * move_YSensitivity);
-
-			moveServer(movementVector);
-		}
-	}*/
-	
 	moveMulticast(movementVector);
 }
 void APlayerCharacter::moveMulticast_Implementation(FVector2D movementVector)
@@ -661,8 +660,12 @@ void APlayerCharacter::updateSpeed()
 }
 void APlayerCharacter::run_Implementation()
 {
-	runMulticast();
-
+	// runMulticast();
+	if (isAbleToRun) {
+		isRunning = true;
+		curSpeed = runSpeed;
+		updateSpeed();
+	}
 }
 void APlayerCharacter::runMulticast_Implementation()
 {

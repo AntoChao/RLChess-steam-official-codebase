@@ -72,6 +72,11 @@ public:
 	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Piece Movement")
 	virtual void inBoardInteractedEffect(APlayerCharacter* Sender);
 
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	APlayerCharacter* pieceOwner;
+
+
 	/* Piece material information*/
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
@@ -200,7 +205,12 @@ protected:
 
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Piece Interaction")
 		void dieEffect(APiece* killer);
-		
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "Piece Interaction")
+		bool getIfIsDie();
+
+protected:
 	virtual void dieEffect_Implementation(APiece* killer);
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Piece Collision")

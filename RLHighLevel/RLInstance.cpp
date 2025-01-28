@@ -43,8 +43,10 @@ void URLInstance::openNextLevel(EGameModeEnum gameToOpen)
 			break;
 		}
 		default:
+		{
 			UGameplayStatics::OpenLevel(this, FName("InitLevel"));
 			break;
+		}
 	}
 }
 
@@ -68,6 +70,12 @@ void URLInstance::hostSession(FName sessionName, int numPlayers)
 	{
 		if (IOnlineSessionPtr onlineSessionInterface = onlineSubsystem->GetSessionInterface())
 		{
+			sessionAlreadyEnded = false;
+			curSessionName = sessionName;
+
+			UE_LOG(LogTemp, Error, TEXT("HOST SESSION CHECK USER NAME: %s"), *curPlayerName);
+			UE_LOG(LogTemp, Error, TEXT("HOST SESSION NAME: %s"), *curSessionName.ToString());
+
 			// createSessionsCompletedHandle = onlineSessionInterface->AddOnFindSessionsCompleteDelegate_Handle(createSessionsCompletedDelegate);
 			createSessionsCompletedHandle = onlineSessionInterface->AddOnCreateSessionCompleteDelegate_Handle(createSessionsCompletedDelegate);
 
@@ -105,20 +113,6 @@ void URLInstance::hostSession(FName sessionName, int numPlayers)
 		}
 	}
 }
-/*
-void URLInstance::CreateServer()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Create Server"));
-	FOnlineSessionSettings SessionSettings;
-	SessionSettings.bAllowJoinInProgress = true;
-	SessionSettings.bIsDedicated = false;
-	SessionSettings.bIsLANMatch = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
-	SessionSettings.bShouldAdvertise = true;
-	SessionSettings.bUsesPresence = true;
-	SessionSettings.NumPublicConnections = 5;
-
-	SessionInterface->CreateSession(0, FName("Crete Session"), SessionSettings);
-}*/
 
 void URLInstance::hostSessionCompleted(FName sessionName, bool createdSession)
 {
@@ -135,6 +129,7 @@ void URLInstance::hostSessionCompleted(FName sessionName, bool createdSession)
 
 				// have to put the level into listen for listen erver
 				GetWorld()->ServerTravel("/Game/HighLevel/GameplayLevel?listen");
+				onlineSessionInterface->StartSession(sessionName);
 			}
 			else
 			{
@@ -143,15 +138,7 @@ void URLInstance::hostSessionCompleted(FName sessionName, bool createdSession)
 		}
 	}
 }
-/*
-void URLInstance::OnCreateSessionComplete(FName SessionName, bool Succeeded)
-{
-	if (Succeeded)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Create Server Success"));
-		GetWorld()->ServerTravel("/Game/HighLevel/GameplayLevel?listen");
-	}
-}*/
+
 void URLInstance::setSearchWidget(UHUDLobby* aSearchWidget)
 {
 	searchWidget = aSearchWidget;
@@ -187,20 +174,7 @@ void URLInstance::searchForSessions()
 		}
 	}
 }
-/*
-void URLInstance::SearchServer()
-{
-	foundSuccessed = false;
 
-	UE_LOG(LogTemp, Warning, TEXT("Server searching"));
-
-	SessionSearch = MakeShareable(new FOnlineSessionSearch());
-	SessionSearch->bIsLanQuery = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
-	SessionSearch->MaxSearchResults = 10000;
-	SessionSearch->QuerySettings.Set("SEARCH_PRESENCE", true, EOnlineComparisonOp::Equals);
-
-	SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
-}*/
 void URLInstance::searchForSessionsCompleted(bool Succeeded)
 {
 	foundSuccessed = Succeeded;
@@ -260,6 +234,9 @@ void URLInstance::joinSession(int32 SessionIndex)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Joining Sesion. "));
 				
+				UE_LOG(LogTemp, Error, TEXT("JOIN SESSION CHECK USER NAME: %s"), *curPlayerName);
+
+
 				// attempt to join the session
 				const ULocalPlayer* localPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 				joinSessionCompletedHandle = onlineSessionInterface->AddOnJoinSessionCompleteDelegate_Handle(joinSessionCompletedDelegate);
@@ -278,7 +255,7 @@ void URLInstance::joinSession(int32 SessionIndex)
 void URLInstance::joinSessionCompleted(FName sessionName, EOnJoinSessionCompleteResult::Type joinResult)
 {
 	UE_LOG(LogTemp, Error, TEXT("Failed to join session: %d"), static_cast<int32>(joinResult));
-
+	sessionAlreadyEnded = false;
 	if (IOnlineSubsystem* onlineSubsystem = IOnlineSubsystem::Get())
 	{
 		if (IOnlineSessionPtr onlineSessionInterface = onlineSubsystem->GetSessionInterface())
@@ -290,6 +267,7 @@ void URLInstance::joinSessionCompleted(FName sessionName, EOnJoinSessionComplete
 			UE_LOG(LogTemp, Error, TEXT("Travel succesful: %d"), wasTravelSuccessful);
 
 			curSessionName = sessionName;
+			UE_LOG(LogTemp, Warning, TEXT("Setting the curSessionName: %s"), *curSessionName.ToString());
 		}
 	}
 }
@@ -321,18 +299,34 @@ bool URLInstance::travelToSession(FName sessionName)
 
 void URLInstance::endSession()
 {
-	if (IOnlineSubsystem* onlineSubsystem = IOnlineSubsystem::Get())
+	UE_LOG(LogTemp, Error, TEXT("Ending session"));
+
+	if (!sessionAlreadyEnded)
 	{
-		if (IOnlineSessionPtr onlineSessionInterface = onlineSubsystem->GetSessionInterface())
+		UE_LOG(LogTemp, Error, TEXT("END SESSION CHECK USER NAME: %s"), *curPlayerName);
+
+		sessionAlreadyEnded = true;
+		if (IOnlineSubsystem* onlineSubsystem = IOnlineSubsystem::Get())
 		{
-			UE_LOG(LogTemp, Error, TEXT("Ending session"));
+			if (IOnlineSessionPtr onlineSessionInterface = onlineSubsystem->GetSessionInterface())
+			{
+				UE_LOG(LogTemp, Warning, TEXT("End session with name: %s"), *curSessionName.ToString());
 
-			endSessionCompletedHandle = onlineSessionInterface->AddOnEndSessionCompleteDelegate_Handle(destroySessionCompletedDelegate);
-			bool ableToEnd = onlineSessionInterface->EndSession(curSessionName);
+				APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+				if (PlayerController)
+				{
+					UE_LOG(LogTemp, Error, TEXT("Session destroyed 2"));
+					PlayerController->ClientTravel("Game/HighLevel/lobbylevel/LobbyLevel", TRAVEL_Absolute);
+				}
 
-			UE_LOG(LogTemp, Error, TEXT("End Session succesful: %d"), ableToEnd);
+				endSessionCompletedHandle = onlineSessionInterface->AddOnEndSessionCompleteDelegate_Handle(endSessionCompletedDelegate);
+				bool ableToEnd = onlineSessionInterface->EndSession(curSessionName);
+
+				UE_LOG(LogTemp, Error, TEXT("End Session succesful: %d"), ableToEnd);
+			}
 		}
 	}
+	
 }
 
 void URLInstance::endSessionCompleted(FName sessionName, bool endedSession)
@@ -355,30 +349,32 @@ void URLInstance::destroySession(FName sessionName)
 		if (IOnlineSessionPtr onlineSessionInterface = onlineSubsystem->GetSessionInterface())
 		{
 			UE_LOG(LogTemp, Error, TEXT("Destroying Session"));
-
 			destroySessionCompletedHandle = onlineSessionInterface->AddOnDestroySessionCompleteDelegate_Handle(destroySessionCompletedDelegate);
 			onlineSessionInterface->DestroySession(sessionName);
 		}
 	}
 }
 
-void URLInstance::destroySessionCompleted(FName sessionName, bool endedSession)
+void URLInstance::destroySessionCompleted(FName sessionName, bool destroyedSession)
 {
 	if (IOnlineSubsystem* onlineSubsystem = IOnlineSubsystem::Get())
 	{
 		if (IOnlineSessionPtr onlineSessionInterface = onlineSubsystem->GetSessionInterface())
 		{
 			onlineSessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(destroySessionCompletedHandle);
-			UE_LOG(LogTemp, Error, TEXT("Session destroyed"));
-
-			if (endedSession)
+			UE_LOG(LogTemp, Error, TEXT("Session destroyed Completed: %d"), destroyedSession);
+			/*
+			if (destroyedSession)
 			{
+				UE_LOG(LogTemp, Error, TEXT("Session destroyed 1"));
 				APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
 				if (PlayerController)
 				{
+					UE_LOG(LogTemp, Error, TEXT("Session destroyed 2"));
 					PlayerController->ClientTravel("Game/HighLevel/lobbylevel/LobbyLevel", TRAVEL_Absolute);
 				}
-			}
+			}*/
+
 		}
 	}
 }
@@ -391,6 +387,7 @@ void URLInstance::createSaveFile()
 	{
 		curPlayerName = generateRandomUserString();
 		dataToSave->playerNameSaved = curPlayerName;
+
 		UE_LOG(LogTemp, Error, TEXT("create save file, user name: %s"), *curPlayerName);
 		UGameplayStatics::SaveGameToSlot(dataToSave, "Slot1", 0);
 	}
@@ -416,7 +413,7 @@ void URLInstance::saveGame()
     }
 
     if (dataToSave != nullptr)
-    {
+    { 
         dataToSave->playerNameSaved = curPlayerName;
         UGameplayStatics::SaveGameToSlot(dataToSave, "Slot1", 0);
 		UE_LOG(LogTemp, Warning, TEXT("game saved"));
@@ -443,6 +440,9 @@ void URLInstance::loadGame()
 	{
 		createSaveFile();
 	}
+
+	UE_LOG(LogTemp, Error, TEXT("DOUBLE CHECK USER NAME: %s"), *curPlayerName);
+
 }
 
 EGameModeEnum URLInstance::getCurGameMode() {
@@ -457,4 +457,10 @@ void URLInstance::setLanguage(ELanguage aLanguage)
 ELanguage URLInstance::getLanguage()
 {
 	return gameLanguage;
+}
+
+FString URLInstance::getName()
+{
+	UE_LOG(LogTemp, Error, TEXT("GameInstance name: %s"), *curPlayerName);
+	return curPlayerName;
 }

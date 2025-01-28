@@ -43,40 +43,73 @@ void APlayerRLController::BeginPlay() {
 	}
 }
 
-void APlayerRLController::initName_Implementation()
+void APlayerRLController::initName()
 {
 	URLInstance* gameInstance = Cast<URLInstance>(GetWorld()->GetGameInstance());
 
 	if (gameInstance)
 	{
-		playerName = gameInstance->curPlayerName;
+		FString theName = gameInstance->getName();
+		playerName = theName;
+		UE_LOG(LogTemp, Error, TEXT("controller initName thename: %s"), *theName);
 		UE_LOG(LogTemp, Error, TEXT("controller initName: %s"), *playerName);
 	}
 }
 
 void APlayerRLController::setupWidget_Implementation()
 {
+	UE_LOG(LogTemp, Error, TEXT("PC> Trying Set up Controller Widget"));
 	if (IsValid(PlayerHUDClass)) {
+		UE_LOG(LogTemp, Error, TEXT("PC> Player HUD Class valid"));
+
 		PlayerHUD = CreateWidget<UHUDGameplay>(this, PlayerHUDClass);
 
 		if (PlayerHUD)
 		{
-			updateWidgetLanguage();
-			PlayerHUD->AddToPlayerScreen();
+			UE_LOG(LogTemp, Error, TEXT("PC> Player HUD valid"));
+
+			URLInstance* gameInstance = Cast<URLInstance>(GetGameInstance());
+			if (gameInstance)
+			{
+				PlayerHUD->hudLanguage = gameInstance->getLanguage();
+			}
+
+			PlayerHUD->AddToViewport(1);
 		}
 	}
 }
+
 void APlayerRLController::createEndGameHUD_Implementation()
 {
-	bShowMouseCursor = true;
-	SetInputMode(FInputModeUIOnly());
-	if (IsValid(endGameHUDClass)) {
-		endGameHUD = CreateWidget<UHUDGameplay>(this, endGameHUDClass);
+	UE_LOG(LogTemp, Warning, TEXT("Try creating end game hud"));
 
-		if (endGameHUD)
+	UWorld* myWorld = GetWorld();
+
+	if (IsValid(myWorld))
+	{
+		if (IsValid(endGameHUDClass) && !endGameHUD)
 		{
-			updateWidgetLanguage();
-			endGameHUD->AddToPlayerScreen();
+			if (PlayerHUD)
+			{
+				PlayerHUD->RemoveFromParent();
+			}
+			if (menuHUD)
+			{
+				menuHUD->RemoveFromParent();
+			}
+
+			UE_LOG(LogTemp, Warning, TEXT("End game hud class valid"));
+
+			bShowMouseCursor = true;
+			SetInputMode(FInputModeUIOnly());
+			endGameHUD = CreateWidget<UUserWidget>(this, endGameHUDClass);
+
+			if (endGameHUD)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("End game hud create success"));
+
+				endGameHUD->AddToViewport(1000);
+			}
 		}
 	}
 }
@@ -85,36 +118,29 @@ void APlayerRLController::createMenuHUD_Implementation()
 {
 	if (menuHUD)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("LOGG: Menu already exist, remove it"));
+
 		bShowMouseCursor = false;
-		SetInputMode(FInputModeGameOnly());
+		// SetInputMode(FInputModeGameOnly());
 		menuHUD->RemoveFromParent();
 		menuHUD = false;
 	}
 	else
 	{
-		bShowMouseCursor = true;
-		SetInputMode(FInputModeUIOnly());
+		UE_LOG(LogTemp, Warning, TEXT("LOGG: Menu no exist, try to create"));
+
 		if (IsValid(menuHUDClass)) {
+			bShowMouseCursor = true;
+			SetInputMode(FInputModeUIOnly());
+
 			menuHUD = CreateWidget<UUserWidget>(this, menuHUDClass);
 
 			if (menuHUD)
 			{
-				updateWidgetLanguage();
-				menuHUD->AddToPlayerScreen();
+				UE_LOG(LogTemp, Warning, TEXT("LOGG: Menu created successful"));
+
+				menuHUD->AddToViewport(999);
 			}
-		}
-	}
-}
-
-void APlayerRLController::updateWidgetLanguage_Implementation()
-{
-	if (PlayerHUD)
-	{
-		URLInstance* gameInstance = Cast<URLInstance>(GetGameInstance());
-
-		if (gameInstance)
-		{
-			PlayerHUD->hudLanguage = gameInstance->getLanguage();
 		}
 	}
 }
@@ -139,16 +165,6 @@ void APlayerRLController::setPlayerIndex_Implementation(int curPlayerIndex)
 
 FString APlayerRLController::getPlayerName()
 {
-	/*
-	if (rlPlayerState)
-	{
-		return rlPlayerState->playerName;
-	}
-	else
-	{
-		return TEXT("no rl state");
-	}*/
-
 	return playerName;
 }
 FColor APlayerRLController::getPlayerColor()
@@ -183,15 +199,20 @@ void APlayerRLController::controlledBodyDied_Implementation()
 		UnPossess();
 	}
 	isDied = true;
-	setupControllerBody();
+
+	AGameModeBase* GameMode = UGameplayStatics::GetGameMode(GetWorld());
+	AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(GameMode);
+	if (curGameMode)
+	{
+		curGameMode->checkGameEnd();
+	}
+
+	gameStateCreateBody();
 }
 
 void APlayerRLController::setupControllerBody_Implementation()
 {
-	if (GetLocalRole() == ROLE_Authority)
-	{
-		gameStateCreateBody();
-	}
+	gameStateCreateBody();
 }
 
 void APlayerRLController::gameStateCreateBody_Implementation()
@@ -324,7 +345,7 @@ void APlayerRLController::setupLobbyInput(UEnhancedInputComponent* EnhancedInput
 
 void APlayerRLController::setupGameplayInput(UEnhancedInputComponent* EnhancedInput) {
 	UE_LOG(LogTemp, Warning, TEXT("PC: bind gameplay input"));
-	EnhancedInput->BindAction(openMenuAction, ETriggerEvent::Started, this, &APlayerRLController::pauseGameFunc);
+	EnhancedInput->BindAction(openMenuAction, ETriggerEvent::Started, this, &APlayerRLController::openMenuFunc);
 
 	EnhancedInput->BindAction(lookAction, ETriggerEvent::Triggered, this, &APlayerRLController::lookFunc);
 
@@ -393,22 +414,13 @@ void APlayerRLController::validateRLPlayer()
 
 void APlayerRLController::openMenuFunc(const FInputActionValue& Value) {
 	validateRLPlayer();
+	UE_LOG(LogTemp, Warning, TEXT("LOGG: Try open menu"));
 	if (rlPlayer) {
 		if (Value.Get<bool>()) {
-			rlPlayer->openMenu(Value);
+			createMenuHUD();
+			// rlPlayer->openMenu(Value);
 		}
 	}
-}
-
-void APlayerRLController::pauseGameFunc(const FInputActionValue& Value)
-{
-	validateRLPlayer();
-	if (rlPlayer) {
-		if (Value.Get<bool>()) {
-			return;
-		}
-	}
-	return;
 }
 
 void APlayerRLController::lookFunc(const FInputActionValue& Value) {
@@ -475,11 +487,13 @@ void APlayerRLController::interactFunc(const FInputActionValue& Value)
 	if (rlPlayer && !isDied) {
 		if (Value.Get<bool>())
 		{
+			rlPlayer->interact();
+			/*
 			if (curInteractionCount % 2 == 0)
 			{
 				// player is able to interact or not is responsability of player
 				rlPlayer->interact();
-			}
+			}*/
 		}
 	}
 	curInteractionCount++;

@@ -209,7 +209,8 @@ void APiece::inShopInteractedEffect_Implementation(APlayerCharacter* Sender)
 
             if (gameShop)
             {
-                playSound_server(pieceBeSelectedSC);
+                pieceAudioComponent->SetSound(pieceBeSelectedSC);
+                pieceAudioComponent->Play();
                 gameShop->sellProduct(Sender, this);
 
                 setPieceStatus(EPieceStatus::EInBench);
@@ -229,7 +230,8 @@ void APiece::inBenchInteractedEffect_Implementation(APlayerCharacter* Sender) //
 
             if (gameBoard)
             {
-                playSound_server(pieceBeSelectedSC);
+                pieceAudioComponent->SetSound(pieceBeSelectedSC);
+                pieceAudioComponent->Play();
                 gameBoard->setSpecificColor(pieceColor); // client
             }
 
@@ -255,7 +257,8 @@ void APiece::inBoardInteractedEffect_Implementation(APlayerCharacter* Sender) //
         
             if (gameBoard)
             {
-                playSound_server(pieceBeSelectedSC);
+                pieceAudioComponent->SetSound(pieceBeSelectedSC);
+                pieceAudioComponent->Play();
                 gameBoard->setPossibleMoves(this); // non rpc
             }
         }
@@ -536,10 +539,12 @@ EPieceDirection APiece::getOppositeDirection(EPieceDirection Direction)
 
 void APiece::die_Implementation(APiece* killer) // server
 {
+    UE_LOG(LogTemp, Error, TEXT("PIECE DIED"));
+
     if (!isDied)
     {
         isDied = true;
-
+        pieceOwner->updateArmyStatus(this);
         if (curSquare)
         {
             curSquare->occupiedPieceLeaved();
@@ -562,10 +567,14 @@ void APiece::dieEffect_Implementation(APiece* killer) // netmulticast
     {
         Direction = (MyLocation - collisionLocation).GetSafeNormal();
     }
-    playSound_server(pieceColliedSC);
     spawnFractureMesh(Direction); // client
 
     Destroy();
+}
+
+bool APiece::getIfIsDie()
+{
+    return isDied;
 }
 
 void APiece::spawnFractureMesh_Implementation(FVector aDirection) // client
@@ -586,6 +595,9 @@ void APiece::spawnFractureMesh_Implementation(FVector aDirection) // client
                 fractureMesh->applyForce(aDirection * collideImpulseStrength);
             }
         }
+
+        pieceAudioComponent->SetSound(pieceColliedSC);
+        pieceAudioComponent->Play();
     }
 }
 
@@ -617,6 +629,7 @@ void APiece::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Ot
     {
         if (isMoving)
         {
+            playSound_server(pieceHitSC);
             if (OtherActor->IsA(APiece::StaticClass()))
             {
                 if (OtherActor != this)
@@ -641,9 +654,6 @@ void APiece::collidedWithOtherPiece(APiece* collidedPiece)
     {
         collidedPiece->setIsCollidedBy(this); // disable the other piece collision calculation
         setIsCollidedBy(collidedPiece);
-
-        // DrawDebugLine(GetWorld(), GetActorLocation(), collidedPiece->GetActorLocation(), FColor::Blue, false, 10, 0, 10);
-        playSound_server(pieceHitSC);
 
         if (collidedPiece->getIsMoving())
         {
@@ -830,6 +840,8 @@ void APiece::bePlacedInBenchEffect_Implementation(AEnvSquare* squareDestination)
         curSquare = squareDestination;
         curSquare->beOccupied(this);
         setLocationMulti(curSquare->getPlacementLocation());
+
+        playSound_server(pieceMovingSC);
     }
 }
 
@@ -873,6 +885,8 @@ void APiece::bePlacedInBoardEffect_Implementation(AEnvSquare* squareDestination)
     {
         startMoving(squareDestination);
     }
+
+    playSound_server(pieceMovingSC);
 }
 
 void APiece::firstInBoardMovedEffect_Implementation(AEnvSquare* squareDestination)
@@ -1171,7 +1185,7 @@ APiecePreviewMesh* APiece::getSpawnedPreviewMesh(FVector locationToSpawn)
         if (serverWorld)
         {
             APiecePreviewMesh* previewMesh = serverWorld->SpawnActor<APiecePreviewMesh>(piecePreviewMeshClass, locationToSpawn, GetActorRotation());
-            previewMesh->setMaterial(selectedMaterial);
+            // previewMesh->setMaterial(selectedMaterial);
 
             return previewMesh;
         }

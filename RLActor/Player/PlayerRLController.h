@@ -46,10 +46,8 @@ protected:
 	UHUDGameplay* PlayerHUD;
 
 	// UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Control")
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
+	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Control")
 	void setupWidget();
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
-	void updateWidgetLanguage();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
 	TSubclassOf<UUserWidget> endGameHUDClass;
@@ -93,7 +91,7 @@ public:
 	// can not be server, because it has to be local controller
 	// usage -> host -> local + authority -> none/ server/ multicast
 	//		 -> client -> local + proxy -> none/ multicast
-	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
+	UFUNCTION(BlueprintCallable, Category = "Control")
 	void initName();
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
@@ -195,9 +193,6 @@ protected:
 	// all gameplay action functionalities
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void openMenuFunc(const FInputActionValue& Value);
-
-	UFUNCTION(BlueprintCallable, Category = "Control")
-	void pauseGameFunc(const FInputActionValue& Value);
 
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void lookFunc(const FInputActionValue& Value);

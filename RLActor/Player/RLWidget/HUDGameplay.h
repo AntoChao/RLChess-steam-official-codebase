@@ -18,19 +18,22 @@ public:
 		ELanguage hudLanguage = ELanguage::EEnglish;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection Control")
-	bool isSetupTime = false;
+		bool isWaitingTime = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection Control")
-	int ownerMoney;
+		bool isSetupTime = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection Control")
+		int ownerMoney;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
-	bool isAlive = true;
+		bool isAlive = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-	bool isPlayerTurn = false;
+		bool isPlayerTurn = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection Control")
-	TScriptInterface<IRLActor> curDetectedActor;
+		TScriptInterface<IRLActor> curDetectedActor;
 
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Control")
