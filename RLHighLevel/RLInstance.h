@@ -69,6 +69,8 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Level Control")
 	FString curPlayerName;
 
+	UFUNCTION(BlueprintCallable)
+	FString getName();
 
 	/* multiplayer actions*/
 	UFUNCTION(BlueprintCallable)
@@ -102,7 +104,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void destroySession(FName sessionName);
 	UFUNCTION(BlueprintCallable)
-	void destroySessionCompleted(FName sessionName, bool endedSession);
+	void destroySessionCompleted(FName sessionName, bool destroyedSession);
 
 	FOnCreateSessionCompleteDelegate createSessionsCompletedDelegate;
 	FDelegateHandle createSessionsCompletedHandle;
@@ -114,6 +116,9 @@ public:
 	FDelegateHandle endSessionCompletedHandle;
 	FOnDestroySessionCompleteDelegate destroySessionCompletedDelegate;
 	FDelegateHandle destroySessionCompletedHandle;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Level Control")
+	bool sessionAlreadyEnded;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Level Control")

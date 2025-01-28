@@ -105,6 +105,9 @@ protected:
 	int playerSpeed;
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
+	bool isWaitingOtherPlayers = true;
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
 	bool setUpTime = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
@@ -187,7 +190,9 @@ public:
 
 	/* army functions*/
 	UFUNCTION(BlueprintCallable, Category = "Character Stats")
-	void pieceDied(APiece* pieceDie);
+	void updateArmyStatus(APiece* aPiece);
+	UFUNCTION(BlueprintCallable, Category = "Character Stats")
+	void checkArmyStatus();
 
 protected:
 	virtual void Tick(float DeltaTime) override;
@@ -357,11 +362,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	bool isAbleToMove = true;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	bool isRunning = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	bool isAbleToRun = true;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Move Controller Stats")
 	float curSpeed = 0.0f;
 
 	// interaction stats

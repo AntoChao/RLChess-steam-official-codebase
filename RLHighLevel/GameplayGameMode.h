@@ -176,13 +176,22 @@ protected:
     
 
     // game end
+public:
+    UFUNCTION(BlueprintCallable, Category = "GameMode")
+    void checkGameEnd();
+    
+protected:
     UFUNCTION(BlueprintCallable, Category = "GameMode")
     bool checkIfGameEnd();
     UFUNCTION(BlueprintCallable, Category = "GameMode")
     void endGameplayGameMode();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+    bool ended = false;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
     AController* winner = nullptr;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+    FString winnerName;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
     TSubclassOf<UUserWidget> gameResultHUDClass;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")

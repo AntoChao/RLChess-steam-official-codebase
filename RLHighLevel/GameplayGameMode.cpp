@@ -45,10 +45,7 @@ void AGameplayGameMode::Logout(AController* Exiting)
 
     allPlayerControllers.Remove(rlController);
 
-    if (checkIfGameEnd())
-    {
-        endGameplayGameMode();
-    }
+    checkGameEnd();
 }
 
 void AGameplayGameMode::BeginPlay()
@@ -320,11 +317,6 @@ void AGameplayGameMode::startPlayerPreparePhase()
 {
     UE_LOG(LogTemp, Warning, TEXT("GM: start player prepare phase"));
 
-    if (checkIfGameEnd())
-    {
-        endGameplayGameMode();
-    }
-
     roundCounter++;
     UWorld* serverWorld = GetWorld();
     if (serverWorld)
@@ -349,7 +341,6 @@ void AGameplayGameMode::startPlayerPreparePhase()
 void AGameplayGameMode::startPieceMovingPhase()
 {
     UE_LOG(LogTemp, Warning, TEXT("GM: start pieces moving phase"));
-
 
     // unable player selecting piece
     for (APlayerCharacter* eachPlayer : allPlayers)
@@ -396,6 +387,16 @@ void AGameplayGameMode::startPieceMovingPhase()
     }
 }
 
+void AGameplayGameMode::checkGameEnd()
+{
+    UE_LOG(LogTemp, Error, TEXT("GM: CHECK GAME END"));
+    if (checkIfGameEnd())
+    {
+        UE_LOG(LogTemp, Error, TEXT("GM: END GAME MODE"));
+        endGameplayGameMode();
+    }
+}
+
 // should be called after player finish its move
 bool AGameplayGameMode::checkIfGameEnd()
 {
@@ -411,6 +412,7 @@ bool AGameplayGameMode::checkIfGameEnd()
             {
                 alivePlayerCounter++;
                 winner = aPlayer;
+                winnerName = aPlayer->playerName;
             }
         }
         else if (aAIPlayer)
@@ -419,9 +421,10 @@ bool AGameplayGameMode::checkIfGameEnd()
             {
                 alivePlayerCounter++;
                 winner = aAIPlayer;
+                winnerName = aPlayer->playerName;
             }
         }
-        
+
     }
 
     return alivePlayerCounter <= 1;
@@ -429,14 +432,18 @@ bool AGameplayGameMode::checkIfGameEnd()
 
 void AGameplayGameMode::endGameplayGameMode()
 {
-    for (AController* rlController : allPlayerControllers)
+    if (!ended)
     {
-        if (rlController)
+        ended = true;
+        for (AController* rlController : allPlayerControllers)
         {
-            APlayerRLController* theRLController = Cast<APlayerRLController>(rlController);
-            if (theRLController)
+            if (rlController)
             {
-                theRLController->createEndGameHUD();
+                APlayerRLController* theRLController = Cast<APlayerRLController>(rlController);
+                if (theRLController)
+                {
+                    theRLController->createEndGameHUD();
+                }
             }
         }
     }
