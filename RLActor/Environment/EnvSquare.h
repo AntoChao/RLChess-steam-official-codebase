@@ -14,7 +14,7 @@ class APieceConfirmedMesh;
 class UStaticMeshComponent;
 class UPrimitiveComponent;
 class UBoxComponent;
-
+class UAudioComponent;
 
 UCLASS(BlueprintType, Blueprintable)
 class AEnvSquare : public AActor, public IRLActor
@@ -79,6 +79,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USceneComponent* placeScene;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
+	UAudioComponent* squareAudioComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Square Materials")
 	UMaterialInterface* redMaterial;
@@ -180,5 +183,15 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void overlapEndEffect();
+
+// sound
+protected:
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Audio")
+		void playSound_server(USoundCue* aSoundCue);
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Audio")
+		void playSound_multicast(USoundCue* aSoundCue);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
+		USoundCue* squareBeSelectedSC;
 };
 

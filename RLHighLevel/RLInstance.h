@@ -99,6 +99,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void endSession();
 	UFUNCTION(BlueprintCallable)
+	void travelBackToLobby();
+
+	UFUNCTION(BlueprintCallable)
 	void endSessionCompleted(FName sessionName, bool endedSession);
 
 	UFUNCTION(BlueprintCallable)

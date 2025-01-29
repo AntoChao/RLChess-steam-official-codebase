@@ -41,11 +41,30 @@ void AGameplayGameMode::Logout(AController* Exiting)
 
     UE_LOG(LogTemp, Warning, TEXT("GM: One player log out"));
 
-    APlayerRLController* rlController = Cast<APlayerRLController>(Exiting);
+    // error -> server host log out, it trigger end session + check game end.
 
-    allPlayerControllers.Remove(rlController);
+    APlayerController* hostController = GetWorld()->GetFirstPlayerController();
+    
+    if (Exiting == hostController)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("GM: Host log out"));
+        URLInstance* GI = Cast<URLInstance>(GetWorld()->GetGameInstance());
+        if (GI)
+        {
+            GI->endSession();
+        }
+            
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("GM: Client log out"));
+        checkGameEnd();
+    }
 
-    checkGameEnd();
+    APlayerRLController* exitingRLController = Cast<APlayerRLController>(Exiting);
+    APlayerRLController* hostRLController = Cast<APlayerRLController>(hostController);
+
+    allPlayerControllers.Remove(exitingRLController);
 }
 
 void AGameplayGameMode::BeginPlay()
