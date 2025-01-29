@@ -5,6 +5,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "Components/BoxComponent.h"
+#include "Components/AudioComponent.h"
+#include "Sound/SoundCue.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -38,6 +40,9 @@ AEnvSquare::AEnvSquare()
 	squareCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	squareCollision->SetCollisionObjectType(ECC_WorldDynamic);
 	squareCollision->SetCollisionResponseToAllChannels(ECR_Overlap);
+
+	squareAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComponent"));
+	squareAudioComponent->SetupAttachment(RootComponent);
 
 }
 
@@ -164,6 +169,7 @@ void AEnvSquare::BeInteracted_Implementation(APlayerCharacter* Sender)
 	APiece* playerConfirmedPiece = Sender->getConfirmedPiece();
 	if (playerConfirmedPiece)
 	{
+		playSound_server(squareBeSelectedSC);
 		playerConfirmedPiece->bePlaced(this);
 		
 		cancelConfirmedMeshMulticast();
@@ -326,4 +332,22 @@ void AEnvSquare::overlapEndEffect_Implementation()
 {
 	isPlayerOnTop = false;
 	playerOnTop = nullptr;
+}
+
+void AEnvSquare::playSound_server_Implementation(USoundCue* aSoundCue)
+{
+	playSound_multicast(aSoundCue);
+}
+
+void AEnvSquare::playSound_multicast_Implementation(USoundCue* aSoundCue)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Try playing sound multicast"));
+
+	if (aSoundCue && !squareAudioComponent->IsPlaying())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("sound multicast OKKK"));
+
+		squareAudioComponent->SetSound(aSoundCue);
+		squareAudioComponent->Play();
+	}
 }

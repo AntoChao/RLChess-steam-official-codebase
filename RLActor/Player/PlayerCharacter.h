@@ -110,7 +110,7 @@ protected:
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
 	bool setUpTime = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
 	bool isAlive = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")

@@ -5,6 +5,7 @@
 #include "../RLActor/Player/RLWidget/HUDLobby.h"
 #include "Kismet/GameplayStatics.h"
 #include "RLSaveGame.h"
+#include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
 
 URLInstance::URLInstance()
@@ -297,6 +298,15 @@ bool URLInstance::travelToSession(FName sessionName)
 	return false;
 }
 
+void URLInstance::travelBackToLobby()
+{
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+	if (PlayerController)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GI: travel back"));
+		PlayerController->ClientTravel("Game/HighLevel/lobbylevel/LobbyLevel", TRAVEL_Absolute);
+	}
+}
 void URLInstance::endSession()
 {
 	UE_LOG(LogTemp, Error, TEXT("Ending session"));
@@ -311,13 +321,6 @@ void URLInstance::endSession()
 			if (IOnlineSessionPtr onlineSessionInterface = onlineSubsystem->GetSessionInterface())
 			{
 				UE_LOG(LogTemp, Warning, TEXT("End session with name: %s"), *curSessionName.ToString());
-
-				APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-				if (PlayerController)
-				{
-					UE_LOG(LogTemp, Error, TEXT("Session destroyed 2"));
-					PlayerController->ClientTravel("Game/HighLevel/lobbylevel/LobbyLevel", TRAVEL_Absolute);
-				}
 
 				endSessionCompletedHandle = onlineSessionInterface->AddOnEndSessionCompleteDelegate_Handle(endSessionCompletedDelegate);
 				bool ableToEnd = onlineSessionInterface->EndSession(curSessionName);
@@ -335,7 +338,11 @@ void URLInstance::endSessionCompleted(FName sessionName, bool endedSession)
 	{
 		if (IOnlineSessionPtr onlineSessionInterface = onlineSubsystem->GetSessionInterface())
 		{
+
+			UE_LOG(LogTemp, Error, TEXT("GI: end session complete: %d"), endedSession);
 			onlineSessionInterface->ClearOnEndSessionCompleteDelegate_Handle(endSessionCompletedHandle);
+
+			travelBackToLobby();
 
 			destroySession(sessionName);
 		}

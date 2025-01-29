@@ -209,8 +209,8 @@ void APiece::inShopInteractedEffect_Implementation(APlayerCharacter* Sender)
 
             if (gameShop)
             {
-                pieceAudioComponent->SetSound(pieceBeSelectedSC);
-                pieceAudioComponent->Play();
+                playSound_server(pieceBeSelectedSC);
+
                 gameShop->sellProduct(Sender, this);
 
                 setPieceStatus(EPieceStatus::EInBench);
@@ -230,8 +230,7 @@ void APiece::inBenchInteractedEffect_Implementation(APlayerCharacter* Sender) //
 
             if (gameBoard)
             {
-                pieceAudioComponent->SetSound(pieceBeSelectedSC);
-                pieceAudioComponent->Play();
+                playSound_server(pieceBeSelectedSC);
                 gameBoard->setSpecificColor(pieceColor); // client
             }
 
@@ -257,8 +256,7 @@ void APiece::inBoardInteractedEffect_Implementation(APlayerCharacter* Sender) //
         
             if (gameBoard)
             {
-                pieceAudioComponent->SetSound(pieceBeSelectedSC);
-                pieceAudioComponent->Play();
+                playSound_server(pieceBeSelectedSC);
                 gameBoard->setPossibleMoves(this); // non rpc
             }
         }
@@ -596,8 +594,7 @@ void APiece::spawnFractureMesh_Implementation(FVector aDirection) // client
             }
         }
 
-        pieceAudioComponent->SetSound(pieceColliedSC);
-        pieceAudioComponent->Play();
+        playSound_server(pieceColliedSC);
     }
 }
 

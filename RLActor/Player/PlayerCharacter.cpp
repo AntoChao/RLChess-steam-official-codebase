@@ -62,8 +62,10 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	DOREPLIFETIME(APlayerCharacter, selectedMaterial);
 
+	DOREPLIFETIME(APlayerCharacter, isWaitingOtherPlayers);
 	DOREPLIFETIME(APlayerCharacter, setUpTime);
 	DOREPLIFETIME(APlayerCharacter, isPlayerTurn);
+
 	DOREPLIFETIME(APlayerCharacter, playerBench);
 	DOREPLIFETIME(APlayerCharacter, army);
 
@@ -71,6 +73,7 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(APlayerCharacter, confirmedPiece);
 
 	DOREPLIFETIME(APlayerCharacter, curMoney);
+	DOREPLIFETIME(APlayerCharacter, isAlive);
 
 	DOREPLIFETIME(APlayerCharacter, isAbleToRun);
 	DOREPLIFETIME(APlayerCharacter, isRunning);

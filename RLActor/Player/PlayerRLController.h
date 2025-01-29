@@ -42,7 +42,7 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
 	TSubclassOf<UHUDGameplay> PlayerHUDClass;
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "UI Main")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
 	UHUDGameplay* PlayerHUD;
 
 	// UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Control")
