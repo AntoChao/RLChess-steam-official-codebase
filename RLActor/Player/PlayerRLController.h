@@ -42,20 +42,30 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
 	TSubclassOf<UHUDGameplay> PlayerHUDClass;
+	
+public :
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
 	UHUDGameplay* PlayerHUD;
 
+protected :
 	// UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Control")
-	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Control")
+	UFUNCTION(BlueprintCallable, Category = "Control")
 	void setupWidget();
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
 	TSubclassOf<UUserWidget> endGameHUDClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
 	UUserWidget* endGameHUD;
+
 public :
-	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Control")
-	void createEndGameHUD();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
+	FString winnerName;
+
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Control")
+	void createEndGameHUD(const FString& aWinnerName);
+	
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Control")
+	void createEndGameHUD_Multi(const FString& aWinnerName);
 
 protected :
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
@@ -63,7 +73,7 @@ protected :
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
 	UUserWidget* menuHUD;
 public:
-	UFUNCTION(Client, Reliable, BlueprintCallable, Category = "Control")
+	UFUNCTION(BlueprintCallable, Category = "Control")
 	void createMenuHUD();
 
 public:
@@ -236,6 +246,8 @@ protected:
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "UI")
-	UHUDGameplay* getWidget();
+	void updateGameplayHUD(bool isWaitingPar, bool isSetupPar, 
+		int curMoneyPar, bool isAlivePar, bool isPlayerTurnPar, 
+		TScriptInterface<IRLActor> detectedActor, int curRestTime);
 };
 

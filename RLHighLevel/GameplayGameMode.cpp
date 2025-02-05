@@ -32,7 +32,13 @@ void AGameplayGameMode::PostLogin(APlayerController* NewPlayer)
 
     allPlayerControllers.Add(rlController);
 
-    UE_LOG(LogTemp, Warning, TEXT("GM: One player log in"))
+    
+    APlayerRLController* aPlayer = Cast<APlayerRLController>(rlController);
+    if (aPlayer)
+    {
+        allNames.Add(aPlayer->playerName);
+        UE_LOG(LogTemp, Warning, TEXT("GM: One player log in and name: %s"), *aPlayer->playerName)
+    }   
 }
 
 void AGameplayGameMode::Logout(AController* Exiting)
@@ -52,19 +58,18 @@ void AGameplayGameMode::Logout(AController* Exiting)
         if (GI)
         {
             GI->endSession();
-        }
-            
+        }   
     }
     else
     {
         UE_LOG(LogTemp, Warning, TEXT("GM: Client log out"));
+        APlayerRLController* exitingRLController = Cast<APlayerRLController>(Exiting);
+        APlayerRLController* hostRLController = Cast<APlayerRLController>(hostController);
+
+        allPlayerControllers.Remove(exitingRLController);
+
         checkGameEnd();
     }
-
-    APlayerRLController* exitingRLController = Cast<APlayerRLController>(Exiting);
-    APlayerRLController* hostRLController = Cast<APlayerRLController>(hostController);
-
-    allPlayerControllers.Remove(exitingRLController);
 }
 
 void AGameplayGameMode::BeginPlay()
@@ -420,33 +425,25 @@ void AGameplayGameMode::checkGameEnd()
 bool AGameplayGameMode::checkIfGameEnd()
 {
     int alivePlayerCounter = 0;
-
+    int i = 0;
     for (AController* rlController : allPlayerControllers)
     {
         APlayerRLController* aPlayer = Cast<APlayerRLController>(rlController);
-        AAIRLController* aAIPlayer = Cast<AAIRLController>(rlController);
+        // AAIRLController* aAIPlayer = Cast<AAIRLController>(rlController);
         if (aPlayer)
         {
             if (aPlayer && !aPlayer->isDied)
             {
                 alivePlayerCounter++;
                 winner = aPlayer;
-                winnerName = aPlayer->playerName;
-            }
-        }
-        else if (aAIPlayer)
-        {
-            if (aAIPlayer && !aAIPlayer->isDied)
-            {
-                alivePlayerCounter++;
-                winner = aAIPlayer;
-                winnerName = aPlayer->playerName;
-            }
-        }
+                winnerName = allNames[i];
 
+            }
+        }
+        i++;
     }
 
-    return alivePlayerCounter <= 1;
+    return alivePlayerCounter == 1;
 }
 
 void AGameplayGameMode::endGameplayGameMode()
@@ -461,7 +458,7 @@ void AGameplayGameMode::endGameplayGameMode()
                 APlayerRLController* theRLController = Cast<APlayerRLController>(rlController);
                 if (theRLController)
                 {
-                    theRLController->createEndGameHUD();
+                    theRLController->createEndGameHUD(winnerName);
                 }
             }
         }

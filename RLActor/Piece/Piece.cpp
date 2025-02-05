@@ -1198,7 +1198,7 @@ APieceConfirmedMesh* APiece::getSpawnedConfirmedMesh(FVector locationToSpawn)
         if (serverWorld)
         {
             APieceConfirmedMesh* confirmedMesh = serverWorld->SpawnActor<APieceConfirmedMesh>(pieceConfirmedMeshClass, locationToSpawn, GetActorRotation());
-            confirmedMesh->setMaterial(selectedMaterial);
+            // confirmedMesh->setMaterial(selectedMaterial);
 
             return confirmedMesh;
         }
@@ -1208,7 +1208,10 @@ APieceConfirmedMesh* APiece::getSpawnedConfirmedMesh(FVector locationToSpawn)
 
 void APiece::playSound_server_Implementation(USoundCue* aSoundCue)
 {
-    playSound_multicast(aSoundCue);
+    if (IsValid(this))
+    {
+        playSound_multicast(aSoundCue);
+    }
 }
 
 void APiece::playSound_multicast_Implementation(USoundCue* aSoundCue)
