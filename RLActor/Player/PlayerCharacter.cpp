@@ -78,6 +78,8 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(APlayerCharacter, isAbleToRun);
 	DOREPLIFETIME(APlayerCharacter, isRunning);
 	DOREPLIFETIME(APlayerCharacter, curSpeed);
+
+	DOREPLIFETIME(APlayerCharacter, selectedSquare);
 }
 
 void APlayerCharacter::BeginPlay()
@@ -89,23 +91,28 @@ void APlayerCharacter::BeginPlay()
 	isWaitingOtherPlayers = true;
 }
 
-void APlayerCharacter::updateWidget()
+void APlayerCharacter::updateWidget_Implementation()
 {
-	if (PlayerHUD)
+	AGameModeBase* GameMode = UGameplayStatics::GetGameMode(GetWorld());
+	AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(GameMode);
+	if (curGameMode)
 	{
-		PlayerHUD->isWaitingTime = isWaitingOtherPlayers;
-		PlayerHUD->isSetupTime = setUpTime;
-		PlayerHUD->ownerMoney = curMoney;
-		PlayerHUD->isAlive = isAlive;
-		PlayerHUD->isPlayerTurn = isPlayerTurn;
-		PlayerHUD->curDetectedActor = detectedActor;
+		turnRestTime = curGameMode->curRestTime;
 	}
-	else
+
+	updateWidget_Multi(turnRestTime);
+}
+
+void APlayerCharacter::updateWidget_Multi_Implementation(int aRestTime)
+{
+	AController* playerController = GetController();
+	if (playerController)
 	{
-		APlayerRLController* rlCont = Cast<APlayerRLController>(GetController());
+		APlayerRLController* rlCont = Cast<APlayerRLController>(playerController);
 		if (rlCont)
 		{
-			PlayerHUD = rlCont->getWidget();
+			rlCont->updateGameplayHUD(isWaitingOtherPlayers, setUpTime, curMoney,
+				isAlive, isPlayerTurn, detectedActor, aRestTime);
 		}
 	}
 }
@@ -194,12 +201,18 @@ void APlayerCharacter::OnRep_selectedMaterial()
 
 void APlayerCharacter::startSetup_Implementation()
 {
-	setUpTime = true;
-	isWaitingOtherPlayers = false;
+	startSetup_multi();
+	/*
 	if (isAIPossessed)
 	{
 		initializeRandomArmy();
-	}
+	}*/
+}
+void APlayerCharacter::startSetup_multi_Implementation()
+{
+	setUpTime = true;
+	isWaitingOtherPlayers = false;
+
 }
 void APlayerCharacter::endSetup_Implementation()
 {
@@ -350,13 +363,10 @@ void APlayerCharacter::receiveProduct_Implementation(APiece* aProduct)
 /* army function*/
 void APlayerCharacter::updateArmyStatus(APiece* aPiece)
 {
-	UE_LOG(LogTemp, Error, TEXT("CHARACTER: UPDATE ARMY STATUS"));
-
 	if (aPiece && aPiece->getIfIsDie())
 	{
 		army.Remove(aPiece);
-		UE_LOG(LogTemp, Error, TEXT("CHARACTER: PIECE GOT REMOVED"));
-
+		
 	}
 
 	checkArmyStatus();
@@ -372,7 +382,6 @@ void APlayerCharacter::checkArmyStatus()
 			APlayerRLController* PlayerController = Cast<APlayerRLController>(aController);
 			if (PlayerController)
 			{
-				UE_LOG(LogTemp, Error, TEXT("CHARACTER: ARMY EMPTY, PLAYER DIED"));
 				PlayerController->controlledBodyDied();
 			}
 		}
@@ -452,7 +461,6 @@ void APlayerCharacter::detectReaction()
 // turn control
 void APlayerCharacter::startTurn()
 {
-	UE_LOG(LogTemp, Warning, TEXT("LOGG: PLAYER STARTING TURN"));
 	isPlayerTurn = true;
 	selectedSquare = nullptr;
 	setConfirmedPiece(nullptr);
@@ -561,28 +569,7 @@ void APlayerCharacter::BeUnInteracted(APlayerCharacter* Sender)
 
 void APlayerCharacter::openMenu(const FInputActionValue& Value)
 {
-	if (menuHUD)
-	{
-		menuHUD->RemoveFromParent();
-		menuHUD = nullptr;
-	}
-	else
-	{
-		if (IsValid(menuHUDClass))
-		{
-			AController* theController = GetController();
-			APlayerController* thePlayerController = Cast<APlayerController>(theController);
-			if (thePlayerController)
-			{
-				menuHUD = CreateWidget<UUserWidget>(thePlayerController, menuHUDClass);
-
-				if (menuHUD)
-				{
-					menuHUD->AddToPlayerScreen();
-				}
-			}
-		}
-	}
+	return;
 }
 
 void APlayerCharacter::look(FVector2D lookAxisVector)
@@ -1010,11 +997,8 @@ void APlayerCharacter::setConfirmedPiece_Implementation(APiece* aPiece) // clien
 
 void APlayerCharacter::setSelectedSquare(AEnvSquare* aSquare) // non rpc
 {
-	if (IsLocallyControlled())
-	{
-		setSelectedSquareEffect(aSquare);
-		setConfirmedPiece(selectedPiece);
-	}
+	setSelectedSquareEffect(aSquare);
+	setConfirmedPiece(selectedPiece);
 }
 
 void APlayerCharacter::setSelectedSquareValue_Implementation(AEnvSquare* aSquare) // server

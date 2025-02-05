@@ -93,11 +93,14 @@ protected:
 
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
-	UHUDGameplay* PlayerHUD;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Piece Stats")
+	int turnRestTime;
 
-	UFUNCTION(BlueprintCallable, Category = "Control")
+	UFUNCTION(Server, Unreliable, BlueprintCallable, Category = "Control")
 	void updateWidget();
+
+	UFUNCTION(NetMulticast, Unreliable, BlueprintCallable, Category = "Control")
+	void updateWidget_Multi(int aRestTime);
 
 	/* character basic stats*/
 protected:
@@ -154,6 +157,8 @@ public:
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Character Stats")
 	void startSetup();
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Character Stats")
+	void startSetup_multi();
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Character Stats")
 	void endSetup();
 
@@ -250,11 +255,6 @@ public:
 
 	virtual void BeUnInteracted(APlayerCharacter* Sender) override;
 
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
-	TSubclassOf<UUserWidget> menuHUDClass;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI Main")
-	UUserWidget* menuHUD;
 	/* controller functions*/
 public:
 	UFUNCTION(BlueprintCallable, Category = "Control")
@@ -384,7 +384,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	int selectedItemIndex = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Interact Control")
 	AEnvSquare* selectedSquare = nullptr;
 
 	/* item Effect*/

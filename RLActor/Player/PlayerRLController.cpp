@@ -26,6 +26,7 @@ void APlayerRLController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME(APlayerRLController, isDied);
 	DOREPLIFETIME(APlayerRLController, playerIndex);
 	DOREPLIFETIME(APlayerRLController, playerName);
 }
@@ -56,9 +57,8 @@ void APlayerRLController::initName()
 	}
 }
 
-void APlayerRLController::setupWidget_Implementation()
+void APlayerRLController::setupWidget()
 {
-	UE_LOG(LogTemp, Error, TEXT("PC> Trying Set up Controller Widget"));
 	if (IsValid(PlayerHUDClass)) {
 		UE_LOG(LogTemp, Error, TEXT("PC> Player HUD Class valid"));
 
@@ -75,46 +75,68 @@ void APlayerRLController::setupWidget_Implementation()
 			}
 
 			PlayerHUD->AddToViewport(1);
-		}
-	}
-}
 
-void APlayerRLController::createEndGameHUD_Implementation()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Try creating end game hud"));
-
-	UWorld* myWorld = GetWorld();
-
-	if (IsValid(myWorld))
-	{
-		if (IsValid(endGameHUDClass) && !endGameHUD)
-		{
 			if (PlayerHUD)
 			{
-				PlayerHUD->RemoveFromParent();
-			}
-			if (menuHUD)
-			{
-				menuHUD->RemoveFromParent();
-			}
-
-			UE_LOG(LogTemp, Warning, TEXT("End game hud class valid"));
-
-			bShowMouseCursor = true;
-			SetInputMode(FInputModeUIOnly());
-			endGameHUD = CreateWidget<UUserWidget>(this, endGameHUDClass);
-
-			if (endGameHUD)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("End game hud create success"));
-
-				endGameHUD->AddToViewport(1000);
+				UE_LOG(LogTemp, Error, TEXT("PC> Player HUD valid 2"));
 			}
 		}
 	}
 }
 
-void APlayerRLController::createMenuHUD_Implementation()
+void APlayerRLController::createEndGameHUD_Implementation(const FString& aWinnerName)
+{
+	createEndGameHUD_Multi(aWinnerName);
+
+	UE_LOG(LogTemp, Log, TEXT("Winner: %s"), *aWinnerName);
+}
+
+void APlayerRLController::createEndGameHUD_Multi_Implementation(const FString& aWinnerName)
+{
+	winnerName = aWinnerName;
+
+	UE_LOG(LogTemp, Warning, TEXT("Try creating end game hud"));
+
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		UE_LOG(LogTemp, Log, TEXT("PC: authority EndGame winner: %s"), *aWinnerName);
+	}
+	else if (GetLocalRole() == ROLE_SimulatedProxy)
+	{
+		UE_LOG(LogTemp, Log, TEXT("PC: simulated EndGame winner: %s"), *aWinnerName);
+	}
+	else if (GetLocalRole() == ROLE_AutonomousProxy)
+	{
+		UE_LOG(LogTemp, Log, TEXT("PC: autonomous EndGame winner: %s"), *aWinnerName);
+	}
+
+	if (IsValid(endGameHUDClass) && !endGameHUD)
+	{
+		if (PlayerHUD)
+		{
+			PlayerHUD->RemoveFromParent();
+		}
+		if (menuHUD)
+		{
+			menuHUD->RemoveFromParent();
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("End game hud class valid"));
+
+		bShowMouseCursor = true;
+		SetInputMode(FInputModeUIOnly());
+		endGameHUD = CreateWidget<UUserWidget>(this, endGameHUDClass);
+
+		if (endGameHUD)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("End game hud create success"));
+
+			endGameHUD->AddToViewport(10);
+		}
+	}
+}
+
+void APlayerRLController::createMenuHUD()
 {
 	if (menuHUD)
 	{
@@ -123,7 +145,7 @@ void APlayerRLController::createMenuHUD_Implementation()
 		bShowMouseCursor = false;
 		// SetInputMode(FInputModeGameOnly());
 		menuHUD->RemoveFromParent();
-		menuHUD = false;
+		menuHUD = nullptr;
 	}
 	else
 	{
@@ -139,15 +161,10 @@ void APlayerRLController::createMenuHUD_Implementation()
 			{
 				UE_LOG(LogTemp, Warning, TEXT("LOGG: Menu created successful"));
 
-				menuHUD->AddToViewport(999);
+				menuHUD->AddToViewport(3);
 			}
 		}
 	}
-}
-
-UHUDGameplay* APlayerRLController::getWidget()
-{
-	return PlayerHUD;
 }
 
 void APlayerRLController::Tick(float DeltaTime)
@@ -204,10 +221,16 @@ void APlayerRLController::controlledBodyDied_Implementation()
 	AGameplayGameMode* curGameMode = Cast<AGameplayGameMode>(GameMode);
 	if (curGameMode)
 	{
-		curGameMode->checkGameEnd();
+		if (curGameMode->checkIfGameEnd())
+		{
+			UE_LOG(LogTemp, Error, TEXT("GM: END GAME MODE"));
+			curGameMode->endGameplayGameMode();
+		}
+		else
+		{
+			gameStateCreateBody();
+		}
 	}
-
-	gameStateCreateBody();
 }
 
 void APlayerRLController::setupControllerBody_Implementation()
@@ -566,5 +589,21 @@ void APlayerRLController::selectItem(int itemIndex)
 	if (rlPlayer)
 	{
 		rlPlayer->selectItem(itemIndex);
+	}
+}
+
+void APlayerRLController::updateGameplayHUD(bool isWaitingPar, bool isSetupPar, int curMoneyPar,
+	bool isAlivePar, bool isPlayerTurnPar, TScriptInterface<IRLActor> detectedActor,
+	int curRestTime)
+{
+	if (PlayerHUD)
+	{
+		PlayerHUD->updateWaitingTime(isWaitingPar);
+		PlayerHUD->isSetupTime = isSetupPar;
+		PlayerHUD->ownerMoney = curMoneyPar;
+		PlayerHUD->isAlive = isAlivePar;
+		PlayerHUD->isPlayerTurn = isPlayerTurnPar;
+		PlayerHUD->curDetectedActor = detectedActor;
+		PlayerHUD->turnRestTime = curRestTime;
 	}
 }

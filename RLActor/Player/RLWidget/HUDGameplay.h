@@ -35,6 +35,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection Control")
 		TScriptInterface<IRLActor> curDetectedActor;
 
+	UFUNCTION(BlueprintCallable, Category = "Control")
+		void updateWaitingTime(bool isWaiting);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Stats")
+		int turnRestTime = 0;
+
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	void updateSetupTimeDef();

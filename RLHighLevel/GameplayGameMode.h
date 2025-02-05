@@ -54,7 +54,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
 	TArray<AController*> allPlayerControllers;
-	
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
+    TArray<FString> allNames;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
 	TArray<APlayerCharacter*> allPlayers;
 
@@ -140,8 +141,12 @@ protected:
 
     UFUNCTION(Category = "GameMode")
     void countDown();
+    
+public :
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
     int curRestTime;
+    
+protected :
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
     FTimerHandle countDownHandle;
     
@@ -180,12 +185,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "GameMode")
     void checkGameEnd();
     
-protected:
     UFUNCTION(BlueprintCallable, Category = "GameMode")
     bool checkIfGameEnd();
     UFUNCTION(BlueprintCallable, Category = "GameMode")
     void endGameplayGameMode();
 
+protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")
     bool ended = false;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round Manager")

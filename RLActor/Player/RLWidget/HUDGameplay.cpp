@@ -1,5 +1,13 @@
 #include "HUDGameplay.h"
 
+#include "Net/UnrealNetwork.h"
+
+void UHUDGameplay::updateWaitingTime(bool isWaiting)
+{
+    isWaitingTime = isWaiting;
+
+}
+
 void UHUDGameplay::updateSetupTimeDef()
 {
     switch (hudLanguage)
