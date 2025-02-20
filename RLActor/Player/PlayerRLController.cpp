@@ -143,9 +143,9 @@ void APlayerRLController::createMenuHUD()
 		UE_LOG(LogTemp, Warning, TEXT("LOGG: Menu already exist, remove it"));
 
 		bShowMouseCursor = false;
-		// SetInputMode(FInputModeGameOnly());
+		SetInputMode(FInputModeGameOnly());
 		menuHUD->RemoveFromParent();
-		menuHUD = nullptr;
+		// menuHUD = nullptr;
 	}
 	else
 	{
@@ -403,12 +403,10 @@ void APlayerRLController::goBackFunc(const FInputActionValue& Value) {
 		{
 		case EGameModeEnum::ELobby:
 		{
-			gameInstance->openNextLevel(EGameModeEnum::EInit);
 			break;
 		}
 		case EGameModeEnum::EEnd:
 		{
-			gameInstance->openNextLevel(EGameModeEnum::EInit);
 			break;
 		}
 		case EGameModeEnum::EGameplay:
@@ -440,10 +438,15 @@ void APlayerRLController::openMenuFunc(const FInputActionValue& Value) {
 	UE_LOG(LogTemp, Warning, TEXT("LOGG: Try open menu"));
 	if (rlPlayer) {
 		if (Value.Get<bool>()) {
-			createMenuHUD();
-			// rlPlayer->openMenu(Value);
+			// createMenuHUD();
+			
+			if (curMenuCount % 2 == 0)
+			{
+				createMenuHUD();
+			}
 		}
 	}
+	curMenuCount++;
 }
 
 void APlayerRLController::lookFunc(const FInputActionValue& Value) {
@@ -457,7 +460,7 @@ void APlayerRLController::lookFunc(const FInputActionValue& Value) {
 void APlayerRLController::moveFunc(const FInputActionValue& Value) {
 	if (rlPlayer) {
 		FVector2D moveVector = Value.Get<FVector2D>();
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("control move"));
+		// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("control move"));
 
 		rlPlayer->moveForward(moveVector.Y);
 		rlPlayer->moveRight(moveVector.X);
@@ -510,13 +513,20 @@ void APlayerRLController::interactFunc(const FInputActionValue& Value)
 	if (rlPlayer && !isDied) {
 		if (Value.Get<bool>())
 		{
-			rlPlayer->interact();
-			/*
 			if (curInteractionCount % 2 == 0)
 			{
 				// player is able to interact or not is responsability of player
 				rlPlayer->interact();
-			}*/
+
+				if (GetLocalRole() == ROLE_Authority)
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Server Controller: interact"));
+				}
+				else
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Client Controller: interact"));
+				}
+			}
 		}
 	}
 	curInteractionCount++;

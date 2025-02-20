@@ -355,6 +355,17 @@ void AEnvBoard::resetBoard() // Client
             aSquare->setPreviewMesh(nullptr); // client
         }
     }
+
+    if (GetLocalRole() == ROLE_Authority)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+            TEXT("Server Board: resetBoard"));
+    }
+    else
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+            TEXT("Client Board: resetBoard"));
+    }
 }
 void AEnvBoard::resetConfirmedMeshBoard()
 {

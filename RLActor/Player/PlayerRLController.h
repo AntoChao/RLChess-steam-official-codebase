@@ -159,6 +159,8 @@ protected:
 	// all gameplay action inputs
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	class UInputAction* openMenuAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	int curMenuCount = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	class UInputAction* lookAction;

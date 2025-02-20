@@ -315,6 +315,23 @@ bool APlayerCharacter::isAbleToBenchPiece()
 }
 void APlayerCharacter::benchAPiece_Implementation(APiece* newPiece)
 {
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+			TEXT("Server Player: benchPiece"));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+			TEXT("Client Player: benchPiece"));
+	}
+
+	// try to solve the double issue
+	if (newPiece->getPieceColor() != getPlayerColor())
+	{
+		return;
+	}
+
 	army.Add(newPiece);
 	newPiece->pieceOwner = this;
 
@@ -326,6 +343,7 @@ void APlayerCharacter::benchAPiece_Implementation(APiece* newPiece)
 
 			unselectPiece();
 			clientResetBoard(); // unselect the piece after piece benched
+			
 			break;
 		}
 	}
@@ -350,11 +368,33 @@ void APlayerCharacter::payProduct_Implementation(APiece* aProduct)
 	int productCost = aProduct->GetProductCost();
 
 	curMoney -= productCost;
+
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+			TEXT("Server Player: payProduct"));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+			TEXT("Client Player: payProduct"));
+	}
 }
 void APlayerCharacter::receiveProduct_Implementation(APiece* aProduct)
 {
 	if (aProduct)
 	{
+		if (GetLocalRole() == ROLE_Authority)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+				TEXT("Server Player: receiveProduct"));
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+				TEXT("Client Player: receiveProduct"));
+		}
+
 		aProduct->setPieceColor(getPlayerColor());
 		benchAPiece(aProduct);
 	}
@@ -392,7 +432,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	// Call the base class  
 	Super::Tick(DeltaTime);
-
+	/*
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
 	if (PC)
 	{
@@ -406,7 +446,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 			}
 
 		}
-	}
+	}*/
 
 	detect();
 	updateWidget();
@@ -688,6 +728,15 @@ void APlayerCharacter::selectItem_Implementation(int itemIndex)
 
 void APlayerCharacter::interact()
 {
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Server Player: interact"));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Client Player: interact"));
+	}
+
 	if (detectHit.bBlockingHit)
 	{
 		AActor* hitActor = detectHit.GetActor();
@@ -833,6 +882,17 @@ player turn + hit piece -> different color -> attack piece -> reset selecte piec
 */
 void APlayerCharacter::buyPiece(APiece* detectedPiece)
 {
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, 
+			TEXT("Server Player: BuyPiece"));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, 
+			TEXT("Client Player: BuyPiece"));
+	}
+
 	if (detectedPiece)
 	{
 		if (detectedPiece->getPieceStatus() == EPieceStatus::EInShop)
@@ -845,6 +905,17 @@ void APlayerCharacter::buyPiece(APiece* detectedPiece)
 }
 void APlayerCharacter::serverBuyInShopPiece_Implementation()
 {
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+			TEXT("Server Player: serverBuyInShopPiece"));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+			TEXT("Client Player: serverBuyInShopPiece"));
+	}
+
 	if (selectedPiece)
 	{
 		selectedPiece->inShopInteractedEffect(this);
@@ -953,6 +1024,17 @@ void APlayerCharacter::unselectPiece_Implementation() // Client
 	UGameplayStatics::PlaySoundAtLocation(this, unselectPieceSC, GetActorLocation());
 
 	selectedPiece = nullptr;
+
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+			TEXT("Server Player: unselectPiece"));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+			TEXT("Client Player: unselectPiece"));
+	}
 }
 
 void APlayerCharacter::clientResetBoard_Implementation()
@@ -970,6 +1052,17 @@ void APlayerCharacter::clientResetBoard_Implementation()
 				if (gameBoard)
 				{
 					gameBoard->resetBoard(); // non rpc
+
+					if (GetLocalRole() == ROLE_Authority)
+					{
+						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+							TEXT("Server Player: clientResetBoard"));
+					}
+					else
+					{
+						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+							TEXT("Client Player: clientResetBoard"));
+					}
 				}
 			}
 		}
@@ -987,6 +1080,17 @@ APiece* APlayerCharacter::getConfirmedPiece()
 
 void APlayerCharacter::setSelectedPiece_Implementation(APiece* aPiece) // client
 {
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+			TEXT("Server Player: setSelectedPiece"));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+			TEXT("Client Player: setSelectedPiece"));
+	}
+
 	selectedPiece = aPiece;
 }
 void APlayerCharacter::setConfirmedPiece_Implementation(APiece* aPiece) // client

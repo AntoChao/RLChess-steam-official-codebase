@@ -32,12 +32,7 @@ protected:
 	UPROPERTY(BlueprintReadWrite, Category = "Level Control")
 		EGameModeEnum curGameMode;
 
-	
-
 public:
-	UFUNCTION(BlueprintCallable, Category = "Level Control")
-		void openNextLevel(EGameModeEnum gameToOpen);
-
 	UPROPERTY(BlueprintReadWrite, Category = "Level Control")
 		int sessionSize = 2;
 
