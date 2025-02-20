@@ -267,6 +267,17 @@ void AEnvSquare::occupiedPieceLeaved_Implementation()
 {
 	isOccupied = false;
 	occupiedPiece = nullptr;
+
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+			TEXT("Server Square: occupiedPieceLeaved"));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+			TEXT("Client Square: occupiedPieceLeaved"));
+	}
 }
 
 bool AEnvSquare::getIsOccupied()

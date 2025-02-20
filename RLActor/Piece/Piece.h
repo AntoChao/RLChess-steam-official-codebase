@@ -281,7 +281,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	FColor getPieceColor();
 
-	UFUNCTION(BlueprintCallable, Category = "Piece Movement")
+	//UFUNCTION(BlueprintCallable, Category = "Piece Movement")
 	int getLevel();
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Piece Movement")

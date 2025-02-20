@@ -17,39 +17,6 @@ URLInstance::URLInstance()
 	destroySessionCompletedDelegate = FOnDestroySessionCompleteDelegate::CreateUObject(this, &URLInstance::destroySessionCompleted);
 	
 }
-	
-void URLInstance::openNextLevel(EGameModeEnum gameToOpen)
-{
-	curGameMode = gameToOpen;
-	switch (gameToOpen)
-	{
-		case EGameModeEnum::EInit:
-		{
-			UGameplayStatics::OpenLevel(this, FName("InitLevel"));
-			break;
-		}
-		case EGameModeEnum::ELobby:
-		{
-			UGameplayStatics::OpenLevel(this, FName("LobbyLevel"));
-			break;
-		}
-		case EGameModeEnum::EGameplay:
-		{
-			UGameplayStatics::OpenLevel(this, FName("GameplayLevel"));
-			break;
-		}
-		case EGameModeEnum::EEnd:
-		{
-			UGameplayStatics::OpenLevel(this, FName("EndLevel"));
-			break;
-		}
-		default:
-		{
-			UGameplayStatics::OpenLevel(this, FName("InitLevel"));
-			break;
-		}
-	}
-}
 
 // online sessions steam
 
@@ -77,7 +44,6 @@ void URLInstance::hostSession(FName sessionName, int numPlayers)
 			UE_LOG(LogTemp, Error, TEXT("HOST SESSION CHECK USER NAME: %s"), *curPlayerName);
 			UE_LOG(LogTemp, Error, TEXT("HOST SESSION NAME: %s"), *curSessionName.ToString());
 
-			// createSessionsCompletedHandle = onlineSessionInterface->AddOnFindSessionsCompleteDelegate_Handle(createSessionsCompletedDelegate);
 			createSessionsCompletedHandle = onlineSessionInterface->AddOnCreateSessionCompleteDelegate_Handle(createSessionsCompletedDelegate);
 
 			UE_LOG(LogTemp, Warning, TEXT("CreateServer"));
@@ -94,9 +60,11 @@ void URLInstance::hostSession(FName sessionName, int numPlayers)
 
 			sessionSettings.bUsesPresence = true;
 			sessionSettings.bAllowJoinInProgress = true;
-			// sessionSettings.bAllowInvites = true;
-			// sessionSettings.bAllowJoinViaPresence = true;
-			// sessionSettings.bAllowJoinViaPresenceFriendsOnly = true;
+			sessionSettings.bAllowInvites = true;
+			sessionSettings.bAllowJoinViaPresence = true;
+			sessionSettings.bAllowJoinViaPresenceFriendsOnly = false;
+			sessionSettings.bUseLobbiesIfAvailable = true;
+
 			sessionSettings.Set(FName("SESSION_NAME"), sessionName.ToString(), EOnlineDataAdvertisementType::ViaOnlineService); // Storing session name
 
 			const ULocalPlayer* localPlayer = GetWorld()->GetFirstLocalPlayerFromController();
@@ -370,18 +338,6 @@ void URLInstance::destroySessionCompleted(FName sessionName, bool destroyedSessi
 		{
 			onlineSessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(destroySessionCompletedHandle);
 			UE_LOG(LogTemp, Error, TEXT("Session destroyed Completed: %d"), destroyedSession);
-			/*
-			if (destroyedSession)
-			{
-				UE_LOG(LogTemp, Error, TEXT("Session destroyed 1"));
-				APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-				if (PlayerController)
-				{
-					UE_LOG(LogTemp, Error, TEXT("Session destroyed 2"));
-					PlayerController->ClientTravel("Game/HighLevel/lobbylevel/LobbyLevel", TRAVEL_Absolute);
-				}
-			}*/
-
 		}
 	}
 }

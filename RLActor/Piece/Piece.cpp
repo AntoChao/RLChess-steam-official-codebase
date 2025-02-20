@@ -200,6 +200,19 @@ void APiece::BeInteracted(APlayerCharacter* Sender)
 // if the rest interaction is client, maybe delagate this logic into a server func
 void APiece::inShopInteractedEffect_Implementation(APlayerCharacter* Sender)
 {
+
+    if (GetLocalRole() == ROLE_Authority)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+            TEXT("Server Piece: inShopInteractedEffect"));
+    }
+    else
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+            TEXT("Client Piece: inShopInteractedEffect"));
+    }
+
+
     if (UWorld* World = GetWorld())
     {
         ARLGameState* GameState = Cast<ARLGameState>(World->GetGameState());
@@ -706,6 +719,17 @@ EPieceStatus APiece::getPieceStatus()
 void APiece::setPieceStatus_Implementation(EPieceStatus newStatus)
 {
     pieceStatus = newStatus;
+
+    if (GetLocalRole() == ROLE_Authority)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+            TEXT("Server Piece: setPieceStatus"));
+    }
+    else
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+            TEXT("Client Piece: setPieceStatus"));
+    }
 }
 void APiece::setPieceStatusInBoard_Implementation()
 {
@@ -718,6 +742,17 @@ void APiece::setPieceColor_Implementation(FColor aColor)
 
     if (colorToMaterial.Contains(aColor))
     {
+        if (GetLocalRole() == ROLE_Authority)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+                TEXT("Server Piece: setPieceColor"));
+        }
+        else
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+                TEXT("Client Piece: setPieceColor"));
+        }
+
         selectedMaterial = colorToMaterial[aColor];
 
         if (selectedMaterial && pieceStaticBodyMesh)
@@ -763,6 +798,17 @@ void APiece::updateRestStatus_Implementation()
 /* setActor location in a time constraint*/
 void APiece::bePlaced_Implementation(AEnvSquare* squareDestination)
 {
+    if (GetLocalRole() == ROLE_Authority)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+            TEXT("Server Piece: bePlaced"));
+    }
+    else
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+            TEXT("Client Piece: bePlaced"));
+    }
+
     if (pieceStatus == EPieceStatus::EInShop)
     {
         bePlacedInShopEffect(squareDestination);
@@ -800,11 +846,33 @@ void APiece::bePlaced_Implementation(AEnvSquare* squareDestination)
 void APiece::setLocationMulti_Implementation(FVector aLocation)
 {
     SetActorLocation(aLocation);
+
+    if (GetLocalRole() == ROLE_Authority)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+            TEXT("Server Piece: setLocationMulti"));
+    }
+    else
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+            TEXT("Client Piece: setLocationMulti"));
+    }
 }
 
 void APiece::bePlacedInShopEffect_Implementation(AEnvSquare* squareDestination)
 {
     // setPieceStatus(EPieceStatus::EInBench);
+
+    if (GetLocalRole() == ROLE_Authority)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+            TEXT("Server Piece: bePlacedInShopEffect"));
+    }
+    else
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+            TEXT("Client Piece: bePlacedInShopEffect"));
+    }
 
     if (IsValid(curSquare))
     {
@@ -817,6 +885,7 @@ void APiece::bePlacedInShopEffect_Implementation(AEnvSquare* squareDestination)
     
     curSquare->beOccupied(this);
     setLocationMulti(curSquare->getPlacementLocation());
+
 }
 
 void APiece::bePlacedInBenchEffect_Implementation(AEnvSquare* squareDestination)
@@ -1216,12 +1285,8 @@ void APiece::playSound_server_Implementation(USoundCue* aSoundCue)
 
 void APiece::playSound_multicast_Implementation(USoundCue* aSoundCue)
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Try playing sound multicast"));
-
     if (aSoundCue && !pieceAudioComponent->IsPlaying())
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("sound multicast OKKK"));
-
         pieceAudioComponent->SetSound(aSoundCue);
         pieceAudioComponent->Play();
     }

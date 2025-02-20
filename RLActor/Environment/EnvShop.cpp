@@ -147,6 +147,17 @@ void AEnvShop::createRandomShop_Implementation()
 
 void AEnvShop::sellProduct_Implementation(APlayerCharacter* player, APiece* specificProduct)
 {
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+			TEXT("Server Shop: sellProduct"));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+			TEXT("Client Shop: sellProduct"));
+	}
+
 	if (player && specificProduct)
 	{
 		if (player->isEnableToBuyProduct(specificProduct))
@@ -193,7 +204,16 @@ void AEnvShop::refillProduct_Implementation(APiece* specificProduct)
 				productsInShop.Add(productInstance);
 
 			}
-
+			if (GetLocalRole() == ROLE_Authority)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+					TEXT("Server Shop: refillProduct"));
+			}
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+					TEXT("Client Shop: refillProduct"));
+			}
 		}
 	}
 }
